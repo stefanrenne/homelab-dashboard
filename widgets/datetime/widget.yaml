@@ -1,0 +1,9 @@
+id: datetime
+name: Date and time
+version: 1.0.0
+apiVersion: 1
+description: The current date and time, formatted for the dashboard language.
+options:
+  locale: { type: string }
+  dateStyle: { type: enum, values: [full, long, medium, short, none], default: long }
+  timeStyle: { type: enum, values: [full, long, medium, short, none], default: short }

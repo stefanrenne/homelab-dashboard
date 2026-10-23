@@ -1,0 +1,10 @@
+id: resources
+name: System resources
+version: 1.0.0
+apiVersion: 1
+description: CPU, memory and disk usage of the machine (or container) the dashboard runs on.
+refresh: 5s
+options:
+  cpu: { type: boolean, default: true }
+  memory: { type: boolean, default: true }
+  disk: { type: list, default: ["/"] }

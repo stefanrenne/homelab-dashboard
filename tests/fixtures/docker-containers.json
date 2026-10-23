@@ -1,0 +1,7 @@
+[
+  { "Id": "a1", "Names": ["/plex"], "State": "running",
+    "Labels": { "homelab.name": "Plex", "homelab.group": "Media", "homelab.icon": "plex.svg", "homelab.href": "http://plex.lan:32400" } },
+  { "Id": "b2", "Names": ["/uptime-kuma"], "State": "running",
+    "Labels": { "homelab.name": "Uptime Kuma", "homelab.siteMonitor": "http://uptime-kuma:3001" } },
+  { "Id": "c3", "Names": ["/postgres"], "State": "running", "Labels": { "com.docker.compose.service": "db" } }
+]

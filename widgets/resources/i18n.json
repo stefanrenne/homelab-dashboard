@@ -1,0 +1,7 @@
+{
+  "en": { "cpu": "CPU", "memory": "Memory", "disk": "Disk" },
+  "nl": { "cpu": "CPU", "memory": "Geheugen", "disk": "Schijf" },
+  "fr": { "cpu": "CPU", "memory": "Mémoire", "disk": "Disque" },
+  "de": { "cpu": "CPU", "memory": "Speicher", "disk": "Festplatte" },
+  "es": { "cpu": "CPU", "memory": "Memoria", "disk": "Disco" }
+}

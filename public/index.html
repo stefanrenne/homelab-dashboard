@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Homelab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --hd-hue: 222;
+    --hd-bg: hsl(var(--hd-hue) 30% 7%);
+    --hd-bg2: hsl(var(--hd-hue) 30% 11%);
+    --hd-card: hsl(var(--hd-hue) 25% 13% / .85);
+    --hd-card-hover: hsl(var(--hd-hue) 25% 17% / .9);
+    --hd-border: hsl(var(--hd-hue) 20% 24%);
+    --hd-text: hsl(var(--hd-hue) 20% 92%);
+    --hd-muted: hsl(var(--hd-hue) 12% 62%);
+    --hd-accent: hsl(var(--hd-hue) 85% 66%);
+    --hd-ok: #34d399;
+    --hd-warn: #fbbf24;
+    --hd-error: #f87171;
+    --hd-radius: 12px;
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    --hd-bg: hsl(var(--hd-hue) 30% 96%);
+    --hd-bg2: hsl(var(--hd-hue) 35% 90%);
+    --hd-card: hsl(0 0% 100% / .9);
+    --hd-card-hover: hsl(0 0% 100%);
+    --hd-border: hsl(var(--hd-hue) 20% 84%);
+    --hd-text: hsl(var(--hd-hue) 30% 14%);
+    --hd-muted: hsl(var(--hd-hue) 10% 42%);
+    --hd-accent: hsl(var(--hd-hue) 75% 45%);
+    --hd-ok: #059669;
+    --hd-warn: #b45309;
+    --hd-error: #dc2626;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    font: 15px/1.45 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--hd-text);
+    background: radial-gradient(1200px 600px at 10% -10%, var(--hd-bg2), transparent), var(--hd-bg);
+    background-attachment: fixed;
+    background-size: cover;
+  }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; margin-bottom: 28px; }
+  header h1 { font-size: 1.5rem; margin: 0; font-weight: 700; letter-spacing: -.01em; }
+  .header-widgets { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; flex: 1; justify-content: flex-end; }
+  .header-widgets > * { min-width: 120px; }
+  .header-widgets .hw-search { flex: 1; max-width: 420px; }
+  .header-widgets .hw-resources { min-width: min(100%, 300px); }
+  .messages { margin-bottom: 24px; display: grid; gap: 8px; }
+  .msg { border: 1px solid var(--hd-border); border-left: 4px solid var(--hd-error); background: var(--hd-card); border-radius: 8px; padding: 10px 14px; }
+  .msg.warn { border-left-color: var(--hd-warn); }
+  .msg summary { cursor: pointer; font-weight: 600; }
+  .msg ul { margin: 8px 0 0; padding-left: 18px; }
+  .msg code { font-size: .85em; color: var(--hd-muted); }
+  .groups { display: grid; gap: 28px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+  .group.wide { grid-column: 1 / -1; }
+  .group h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--hd-muted); margin: 0 0 10px; font-weight: 600; }
+  .cards { display: grid; gap: 10px; grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr)); }
+  @media (max-width: 700px) { .cards { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--hd-card); border: 1px solid var(--hd-border); border-radius: var(--hd-radius);
+    padding: 12px 14px; backdrop-filter: blur(6px); transition: background .15s, border-color .15s;
+  }
+  .card:hover { background: var(--hd-card-hover); border-color: color-mix(in srgb, var(--hd-accent) 40%, var(--hd-border)); }
+  .card-head { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; min-width: 0; }
+  .icon { width: 36px; height: 36px; flex: none; border-radius: 8px; display: grid; place-items: center; overflow: hidden; }
+  .icon img { width: 100%; height: 100%; object-fit: contain; }
+  .icon.letter { background: color-mix(in srgb, var(--hd-accent) 20%, transparent); color: var(--hd-accent); font-weight: 700; }
+  .title { min-width: 0; flex: 1; }
+  .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .desc { color: var(--hd-muted); font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: .75rem; color: var(--hd-muted); flex: none; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--hd-muted); }
+  .dot.up { background: var(--hd-ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hd-ok) 20%, transparent); }
+  .dot.down { background: var(--hd-error); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hd-error) 20%, transparent); }
+  .dot.warn { background: var(--hd-warn); }
+  .widget { margin-top: 10px; }
+  .blocks { display: grid; gap: 6px; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); }
+  .block { background: color-mix(in srgb, var(--hd-text) 5%, transparent); border-radius: 8px; padding: 6px 8px; text-align: center; min-width: 0; }
+  .block .v { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .block .l { font-size: .72rem; color: var(--hd-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .block.ok .v { color: var(--hd-ok); }
+  .block.warn .v { color: var(--hd-warn); }
+  .block.error .v { color: var(--hd-error); }
+  .widget-error { font-size: .8rem; color: var(--hd-error); background: color-mix(in srgb, var(--hd-error) 10%, transparent); border-radius: 8px; padding: 6px 8px; overflow-wrap: anywhere; }
+  .badge { font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; color: var(--hd-muted); border: 1px solid var(--hd-border); border-radius: 4px; padding: 0 4px; margin-left: 6px; vertical-align: middle; }
+  .bookmarks { margin-top: 36px; display: grid; gap: 24px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+  .bm-list { display: grid; gap: 6px; }
+  .bm { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; color: inherit; text-decoration: none; background: var(--hd-card); border: 1px solid var(--hd-border); }
+  .bm:hover { border-color: var(--hd-accent); }
+  .bm .icon { width: 24px; height: 24px; font-size: .7rem; border-radius: 6px; }
+  .empty { text-align: center; color: var(--hd-muted); padding: 64px 16px; border: 1px dashed var(--hd-border); border-radius: var(--hd-radius); }
+  .empty code { color: var(--hd-text); }
+  footer { margin-top: 48px; text-align: center; font-size: .75rem; color: var(--hd-muted); }
+  a:focus-visible, input:focus-visible { outline: 2px solid var(--hd-accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title"></h1>
+    <div class="header-widgets" id="header-widgets"></div>
+  </header>
+  <div class="messages" id="messages"></div>
+  <main id="groups" class="groups" aria-live="polite"></main>
+  <section id="bookmarks" class="bookmarks"></section>
+  <footer id="footer"></footer>
+</div>
+<script>
+'use strict';
+
+// ---------------------------------------------------------------- texts
+const I18N = {
+  en: {
+    loading: 'Loading…', errors: 'Configuration errors', warnings: 'Warnings', empty: 'No services yet.',
+    emptyHint: 'Add them to services.yaml in your config folder, or label your containers with homelab.name.',
+    up: 'Online', down: 'Offline', warn: 'Degraded', unknown: 'Unknown', widgetFailed: 'Widget failed',
+    unknownWidget: 'Unknown widget type', discovered: 'auto', offline: 'Server unreachable, retrying…',
+    clientFailed: 'Could not load the widget code',
+  },
+  nl: {
+    loading: 'Laden…', errors: 'Fouten in de configuratie', warnings: 'Waarschuwingen', empty: 'Nog geen services.',
+    emptyHint: 'Zet ze in services.yaml in je configmap, of geef je containers het label homelab.name.',
+    up: 'Online', down: 'Offline', warn: 'Verstoord', unknown: 'Onbekend', widgetFailed: 'Widget mislukt',
+    unknownWidget: 'Onbekend widgettype', discovered: 'auto', offline: 'Server onbereikbaar, opnieuw proberen…',
+    clientFailed: 'De widgetcode kon niet geladen worden',
+  },
+  fr: {
+    loading: 'Chargement…', errors: 'Erreurs de configuration', warnings: 'Avertissements', empty: 'Aucun service pour l’instant.',
+    emptyHint: 'Ajoutez-les dans services.yaml de votre dossier de configuration, ou étiquetez vos conteneurs avec homelab.name.',
+    up: 'En ligne', down: 'Hors ligne', warn: 'Dégradé', unknown: 'Inconnu', widgetFailed: 'Échec du widget',
+    unknownWidget: 'Type de widget inconnu', discovered: 'auto', offline: 'Serveur injoignable, nouvelle tentative…',
+    clientFailed: 'Impossible de charger le code du widget',
+  },
+  de: {
+    loading: 'Lädt…', errors: 'Konfigurationsfehler', warnings: 'Warnungen', empty: 'Noch keine Dienste.',
+    emptyHint: 'Trage sie in services.yaml im Konfigurationsordner ein oder versieh deine Container mit dem Label homelab.name.',
+    up: 'Online', down: 'Offline', warn: 'Beeinträchtigt', unknown: 'Unbekannt', widgetFailed: 'Widget fehlgeschlagen',
+    unknownWidget: 'Unbekannter Widget-Typ', discovered: 'auto', offline: 'Server nicht erreichbar, neuer Versuch…',
+    clientFailed: 'Widget-Code konnte nicht geladen werden',
+  },
+  es: {
+    loading: 'Cargando…', errors: 'Errores de configuración', warnings: 'Advertencias', empty: 'Todavía no hay servicios.',
+    emptyHint: 'Añádelos en services.yaml de tu carpeta de configuración, o etiqueta tus contenedores con homelab.name.',
+    up: 'En línea', down: 'Sin conexión', warn: 'Degradado', unknown: 'Desconocido', widgetFailed: 'Error del widget',
+    unknownWidget: 'Tipo de widget desconocido', discovered: 'auto', offline: 'Servidor inaccesible, reintentando…',
+    clientFailed: 'No se pudo cargar el código del widget',
+  },
+};
+
+const COLORS = { slate: 222, blue: 217, sky: 199, emerald: 160, green: 142, violet: 263, purple: 271, rose: 350, red: 0, amber: 38, orange: 25, teal: 173, zinc: 240 };
+
+let lang = 'en';
+function translate(key) {
+  return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+}
+
+// ---------------------------------------------------------------- helpers
+function el(tag, attrs, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === 'class') node.className = v;
+    else if (k === 'text') node.textContent = v;
+    else node.setAttribute(k, v);
+  }
+  for (const c of children) if (c !== null && c !== undefined) node.append(c);
+  return node;
+}
+
+/** Blocks script-ish URLs; everything else (http, https, smb, ssh, relative) is allowed. */
+function safeHref(href) {
+  if (!href) return null;
+  return /^\s*(javascript|data|vbscript):/i.test(href) ? null : href;
+}
+
+function iconNode(icon, name, cls) {
+  const box = el('span', { class: 'icon' + (cls ? ' ' + cls : '') });
+  const letter = () => {
+    box.classList.add('letter');
+    box.textContent = (name || '?').trim().charAt(0).toUpperCase();
+  };
+  if (!icon) letter();
+  else {
+    const img = el('img', { src: icon, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
+    img.addEventListener('error', () => { img.remove(); letter(); });
+    box.append(img);
+  }
+  return box;
+}
+
+function formatValue(value) {
+  if (value === null || value === undefined) return '–';
+  if (typeof value === 'number') return new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(value);
+  return String(value);
+}
+
+// ---------------------------------------------------------------- widgets
+const clientModules = new Map(); // type -> Promise
+const pollers = []; // { run(), timer }
+let layout = null;
+
+function widgetT(type) {
+  const strings = (layout.widgetTypes[type] && layout.widgetTypes[type].i18n) || {};
+  return (key) => (Object.prototype.hasOwnProperty.call(strings, key) ? strings[key] : translate(key));
+}
+
+function renderBlocks(container, type, result) {
+  const t = widgetT(type);
+  container.replaceChildren();
+  if (!result) return;
+  if (!result.ok) {
+    container.append(el('div', { class: 'widget-error', text: `${translate('widgetFailed')}: ${result.error}` }));
+    return;
+  }
+  const blocks = (result.data && result.data.blocks) || [];
+  if (!blocks.length) return;
+  const grid = el('div', { class: 'blocks' });
+  for (const b of blocks) {
+    const value = typeof b.value === 'string' ? t(b.value) : formatValue(b.value);
+    const shown = b.unit && b.value !== null ? `${value} ${b.unit}` : value;
+    grid.append(el('div', { class: 'block' + (b.status ? ' ' + b.status : ''), title: `${t(b.label)}: ${shown}` },
+      el('div', { class: 'v', text: shown }),
+      el('div', { class: 'l', text: t(b.label) })));
+  }
+  container.append(grid);
+}
+
+/** Creates the DOM for one widget instance and starts polling its data. */
+function mountWidget(instance, extraClass) {
+  const box = el('div', { class: 'widget' + (extraClass ? ' ' + extraClass : '') });
+  const type = layout.widgetTypes[instance.type];
+  if (!instance.known || !type) {
+    box.append(el('div', { class: 'widget-error', text: `${translate('unknownWidget')}: ${instance.type}` }));
+    return box;
+  }
+  let custom = null;
+  if (type.client) {
+    if (!clientModules.has(instance.type)) clientModules.set(instance.type, import(type.client));
+    clientModules.get(instance.type).then(() => {
+      custom = document.createElement(`hd-${instance.type}`);
+      custom.options = instance.options;
+      custom.t = widgetT(instance.type);
+      custom.error = null;
+      custom.data = null;
+      box.replaceChildren(custom);
+      if (last) apply(last);
+    }, (err) => {
+      box.replaceChildren(el('div', { class: 'widget-error', text: `${translate('clientFailed')}: ${err.message}` }));
+    });
+  }
+  let last = null;
+  const apply = (result) => {
+    last = result;
+    if (custom) {
+      custom.error = result.ok ? null : result.error;
+      custom.data = result.ok ? result.data : null;
+    } else if (!type.client) renderBlocks(box, instance.type, result);
+  };
+  if (instance.server) poll(instance, apply);
+  return box;
+}
+
+function poll(instance, onResult) {
+  const run = async () => {
+    try {
+      const res = await fetch(`/api/widgets/${encodeURIComponent(instance.instanceId)}`);
+      onResult(await res.json());
+    } catch (err) {
+      onResult({ ok: false, error: translate('offline') });
+    }
+  };
+  const every = Math.max(2000, instance.refreshMs || 30000);
+  const entry = { run, timer: setInterval(() => { if (!document.hidden) run(); }, every) };
+  pollers.push(entry);
+  run();
+}
+
+function stopPolling() {
+  for (const p of pollers) clearInterval(p.timer);
+  pollers.length = 0;
+}
+
+function statusNode(instance) {
+  const wrap = el('span', { class: 'status' });
+  const dot = el('span', { class: 'dot', role: 'img', 'aria-label': translate('unknown') });
+  const label = el('span');
+  wrap.append(label, dot);
+  if (!instance.known) {
+    dot.title = `${translate('unknownWidget')}: ${instance.type}`;
+    return wrap;
+  }
+  poll(instance, (result) => {
+    const status = result.ok ? (result.data && result.data.status) || 'unknown' : 'down';
+    dot.className = 'dot ' + status;
+    dot.setAttribute('aria-label', translate(status));
+    dot.title = result.ok ? translate(status) : `${translate('down')}: ${result.error}`;
+    label.textContent = result.ok && result.data && typeof result.data.latency === 'number' ? `${Math.round(result.data.latency)} ms` : '';
+  });
+  return wrap;
+}
+
+// ---------------------------------------------------------------- page
+function renderMessages(messages) {
+  const box = document.getElementById('messages');
+  box.replaceChildren();
+  const section = (list, cls, title) => {
+    if (!list.length) return;
+    const ul = el('ul');
+    for (const m of list) {
+      ul.append(el('li', null, el('code', { text: `${m.file}${m.path ? ' › ' + m.path : ''}` }), ` ${m.message}`));
+    }
+    box.append(el('details', { class: 'msg ' + cls, open: cls === 'error' ? '' : null },
+      el('summary', { text: `${title} (${list.length})` }), ul));
+  };
+  section(messages.errors, 'error', translate('errors'));
+  section(messages.warnings, 'warn', translate('warnings'));
+}
+
+function renderService(service) {
+  const href = safeHref(service.href);
+  const head = el(href ? 'a' : 'div', { class: 'card-head', href, target: href ? service.target : null, rel: href ? 'noopener noreferrer' : null });
+  const name = el('div', { class: 'name', text: service.name });
+  if (service.discovered) name.append(el('span', { class: 'badge', title: service.discovered, text: translate('discovered') }));
+  head.append(iconNode(service.icon, service.name),
+    el('div', { class: 'title' }, name, service.description ? el('div', { class: 'desc', text: service.description }) : null));
+  if (service.status) head.append(statusNode(service.status));
+  const card = el('article', { class: 'card', 'data-service': service.id }, head);
+  for (const w of service.widgets) card.append(mountWidget(w));
+  return card;
+}
+
+function render(data) {
+  stopPolling();
+  layout = data;
+  const s = data.settings;
+  lang = I18N[s.language] ? s.language : 'en';
+  document.documentElement.lang = s.language || 'en';
+  document.title = s.title;
+  const dark = s.theme === 'dark' || (s.theme === 'auto' && !(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches));
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.documentElement.style.setProperty('--hd-hue', COLORS[s.color] !== undefined ? COLORS[s.color] : 222);
+  document.body.style.backgroundImage = s.background
+    ? `linear-gradient(color-mix(in srgb, var(--hd-bg) 70%, transparent), var(--hd-bg)), url("${encodeURI(s.background)}")`
+    : '';
+  document.getElementById('title').textContent = s.title;
+
+  const header = document.getElementById('header-widgets');
+  header.replaceChildren(...data.header.map((w) => mountWidget(w, 'hw-' + w.type)));
+
+  renderMessages(data.messages);
+
+  const groups = document.getElementById('groups');
+  groups.replaceChildren();
+  const visible = data.groups.filter((g) => g.services.length);
+  if (!visible.length) {
+    groups.append(el('div', { class: 'empty group wide' }, el('p', { text: translate('empty') }), el('p', { text: translate('emptyHint') })));
+  }
+  for (const g of visible) {
+    const cols = Number(g.layout.columns) || 1;
+    const section = el('section', { class: 'group' + (cols > 1 ? ' wide' : '') }, el('h2', { text: g.name }));
+    const cards = el('div', { class: 'cards' });
+    cards.style.setProperty('--cols', cols);
+    for (const svc of g.services) cards.append(renderService(svc));
+    section.append(cards);
+    groups.append(section);
+  }
+
+  const bookmarks = document.getElementById('bookmarks');
+  bookmarks.replaceChildren(...data.bookmarks.map((g) => {
+    const list = el('div', { class: 'bm-list' });
+    for (const b of g.bookmarks) {
+      list.append(el('a', { class: 'bm', href: safeHref(b.href), target: '_blank', rel: 'noopener noreferrer', title: b.description || null },
+        iconNode(b.icon, b.abbr || b.name), el('span', { text: b.name })));
+    }
+    return el('section', { class: 'group' }, el('h2', { text: g.name }), list);
+  }));
+
+  document.getElementById('footer').textContent = `homelab-dashboard ${data.version || ''}`;
+}
+
+async function load() {
+  try {
+    const res = await fetch('/api/layout');
+    render(await res.json());
+  } catch (err) {
+    document.getElementById('messages').replaceChildren(el('div', { class: 'msg', text: translate('offline') }));
+    setTimeout(load, 5000);
+  }
+}
+
+function connectEvents() {
+  if (typeof EventSource === 'undefined') return;
+  const events = new EventSource('/api/events');
+  let timer = null;
+  events.addEventListener('reload', () => {
+    clearTimeout(timer);
+    timer = setTimeout(load, 150);
+  });
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) for (const p of pollers) p.run();
+});
+
+window.HD = { I18N, translate, render, safeHref, formatValue, load };
+document.getElementById('title').textContent = translate('loading');
+load();
+connectEvents();
+</script>
+</body>
+</html>

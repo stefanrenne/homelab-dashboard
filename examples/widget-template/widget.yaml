@@ -1,0 +1,12 @@
+# The manifest of your widget. See docs/widgets/api-reference.md in the dashboard repo.
+id: example-counter          # unique, lowercase; becomes "type: example-counter" in services.yaml
+name: Example counter
+version: 1.0.0               # bump on every release; the dashboard installs it as <id>@<version>
+apiVersion: 1                # the widget API you wrote this against
+description: Shows a number from a JSON API, with its change since the last refresh.
+refresh: 30s                 # how long the dashboard caches a result
+options:
+  url: { type: url, required: true }           # public: may be shown in the browser
+  key: { type: string, secret: true }          # secret: only ever reaches server.js
+  field: { type: string, default: count }
+  max: { type: number, default: 100 }

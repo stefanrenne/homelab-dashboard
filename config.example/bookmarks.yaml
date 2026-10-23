@@ -1,0 +1,13 @@
+- Developer:
+    - GitHub:
+        - abbr: GH
+          href: https://github.com
+          icon: github.svg
+    - Docker Hub:
+        - abbr: DH
+          href: https://hub.docker.com
+          icon: docker.svg
+- Docs:
+    - Homelab dashboard widgets:
+        - abbr: WD
+          href: https://github.com/

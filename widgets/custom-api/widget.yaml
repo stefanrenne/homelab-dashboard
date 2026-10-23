@@ -1,0 +1,11 @@
+id: custom-api
+name: Custom API
+version: 1.0.0
+apiVersion: 1
+description: Shows fields from any JSON API, without writing a widget.
+refresh: 30s
+options:
+  url: { type: url, required: true }
+  method: { type: enum, values: [GET, POST], default: GET }
+  headers: { type: object, secret: true }
+  mappings: { type: list, required: true }  # [{ field: data.count, label: Count, unit: ms }]

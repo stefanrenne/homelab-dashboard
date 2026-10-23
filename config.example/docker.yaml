@@ -1,0 +1,10 @@
+# Docker servers, for "container:" status and for auto-discovery of containers with
+# homelab.* labels (see docs/discovery.md). Mount the socket read-only, or better,
+# use a docker-socket-proxy.
+#
+# local:
+#   socket: /var/run/docker.sock
+# nas:
+#   host: 192.168.1.20
+#   port: 2375
+#   discover: false   # only use it for container status, do not add its containers

@@ -1,0 +1,34 @@
+# Decisions
+
+Why things are the way they are. Newest first.
+
+## Path checks on resolved paths (2026-10-23)
+`/widgets/<id>/assets/..%2Fserver.js` passed a "starts with assets/" check on the raw path. Every
+check is now done on the result of `safeJoin`, and a test covers the traversal.
+
+## HEAD is answered like GET (2026-10-23)
+The `http-status` widget uses HEAD. The dashboard monitoring itself showed "degraded" because
+only GET was routed.
+
+## Widgets run in-process (2026-10-23)
+A `worker_thread` per widget would limit memory and isolate crashes, but not network or file
+access (Node has no per-thread permissions). For v1 the trust model is explicit (security.md)
+and every call has a timeout. Workers are on the to-do list for resource isolation.
+
+## Status checks are widgets (2026-10-23)
+`siteMonitor`, `ping` and `container` map to the `http-status`, `ping` and `docker` widgets.
+The status dot and widgets then share one runtime, cache and error handling, and a third-party
+widget can serve as a status check by returning `status`.
+
+## Lock file instead of always fetching (2026-10-23)
+A start must not depend on GitHub or npm being reachable, and must not silently pick up new
+code. `plugins.lock.yaml` records the commit or integrity; `?update=1` moves floating refs.
+
+## Node.js without a build step, one runtime dependency (2026-10-23)
+Widget authors write the server and client in the same language. `yaml` is the only runtime
+dependency: YAML is the core of the configuration, and a hand-written parser is not worth the bugs.
+Docker and Kubernetes are reached with `node:http(s)`, so no SDKs are needed.
+
+## Blocks as the default rendering (2026-10-23)
+Most widgets show a few numbers. With declarative `blocks` they need no browser code, look
+consistent, and cannot break the page. `client.js` (a Web Component in shadow DOM) is the escape hatch.

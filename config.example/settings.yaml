@@ -1,0 +1,21 @@
+# Dashboard settings. See docs/configuration.md.
+title: Homelab
+language: en          # en, nl, fr, de, es
+theme: auto           # auto, dark, light
+color: slate          # slate, blue, sky, emerald, green, violet, purple, rose, red, amber, orange, teal, zinc
+target: _blank        # where service links open
+
+layout:
+  Infrastructure:
+    columns: 2
+  Media:
+    columns: 1
+
+discovery:
+  interval: 30s
+
+# Widgets from outside this repository. Pin a tag/commit or exact version.
+plugins: []
+#  - source: git+https://github.com/someone/hd-widget-pihole#v1.2.0
+#  - source: npm:hd-widget-adguard@2.0.1
+#  - path: ./my-widgets/garage-door

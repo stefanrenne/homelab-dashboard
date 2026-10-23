@@ -1,0 +1,10 @@
+# Widgets in the header.
+- datetime:
+    dateStyle: full
+    timeStyle: short
+- resources:
+    cpu: true
+    memory: true
+    disk: ["/"]
+- search:
+    provider: duckduckgo

@@ -1,0 +1,9 @@
+id: http-status
+name: HTTP status
+version: 1.0.0
+apiVersion: 1
+description: Checks that a URL answers. Also used for the "siteMonitor" field of a service.
+refresh: 30s
+options:
+  url: { type: url, required: true }
+  method: { type: enum, values: [HEAD, GET], default: HEAD }

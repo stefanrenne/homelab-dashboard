@@ -1,0 +1,9 @@
+id: search
+name: Search
+version: 1.0.0
+apiVersion: 1
+description: A search box that opens your search engine.
+options:
+  provider: { type: enum, values: [duckduckgo, google, bing, startpage, custom], default: duckduckgo }
+  url: { type: string }   # for provider "custom": a URL with {q}, e.g. https://search.lan/?q={q}
+  target: { type: enum, values: [_blank, _self], default: _blank }

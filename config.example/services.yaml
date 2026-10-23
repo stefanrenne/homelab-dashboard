@@ -1,0 +1,37 @@
+# Groups of services. Each service can have a status check (siteMonitor, ping or
+# container) and any number of widgets. Secrets go in {{HD_VAR_...}} variables.
+- Infrastructure:
+    - Dashboard:
+        href: http://localhost:3000
+        icon: homepage.png
+        description: This dashboard
+        siteMonitor: http://localhost:3000/api/health
+        widget:
+          type: custom-api
+          url: http://localhost:3000/api/health
+          mappings:
+            - field: version
+              label: Version
+            - field: ok
+              label: Healthy
+    - Router:
+        href: http://192.168.1.1
+        icon: unifi.png
+        description: Gateway
+        ping: 192.168.1.1
+    - Cloudflare DNS:
+        href: https://1.1.1.1
+        icon: cloudflare.svg
+        siteMonitor: https://1.1.1.1
+
+- Media:
+    - Plex:
+        href: http://plex.lan:32400/web
+        icon: plex.svg
+        description: Movies and series
+        siteMonitor: http://plex.lan:32400/identity
+#    - Jellyfin:
+#        href: http://jellyfin.lan
+#        icon: jellyfin.svg
+#        container: jellyfin      # status from Docker (see docker.yaml)
+#        server: local

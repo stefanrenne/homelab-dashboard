@@ -1,0 +1,2 @@
+# Kubernetes discovery of Ingresses with homelab.dev/* annotations (see docs/discovery.md).
+mode: disabled   # or: cluster (when running inside the cluster)

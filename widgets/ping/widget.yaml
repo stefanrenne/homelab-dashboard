@@ -1,0 +1,8 @@
+id: ping
+name: Ping
+version: 1.0.0
+apiVersion: 1
+description: Pings a host. Also used for the "ping" field of a service.
+refresh: 30s
+options:
+  host: { type: string, required: true }

@@ -1,0 +1,10 @@
+id: docker
+name: Docker container
+version: 1.0.0
+apiVersion: 1
+description: State, CPU and memory of one container. Used for services with "container:".
+refresh: 15s
+options:
+  container: { type: string, required: true }
+  socket: { type: string }   # default /var/run/docker.sock
+  url: { type: url }         # a Docker API or docker-socket-proxy, instead of a socket

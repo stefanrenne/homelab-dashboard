@@ -1,0 +1,12 @@
+{
+  "kind": "IngressList",
+  "items": [
+    { "metadata": { "name": "grafana", "namespace": "monitoring",
+        "annotations": { "homelab.dev/enabled": "true", "homelab.dev/name": "Grafana", "homelab.dev/group": "Monitoring", "homelab.dev/icon": "grafana.svg" } },
+      "spec": { "tls": [{ "hosts": ["grafana.example.com"] }], "rules": [{ "host": "grafana.example.com", "http": { "paths": [{ "path": "/" }] } }] } },
+    { "metadata": { "name": "wiki", "namespace": "apps", "annotations": { "homelab.dev/enabled": "true" } },
+      "spec": { "rules": [{ "host": "wiki.lan", "http": { "paths": [{ "path": "/docs" }] } }] } },
+    { "metadata": { "name": "hidden", "namespace": "apps", "annotations": {} },
+      "spec": { "rules": [{ "host": "hidden.lan" }] } }
+  ]
+}

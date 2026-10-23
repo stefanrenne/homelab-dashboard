@@ -1,0 +1,9 @@
+{
+  "name": "hd-widget-example-counter",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Example widget for homelab-dashboard",
+  "keywords": ["homelab-dashboard-widget"],
+  "license": "MIT",
+  "files": ["widget.yaml", "server.js", "client.js", "i18n.json", "assets", "README.md"]
+}

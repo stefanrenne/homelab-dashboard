@@ -611,3 +611,23 @@ test('disableIndexing: a robots meta tag and a robots.txt that disallows everyth
     await on.close();
   }
 });
+
+test('custom.css and custom.js from the config folder are served and linked, only when they exist', async () => {
+  const none = await startApp({});
+  const both = await startApp({ 'custom.css': 'body { --hd-accent: hotpink; }', 'custom.js': 'window.customRan = true;' });
+  try {
+    const plain = await (await none.get('/')).text();
+    assert.ok(!plain.includes('custom.css') && !plain.includes('custom.js'));
+    assert.equal((await none.get('/custom.css')).status, 404);
+    const html = await (await both.get('/')).text();
+    assert.match(html, /<link rel="stylesheet" href="custom\.css">\n<\/head>/, 'after the page\'s own style');
+    assert.match(html, /<script src="custom\.js" defer><\/script>\n<\/body>/);
+    const css = await both.get('/custom.css');
+    assert.equal(css.headers.get('content-type'), 'text/css; charset=utf-8');
+    assert.equal(await css.text(), 'body { --hd-accent: hotpink; }');
+    assert.equal((await both.get('/custom.js')).headers.get('content-type'), 'text/javascript; charset=utf-8');
+  } finally {
+    await none.close();
+    await both.close();
+  }
+});

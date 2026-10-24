@@ -43,6 +43,7 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - `disableIndexing`: a robots meta tag and a `/robots.txt` that disallows crawlers, as in homepage.
 - `base` for running behind a reverse proxy under a sub path, as in homepage. The page now asks
   for its data and widget code with relative URLs.
+- `custom.css` and `custom.js` in the config folder are loaded after the page's own, as in homepage.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

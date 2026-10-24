@@ -15,6 +15,7 @@ skipped and the rest keeps working.
 | `kubernetes.yaml` | Kubernetes discovery |
 | other `.yaml` files | Pulled in with `!include` (see [Including other files](#including-other-files)) |
 | `icons/` | Your own icons, used as `icon: /icons/name.svg` |
+| `custom.css`, `custom.js` | Your own style and script, loaded after the page's own (as in homepage). Refresh the browser after a change |
 | `plugins/` | Managed by the dashboard: downloaded widgets and `plugins.lock.yaml`. Older versions and removed sources are deleted after each sync |
 
 ## Variables

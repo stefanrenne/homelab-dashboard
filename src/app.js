@@ -17,6 +17,7 @@ import { UpdateCheck, RELEASES_URL, isNewer } from './update.js';
 import { describeError, scrub } from './plugins/runtime.js';
 
 export const ACTION_TIMEOUT_MS = 30_000;
+export const CUSTOM_FILES = ['custom.css', 'custom.js'];
 import { safeJoin } from './util.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -147,7 +148,8 @@ export async function createApp({
     try {
       if (method === 'GET' && (p === '/' || p === '/index.html')) {
         const html = await fs.promises.readFile(path.join(publicDir, 'index.html'), 'utf8');
-        return send(res, 200, renderIndex(html, state.config.settings, state.config.secrets), 'text/html; charset=utf-8');
+        const custom = CUSTOM_FILES.filter((f) => fs.existsSync(path.join(configDir, f)));
+        return send(res, 200, renderIndex(html, state.config.settings, state.config.secrets, custom), 'text/html; charset=utf-8');
       }
       if (method === 'GET' && p === '/robots.txt') return send(res, 200, renderRobots(state.config.settings), 'text/plain; charset=utf-8');
       if (method === 'GET' && p === '/site.webmanifest') {
@@ -188,6 +190,8 @@ export async function createApp({
           full && (full === path.join(widget.dir, 'client.js') || full.startsWith(path.join(widget.dir, 'assets') + path.sep));
         return allowed ? sendFile(res, full, { cache: 'public, max-age=3600' }) : send(res, 404, { error: 'not found' });
       }
+      // homepage's custom.css / custom.js from the config folder (the user's own, so 'self' in the CSP)
+      if (method === 'GET' && CUSTOM_FILES.includes(p.slice(1))) return sendFile(res, path.join(configDir, p.slice(1)));
       if (method === 'GET' && p.startsWith('/icons/')) {
         const full = safeJoin(path.join(configDir, 'icons'), p.slice('/icons/'.length));
         return full ? sendFile(res, full, { cache: 'public, max-age=86400' }) : send(res, 404, { error: 'not found' });

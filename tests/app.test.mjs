@@ -681,3 +681,15 @@ test('type: icon options reach the widget as URLs, resolved like service icons',
     await t.close();
   }
 });
+
+test('homepage\'s widget names work as aliases: type customapi is the custom-api widget', async () => {
+  const t = await startApp({ 'services.yaml': '- G:\n    - A:\n        widget: { type: customapi, url: "http://a.lan/", mappings: [{ field: x }] }\n' });
+  try {
+    const layout = await (await t.get('/api/layout')).json();
+    assert.equal(layout.groups[0].services[0].widgets[0].type, 'custom-api');
+    assert.equal(layout.groups[0].services[0].widgets[0].known, true);
+    assert.ok(layout.widgetTypes['custom-api']);
+  } finally {
+    await t.close();
+  }
+});

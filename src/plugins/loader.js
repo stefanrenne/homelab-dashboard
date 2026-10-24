@@ -15,6 +15,9 @@ export const SUPPORTED_API_VERSIONS = [1];
 export const DEFAULT_REFRESH_MS = 30_000;
 export const ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,62}$/;
 
+// Other names a widget answers to, e.g. homepage's `customapi` or `unifi_console`.
+const ALIAS_PATTERN = /^[a-z0-9][a-z0-9_-]*$/;
+
 export function readManifest(dir) {
   const file = path.join(dir, 'widget.yaml');
   let manifest;
@@ -30,6 +33,9 @@ export function readManifest(dir) {
   if (typeof manifest.version !== 'string') problems.push('version: required (a string like "1.0.0")');
   if (!Number.isInteger(manifest.apiVersion)) problems.push('apiVersion: required (an integer)');
   problems.push(...checkSchema(manifest.options));
+  if (manifest.aliases !== undefined && (!Array.isArray(manifest.aliases) || manifest.aliases.some((a) => !ALIAS_PATTERN.test(String(a))))) {
+    problems.push('aliases: a list of other names, lowercase letters, digits, dashes and underscores');
+  }
   if (manifest.defaultFields !== undefined && (!Array.isArray(manifest.defaultFields) || manifest.defaultFields.some((f) => typeof f !== 'string'))) {
     problems.push('defaultFields: a list of block keys');
   }
@@ -104,6 +110,8 @@ export function widgetDirs(root) {
  * Builds the registry from built-in widgets and external packages. The first widget with
  * an id wins, so an external package can never replace a built-in one. A package with
  * `yields` (a default plugin) quietly gives way to a widget id that is already there.
+ * A widget's `aliases` are added after every id, where they are still free, pointing to the
+ * same widget (its `id` stays the real one).
  * Returns { widgets: Map<id, widget>, errors: [{ source, message }] }.
  */
 export async function loadRegistry({ builtinDir, external = [] }) {
@@ -124,6 +132,12 @@ export async function loadRegistry({ builtinDir, external = [] }) {
       widgets.set(widget.id, widget);
     } catch (err) {
       errors.push({ source, message: err.message });
+    }
+  }
+  for (const widget of [...widgets.values()]) {
+    for (const alias of widget.manifest.aliases ?? []) {
+      if (!widgets.has(alias)) widgets.set(alias, widget);
+      else if (widgets.get(alias) !== widget) errors.push({ source: widget.source, message: `alias "${alias}" of "${widget.id}" is already used by ${widgets.get(alias).source}` });
     }
   }
   return { widgets, errors };

@@ -148,3 +148,22 @@ test('result: row icons are play or pause', () => {
   assert.doesNotThrow(() => checkData({ rows: [{ label: 'x', icon: 'play' }, { label: 'y', icon: 'pause' }] }));
   assert.throws(() => checkData({ rows: [{ label: 'x', icon: 'rocket' }] }), /icon must be one of play, pause/);
 });
+
+test('registry: aliases point to the same widget, after every id, and never take one', async () => {
+  const { loadRegistry } = await import('../src/plugins/loader.js');
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { tmpDir } = await import('./helpers.mjs');
+  const root = tmpDir('hd-alias-');
+  const make = (id, aliases) => {
+    fs.mkdirSync(path.join(root, id));
+    fs.writeFileSync(path.join(root, id, 'widget.yaml'), `id: ${id}\nname: ${id}\nversion: 1.0.0\napiVersion: 1\naliases: ${JSON.stringify(aliases)}\noptions: {}\n`);
+    return { dir: path.join(root, id), source: `path:${id}` };
+  };
+  const { widgets, errors } = await loadRegistry({ builtinDir: path.resolve('widgets'), external: [make('unifi', ['unifi_console', 'ping']), make('other', [])] });
+  assert.equal(widgets.get('unifi_console'), widgets.get('unifi'));
+  assert.equal(widgets.get('unifi_console').id, 'unifi');
+  assert.equal(widgets.get('customapi').id, 'custom-api', 'the built-in alias');
+  assert.equal(widgets.get('ping').source, 'builtin', 'an alias never takes an id');
+  assert.ok(errors.some((e) => /alias "ping" of "unifi" is already used by builtin/.test(e.message)));
+});

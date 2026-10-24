@@ -66,8 +66,9 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
   const warnings = [...config.warnings, ...extraWarnings];
   const usedTypes = new Set();
 
-  const addInstance = (id, type, rawOptions, where) => {
-    const widget = registry.get(type);
+  const addInstance = (id, requested, rawOptions, where) => {
+    const widget = registry.get(requested);
+    const type = widget?.id ?? requested; // an alias (homepage's customapi) becomes the widget's id
     usedTypes.add(type);
     if (!widget) {
       errors.push({ ...where, message: `unknown widget type "${type}"` });

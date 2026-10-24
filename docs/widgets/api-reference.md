@@ -33,6 +33,7 @@ without `client.js` is rendered by the dashboard from `blocks`.
 | `description` | no | One line, for docs and catalogues. |
 | `refresh` | no | Cache time of a result: `500ms`, `10s`, `5m`, `1h` or seconds. Default `30s`. The browser polls at this rate (minimum 2 s). |
 | `options` | no | Map of option name to schema (below). |
+| `aliases` | no | Other names the widget answers to in `type:`, e.g. homepage's (`[customapi]`). Added after every real id, only where still free; the widget's `id` stays the one the page uses. |
 | `defaultFields` | no | Block keys shown when the entry has no `fields`, e.g. `[cpu, memoryPercent]`. Without it every block shows. |
 
 ### Option schema
@@ -183,3 +184,4 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 | 1 | next | `provider: <name>` in an entry fills options from `settings.yaml` `providers`. Widgets need no change. |
 | 1 | next | `client.js` gets `instanceId`; `GET api/suggest` for search suggestions. |
 | 1 | next | Option type `icon`; `string` options accept numbers and booleans. |
+| 1 | next | `aliases` in widget.yaml. |

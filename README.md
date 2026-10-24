@@ -74,6 +74,8 @@ release workflow, and read [docs/widgets/authoring.md](docs/widgets/authoring.md
 
 ## Documentation
 
+Also as a website: **[stefanrenne.github.io/homelab-dashboard](https://stefanrenne.github.io/homelab-dashboard/)**.
+
 | | |
 |---|---|
 | [Configuration](docs/configuration.md) | Every YAML file and key, variables, icons |

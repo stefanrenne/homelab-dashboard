@@ -20,6 +20,15 @@ CI (`.github/workflows/ci.yml`) does the work; a release is a tag.
 
 A change to the widget API is a release note of its own: say which `apiVersion` it belongs to.
 
+## Documentation site
+
+`.github/workflows/pages.yml` publishes `docs/` and the README as
+[stefanrenne.github.io/homelab-dashboard](https://stefanrenne.github.io/homelab-dashboard/) on
+every push to `main` that touches them. Jekyll builds it with the just-the-docs theme; the
+Markdown stays plain (no front matter), titles and the menu order are in `docs/_config.yml`.
+`scripts/pages.sh` stages the site: it adds the README as home page, points links outside
+`docs/` at GitHub, and wraps each page in `{% raw %}` so `{{HD_VAR_*}}` examples stay literal.
+
 ## Dependabot
 
 `.github/dependabot.yml` opens grouped weekly PRs for GitHub Actions, npm and the Docker base

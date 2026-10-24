@@ -1,0 +1,40 @@
+# GitHub Pages site for these docs: https://stefanrenne.github.io/homelab-dashboard/
+# Built by .github/workflows/pages.yml after scripts/pages.sh staged docs/ and the README.
+# Titles and the menu order live here, so the Markdown files stay clean on GitHub.
+title: Homelab Dashboard
+description: A self-hosted start page for your homelab, configured in YAML, with widgets anyone can publish.
+remote_theme: just-the-docs/just-the-docs@v0.10.1
+plugins:
+  - jekyll-remote-theme
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: false
+search_enabled: true
+heading_anchors: true
+aux_links:
+  GitHub: https://github.com/stefanrenne/homelab-dashboard
+  Widget collection: https://github.com/stefanrenne/homelab-dashboard-widgets
+  Widget example: https://github.com/stefanrenne/homelab-dashboard-widget-example
+aux_links_new_tab: true
+gh_edit_link: true
+gh_edit_link_text: Edit this page on GitHub
+gh_edit_repository: https://github.com/stefanrenne/homelab-dashboard
+gh_edit_branch: main
+gh_edit_source: docs
+gh_edit_view_mode: edit
+exclude:
+  - _config.yml
+
+defaults:
+  - { scope: { path: index.md }, values: { title: Home, nav_order: 1, permalink: / } }
+  - { scope: { path: configuration.md }, values: { title: Configuration, nav_order: 2 } }
+  - { scope: { path: discovery.md }, values: { title: Discovery, nav_order: 3 } }
+  - { scope: { path: widgets/README.md }, values: { title: Widgets, nav_order: 4, has_children: true, permalink: /widgets/ } }
+  - { scope: { path: widgets/authoring.md }, values: { title: Writing a widget, parent: Widgets, nav_order: 1 } }
+  - { scope: { path: widgets/api-reference.md }, values: { title: API reference, parent: Widgets, nav_order: 2 } }
+  - { scope: { path: widgets/security.md }, values: { title: Security, parent: Widgets, nav_order: 3 } }
+  - { scope: { path: architecture.md }, values: { title: Architecture, nav_order: 5 } }
+  - { scope: { path: development.md }, values: { title: Development, nav_order: 6 } }
+  - { scope: { path: publishing.md }, values: { title: Publishing, nav_order: 7 } }
+  - { scope: { path: decisions.md }, values: { title: Decisions, nav_order: 8 } }

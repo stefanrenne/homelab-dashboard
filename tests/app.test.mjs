@@ -378,3 +378,17 @@ test('watchConfig: YAML in subfolders reloads (includes), plugins/ does not', as
   w.close();
   assert.ok(calls >= 1);
 });
+
+test('the page carries description and favicon from settings.yaml', async () => {
+  const t = await startApp({ 'settings.yaml': 'title: My lab\ndescription: Start page of the lab\nfavicon: /icons/lab.svg\n' });
+  try {
+    const res = await t.get('/');
+    const html = await res.text();
+    assert.equal(res.headers.get('content-type'), 'text/html; charset=utf-8');
+    assert.match(html, /<title>My lab<\/title>/);
+    assert.match(html, /<meta name="description" content="Start page of the lab">/);
+    assert.match(html, /<link rel="icon" href="\/icons\/lab\.svg">/);
+  } finally {
+    await t.close();
+  }
+});

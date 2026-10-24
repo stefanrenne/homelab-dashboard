@@ -117,6 +117,13 @@ export function normalizeSettings(raw, ctx) {
     settings.headerStyle = 'boxed';
   }
   settings.showTitle = settings.showTitle !== false;
+  for (const key of ['description', 'favicon']) {
+    if (settings[key] === undefined || settings[key] === null) delete settings[key];
+    else if (typeof settings[key] !== 'string') {
+      ctx.warn(file, key, 'expected text, ignored');
+      delete settings[key];
+    } else settings[key] = settings[key].trim();
+  }
   if (!isPlainObject(settings.layout)) {
     ctx.error(file, 'layout', 'expected a map of group name to layout');
     settings.layout = {};

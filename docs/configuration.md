@@ -83,6 +83,8 @@ nothing by itself. `!include` is this dashboard's own; homepage does not read it
 
 ```yaml
 title: Homelab
+description: The start page of my homelab   # meta description, for link previews and search engines
+favicon: /icons/lab.svg   # a URL, a dashboard-icons name (proxmox.svg) or a file in config/icons
 language: en        # en, nl, fr, de, es
 theme: auto         # auto, dark, light
 color: slate        # a Tailwind colour: slate, gray, zinc, neutral, stone, red, orange, amber, yellow, lime,

@@ -4,6 +4,10 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+- `description` and `favicon` in settings.yaml, as in homepage: the meta description and the
+  browser tab icon, written into the page itself.
+
 ## [0.4.0] - 2026-10-24
 
 ### Added

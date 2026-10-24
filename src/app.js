@@ -174,7 +174,10 @@ export async function createApp({
   }
 
   await reload();
-  const watcher = watch ? watchConfig(configDir, () => reload(), { log }) : null;
+  // HD_WATCH_POLL: seconds between checks for changes, for network file systems
+  const pollSeconds = Number(env.HD_WATCH_POLL);
+  if (env.HD_WATCH_POLL !== undefined && !(pollSeconds > 0)) log.warn(`HD_WATCH_POLL: "${env.HD_WATCH_POLL}" is not a number of seconds; watching as usual`);
+  const watcher = watch ? watchConfig(configDir, () => reload(), { log, pollMs: pollSeconds > 0 ? Math.max(1, pollSeconds) * 1000 : 0 }) : null;
   const heartbeat = setInterval(() => {
     for (const res of sseClients) res.write(': ping\n\n');
   }, 25_000).unref();

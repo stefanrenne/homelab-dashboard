@@ -2,6 +2,8 @@
 
 All configuration lives in one folder (`/config` in the container, `--config` or `HD_CONFIG_DIR`
 otherwise). Every file is optional. The page reloads by itself when a `.yaml` file changes.
+On a network share (NFS, SMB) changes made on another machine are not noticed; set
+`HD_WATCH_POLL` to a number of seconds to check the files that often instead.
 Problems are shown at the top of the page with the file and a path into it. A broken entry is
 skipped and the rest keeps working.
 

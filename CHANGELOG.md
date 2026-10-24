@@ -87,6 +87,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Kubernetes pod status per service: `app`, `namespace` and `podSelector` (and `external`), as in
   homepage, with the pods' state, CPU and memory on a click; discovered Ingresses and routes get
   it too. Built-in `kubernetes-pods` widget.
+- `HD_WATCH_POLL=<seconds>`: check the config files for changes that often, for a config folder on
+  a network share. When the folder cannot be watched at all, it is checked every 5 seconds.
 - `HD_ALLOWED_HOSTS` (and homepage's `HOMEPAGE_ALLOWED_HOSTS`): only the listed host names get
   an answer, against DNS rebinding. Off until set.
 - Built-in `iframe` widget, as in homepage: another page in a frame on a card. Only the origins

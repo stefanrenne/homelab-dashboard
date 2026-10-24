@@ -453,6 +453,27 @@ test('reload picks up edited YAML and tells browsers through /api/events', async
   }
 });
 
+test('watchConfig with pollMs: compares size and time, YAML only, plugins/ left out', async () => {
+  const dir = tmpDir('hd-poll-');
+  fs.writeFileSync(path.join(dir, 'services.yaml'), 'a: 1\n');
+  fs.mkdirSync(path.join(dir, 'plugins'));
+  let calls = 0;
+  const w = watchConfig(dir, () => calls++, { pollMs: 25, log: silentLog });
+  try {
+    await new Promise((r) => setTimeout(r, 60));
+    assert.equal(calls, 0);
+    fs.writeFileSync(path.join(dir, 'notes.txt'), 'x');
+    fs.writeFileSync(path.join(dir, 'plugins', 'plugins.lock.yaml'), 'x: 1\n');
+    await new Promise((r) => setTimeout(r, 60));
+    assert.equal(calls, 0, 'not YAML, or under plugins/');
+    fs.writeFileSync(path.join(dir, 'services.yaml'), 'a: 12\n');
+    await new Promise((r) => setTimeout(r, 80));
+    assert.equal(calls, 1);
+  } finally {
+    w.close();
+  }
+});
+
 test('watchConfig reacts to YAML changes only', async () => {
   const dir = tmpDir();
   let calls = 0;

@@ -4,6 +4,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-24
+
 ### Added
 - The [widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets) is always
   installed at its newest release; sources under `plugins:` extend it. Listing that repository
@@ -12,10 +14,15 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   `docker.yaml` needed (a proxy is still the safer choice).
 - Documentation site: [stefanrenne.github.io/homelab-dashboard](https://stefanrenne.github.io/homelab-dashboard/),
   with a page per widget (built-in and the widgets collection): setup, fields, options and an example.
+- A Docker Compose example with a healthcheck in the quick start.
+- [homelab-dashboard-widget-example](https://github.com/stefanrenne/homelab-dashboard-widget-example):
+  a complete widget repository (tests, CI releases, Dependabot) to start your own widget from.
 
 ### Changed
 - The image starts as root to set up the Docker socket's group, then runs the dashboard as
   `node`. With Kubernetes `runAsNonRoot: true`, also set `runAsUser: 1000`.
+- `examples/widget-template`: block keys, a clear error for a missing number, labels in all
+  five languages.
 
 ## [0.2.0] - 2026-10-24
 

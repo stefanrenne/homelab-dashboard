@@ -117,6 +117,12 @@ widget declares an option with the same name:
 | `provider` | Fills options the entry leaves out from `settings.yaml` `providers.<name>`: a map fills the options it names, a text the first unset `secret: true` option. Every provider value is treated as a secret. A widget that declares its own `provider` option keeps it. |
 | `highlight` | Colours blocks by their value, as in homepage: block `key` (or `<type>.<key>`) → `numeric` / `string` rules with a `level` (`good`, `warn`, `danger`). The dashboard adds the result to the block as `highlight: { level, valueOnly }`; `client.js` sees it in `data.blocks` and may use or ignore it. See [Configuration](../configuration.md). |
 
+**References to another service** (homepage's calendar integrations): an object anywhere in a
+widget's options (up to three levels deep) with `service_group` and `service_name` gets that
+service's widget options (with `type`, the widget of that type) under its own keys, on the
+server. Declare the option `secret: true` (or leave it undeclared): the merged options can hold
+keys. An unknown service is a config message.
+
 A thrown error (or a timeout) shows its message on the card. Secret values in it are replaced by `***`.
 
 ## client.js
@@ -193,4 +199,5 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 | 1 | next | `aliases` in widget.yaml. |
 | 1 | next | `ctx.fetch(url, { insecure: true })` for self-signed certificates. |
 | 1 | next | `ctx.fetch(url, { tls: { ca, cert, key } })` for a CA and client certificate. |
+| 1 | next | Options with `service_group` and `service_name` get the referenced widget's options. |
 | 1 | next | `params` in widget.yaml, the `hd-widget-params` page event and `ctx.params`. |

@@ -71,6 +71,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   homepage, for discovery and `container:` status. Widget API: `ctx.fetch(url, { tls: { ca,
   cert, key } })`.
 - `weight` for services in services.yaml, as in homepage.
+- Widget options can point to another service with `service_group` and `service_name`, as
+  homepage's calendar integrations do; that service's widget options fill them in, on the server.
 - Docker Swarm: `swarm: true` for a server in docker.yaml, as in homepage. Discovery lists the
   services (labels from `deploy.labels`), and `container:` shows a service's running tasks
   against its replicas.

@@ -68,11 +68,41 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
   const usedTypes = new Set();
 
   /**
+   * homepage's references to another service's widget (the calendar's integrations):
+   * an object with `service_group` and `service_name` gets that widget's options (url, key, ...)
+   * under its own keys, on the server only. With a `type`, the service's widget of that type.
+   */
+  const servicesByName = new Map();
+  const collect = (list) => {
+    for (const g of list) {
+      for (const s of g.services ?? []) servicesByName.set(`${g.name}\u0000${s.name}`, s);
+      collect(g.groups ?? []);
+    }
+  };
+  collect(groups);
+  function withReferences(value, where, depth = 0) {
+    if (depth > 3) return value;
+    if (Array.isArray(value)) return value.map((v) => withReferences(v, where, depth + 1));
+    if (!isPlainObject(value)) return value;
+    const out = Object.fromEntries(Object.entries(value).map(([k, v]) => [k, withReferences(v, where, depth + 1)]));
+    if (out.service_group === undefined || out.service_name === undefined) return out;
+    const service = servicesByName.get(`${out.service_group}\u0000${out.service_name}`);
+    const id = (t) => registry.get(t)?.id ?? t;
+    const widget = service?.widgets.find((w) => !out.type || id(w.type) === id(out.type));
+    if (!widget) {
+      errors.push({ ...where, message: `no ${out.type ? `${out.type} widget on ` : ''}service "${out.service_name}" in group "${out.service_group}"` });
+      return out;
+    }
+    return { ...widget.options, ...out };
+  }
+
+  /**
    * Widgets that take their connection from a config file, as in homepage: proxmoxvm from
    * proxmox.yaml (by node), kubernetes from the kubeconfig of kubernetes.yaml `mode: default`.
    * Options in the entry win; every filled-in value is a secret option or the url.
    */
-  function withConnection(type, options, where) {
+  function withConnection(type, rawOptions, where) {
+    const options = withReferences(rawOptions, where);
     if (options.url) return options;
     if (type === 'proxmoxvm' && options.node) {
       const found = config.proxmox?.[String(options.node)] ?? config.proxmox?.[''];

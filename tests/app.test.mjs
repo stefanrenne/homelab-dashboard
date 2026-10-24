@@ -6,7 +6,7 @@ import http from 'node:http';
 import { createApp } from '../src/app.js';
 import { watchConfig } from '../src/config/watch.js';
 import { execFileSync } from 'node:child_process';
-import { tmpDir, serve, silentLog } from './helpers.mjs';
+import { tmpDir, serve, silentLog, writeWidget } from './helpers.mjs';
 import { readLock } from '../src/plugins/installer.js';
 
 const SECRET = 'super-secret-api-key-123';
@@ -191,6 +191,38 @@ test('app, namespace and podSelector: a pods status label, as in homepage; exter
     assert.deepEqual(a.statuses.map((s) => [s.kind, s.type, s.options.app, s.options.namespace]), [['pods', 'kubernetes-pods', 'jellyfin', 'media']]);
     assert.equal(b.statuses[0].options.podSelector, 'app.kubernetes.io/instance in (a, b)');
     assert.deepEqual(c.statuses, []);
+  } finally {
+    await t.close();
+  }
+});
+
+test('service_group and service_name pull another service\'s widget options in, on the server only', async () => {
+  const dir = tmpDir('hd-refs-');
+  writeWidget(dir, { id: 'agenda', name: 'Agenda', version: '1.0.0', apiVersion: 1, options: { integrations: { type: 'list', secret: true } } },
+    { 'server.js': 'export default { fetch: (ctx) => ({ blocks: [{ label: "n", value: JSON.stringify(ctx.options.integrations) }] }) };' });
+  const t = await startApp({
+    'settings.yaml': `plugins:\n  - path: ${dir}\n`,
+    'services.yaml': `
+- Media:
+    - Sonarr:
+        widget: { type: custom-api, url: "http://sonarr.lan", headers: { x-api-key: "{{HD_VAR_SONARR_KEY}}" }, mappings: [] }
+- Home:
+    - Calendar:
+        widget:
+          type: agenda
+          integrations:
+            - { type: custom-api, service_group: Media, service_name: Sonarr, color: teal }
+            - { service_group: Media, service_name: Nope }
+`,
+  }, { HD_VAR_SONARR_KEY: 'sonarr-secret-key' });
+  try {
+    const raw = await t.get('/api/layout').then((r) => r.text());
+    assert.equal(raw.includes('sonarr-secret-key'), false);
+    const cal = t.app.layout.groups[1].services[0].widgets[0];
+    const data = await t.json(`/api/widgets/${cal.instanceId}`);
+    const [first] = JSON.parse(data.data.blocks[0].value);
+    assert.deepEqual([first.url, first.headers['x-api-key'], first.color, first.service_name], ['http://sonarr.lan', 'sonarr-secret-key', 'teal', 'Sonarr']);
+    assert.ok(t.app.layout.messages.errors.some((e) => /no service "Nope" in group "Media"/.test(e.message)));
   } finally {
     await t.close();
   }

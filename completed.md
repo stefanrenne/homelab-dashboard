@@ -38,3 +38,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 2: OpenWeatherMap widget (not checked against the live API: needs a key).
 - 2026-10-24: homepage parity, phase 2: stocks widget (Finnhub; not checked against the live API: needs a key).
 - 2026-10-24: homepage parity, phase 2: Kubernetes widget (tested against a fake API, not a live cluster).
+- 2026-10-24: homepage parity, phase 2: glances, longhorn and unifi (also unifi_console) in the widgets collection. Phase 2 done but the weather's browser location.

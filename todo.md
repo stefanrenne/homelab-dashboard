@@ -16,40 +16,8 @@ Phases 1 to 3 (settings and layout, info widgets, integrations) are done; see `c
 Each with a fixture, a test and a README (its CLAUDE.md). homepage's field names, so `fields:`
 carries over.
 
-Batch 2, the rest (112):
+Batch 2, the rest (79):
 
-- [ ] APC UPS Monitoring
-- [ ] Arcane
-- [ ] ArgoCD
-- [ ] Atsumeru
-- [ ] Autobrr
-- [ ] Azure DevOps
-- [ ] Backrest
-- [ ] Booklore
-- [ ] BookOrbit
-- [ ] Beszel
-- [ ] Caddy
-- [ ] Calibre-web
-- [ ] Changedetection.io
-- [ ] Channels DVR Server
-- [ ] Checkmk
-- [ ] Cloudflare Tunnels
-- [ ] Coin Market Cap
-- [ ] Crowdsec
-- [ ] DeveLanCacheUI
-- [ ] Dispatcharr
-- [ ] Dockhand
-- [ ] Synology Download Station
-- [ ] Duplicati
-- [ ] ESPHome
-- [ ] EVCC
-- [ ] Feed
-- [ ] Filebrowser
-- [ ] Fileflows
-- [ ] Firefly III
-- [ ] Flood
-- [ ] FreshRSS
-- [ ] FRITZ!Box
 - [ ] GameDig
 - [ ] Gatus
 - [ ] Ghostfolio
@@ -111,7 +79,6 @@ Batch 2, the rest (112):
 - [ ] SparkyFitness
 - [ ] Spoolman
 - [ ] Sportarr
-- [ ] Stocks
 - [ ] Suwayomi
 - [ ] SWAG Dashboard
 - [ ] Syncthing Relay Server

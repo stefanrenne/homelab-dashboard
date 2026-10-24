@@ -61,6 +61,7 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - OpenWeatherMap weather widget, with `apiKey` or `provider: openweathermap`, as in homepage.
 - Stocks widget: price and day change of up to eight symbols from Finnhub, with ▲/▼ and
   optional colour, as in homepage.
+- Kubernetes widget: CPU and memory of the cluster and per node (metrics-server), as in homepage.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

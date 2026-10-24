@@ -1,0 +1,138 @@
+{
+  "en": {
+    "cpu": "CPU",
+    "memory": "Memory",
+    "nodes": "Nodes",
+    "ready": "Ready",
+    "notReady": "not ready",
+    "cores": "cores"
+  },
+  "nl": {
+    "cpu": "CPU",
+    "memory": "Geheugen",
+    "nodes": "Nodes",
+    "ready": "Gereed",
+    "notReady": "niet gereed",
+    "cores": "cores"
+  },
+  "fr": {
+    "cpu": "CPU",
+    "memory": "Mémoire",
+    "nodes": "Nœuds",
+    "ready": "Prêts",
+    "notReady": "pas prêt",
+    "cores": "cœurs"
+  },
+  "de": {
+    "cpu": "CPU",
+    "memory": "Speicher",
+    "nodes": "Knoten",
+    "ready": "Bereit",
+    "notReady": "nicht bereit",
+    "cores": "Kerne"
+  },
+  "es": {
+    "cpu": "CPU",
+    "memory": "Memoria",
+    "nodes": "Nodos",
+    "ready": "Listos",
+    "notReady": "no listo",
+    "cores": "núcleos"
+  },
+  "ca": {
+    "cpu": "CPU",
+    "memory": "Memòria",
+    "nodes": "Nodes",
+    "ready": "Llestos",
+    "notReady": "no llest",
+    "cores": "nuclis"
+  },
+  "he": {
+    "cpu": "מעבד",
+    "memory": "זיכרון",
+    "nodes": "צמתים",
+    "ready": "מוכנים",
+    "notReady": "לא מוכן",
+    "cores": "ליבות"
+  },
+  "hr": {
+    "cpu": "CPU",
+    "memory": "Memorija",
+    "nodes": "Čvorovi",
+    "ready": "Spremni",
+    "notReady": "nije spreman",
+    "cores": "jezgri"
+  },
+  "hu": {
+    "cpu": "CPU",
+    "memory": "Memória",
+    "nodes": "Csomópontok",
+    "ready": "Kész",
+    "notReady": "nem kész",
+    "cores": "mag"
+  },
+  "it": {
+    "cpu": "CPU",
+    "memory": "Memoria",
+    "nodes": "Nodi",
+    "ready": "Pronti",
+    "notReady": "non pronto",
+    "cores": "core"
+  },
+  "nb-NO": {
+    "cpu": "CPU",
+    "memory": "Minne",
+    "nodes": "Noder",
+    "ready": "Klare",
+    "notReady": "ikke klar",
+    "cores": "kjerner"
+  },
+  "pt": {
+    "cpu": "CPU",
+    "memory": "Memória",
+    "nodes": "Nós",
+    "ready": "Prontos",
+    "notReady": "não pronto",
+    "cores": "núcleos"
+  },
+  "ru": {
+    "cpu": "ЦП",
+    "memory": "Память",
+    "nodes": "Узлы",
+    "ready": "Готовы",
+    "notReady": "не готов",
+    "cores": "ядер"
+  },
+  "sv": {
+    "cpu": "CPU",
+    "memory": "Minne",
+    "nodes": "Noder",
+    "ready": "Redo",
+    "notReady": "inte redo",
+    "cores": "kärnor"
+  },
+  "vi": {
+    "cpu": "CPU",
+    "memory": "Bộ nhớ",
+    "nodes": "Nút",
+    "ready": "Sẵn sàng",
+    "notReady": "chưa sẵn sàng",
+    "cores": "lõi"
+  },
+  "zh-Hans": {
+    "cpu": "CPU",
+    "memory": "内存",
+    "nodes": "节点",
+    "ready": "就绪",
+    "notReady": "未就绪",
+    "cores": "核"
+  },
+  "zh-Hant": {
+    "cpu": "CPU",
+    "memory": "記憶體",
+    "nodes": "節點",
+    "ready": "就緒",
+    "notReady": "未就緒",
+    "cores": "核心"
+  }
+}

@@ -10,6 +10,7 @@ import { loadRegistry } from '../src/plugins/loader.js';
 import httpStatus from '../widgets/http-status/server.js';
 import customApi, { pick } from '../widgets/custom-api/server.js';
 import docker, { cpuPercent } from '../widgets/docker/server.js';
+import kubernetes, { PATHS as K8S, cores, bytes as k8sBytes } from '../widgets/kubernetes/server.js';
 import stocks, { API as FINNHUB } from '../widgets/stocks/server.js';
 import openweathermap, { API as OWM, condition as owmCondition } from '../widgets/openweathermap/server.js';
 import openmeteo, { API as OPEN_METEO, condition as wmoCondition } from '../widgets/openmeteo/server.js';
@@ -448,4 +449,65 @@ test('stocks client: price, arrow and change; colour can be turned off', async (
   assert.equal(el.shadowRoot.querySelector('ul').className, 'color');
   el.data = { color: false, quotes: [] };
   assert.equal(el.shadowRoot.querySelector('ul').className, '');
+});
+
+
+test('kubernetes: quantities, cluster totals and per node from nodes and metrics, without metrics-server too', async () => {
+  assert.equal(cores('250m'), 0.25);
+  assert.ok(Math.abs(cores('123456789n') - 0.123456789) < 1e-12);
+  assert.equal(cores('4'), 4);
+  assert.equal(k8sBytes('16Gi'), 16 * 1024 ** 3);
+  assert.equal(k8sBytes('2048Ki'), 2 * 1024 ** 2);
+  assert.equal(k8sBytes('1G'), 1e9);
+  const sa = tmpDir('hd-sa-');
+  fs.writeFileSync(path.join(sa, 'token'), 'tok3n\n');
+  let metrics = true;
+  const auth = [];
+  const srv = await serve((req, res) => {
+    auth.push(req.headers.authorization);
+    if (req.url === '/api/v1/nodes') {
+      return res.end(JSON.stringify({ items: [
+        { metadata: { name: 'node-a' }, status: { allocatable: { cpu: '4', memory: '8Gi' }, conditions: [{ type: 'Ready', status: 'True' }] } },
+        { metadata: { name: 'node-b' }, status: { allocatable: { cpu: '2', memory: '4Gi' }, conditions: [{ type: 'Ready', status: 'False' }] } },
+      ] }));
+    }
+    if (!metrics) { res.statusCode = 404; return res.end(); }
+    res.end(JSON.stringify({ items: [
+      { metadata: { name: 'node-a' }, usage: { cpu: '1000m', memory: '2Gi' } },
+      { metadata: { name: 'node-b' }, usage: { cpu: '500000000n', memory: '1Gi' } },
+    ] }));
+  });
+  const saved = { ...K8S };
+  Object.assign(K8S, { sa, api: srv.url });
+  try {
+    const out = await kubernetes.fetch(fakeCtx({}));
+    assert.equal(auth[0], 'Bearer tok3n');
+    assert.deepEqual(out.blocks, [
+      { key: 'cpu', label: 'cpu', value: 25, unit: '%' }, { key: 'memory', label: 'memory', value: 25, unit: '%' },
+      { key: 'nodes', label: 'nodes', value: 2 }, { key: 'ready', label: 'ready', value: 1 },
+    ]);
+    assert.deepEqual(out.nodes.map((n) => [n.name, n.ready, n.cpu.used, n.memory.total]), [['node-a', true, 1, 8 * 1024 ** 3], ['node-b', false, 0.5, 4 * 1024 ** 3]]);
+    metrics = false;
+    const bare = await kubernetes.fetch(fakeCtx({ nodes: { show: false } }));
+    assert.equal(bare.blocks[0].value, null, 'no metrics-server: no usage, still capacity');
+    assert.equal(bare.cluster.cpu.total, 6);
+    assert.deepEqual(bare.nodes, []);
+  } finally {
+    Object.assign(K8S, saved);
+    await srv.close();
+  }
+});
+
+test('kubernetes client: cluster meters and a line per node, a node that is not ready marked', async () => {
+  const { el } = await renderClient('kubernetes', {});
+  el.t = (k) => ({ cpu: 'CPU', memory: 'Memory', cores: 'cores', notReady: 'not ready' })[k] ?? k;
+  el.data = {
+    cluster: { show: true, cpu: { used: 1.5, total: 6 }, memory: { used: 3e9, total: 12e9 }, showLabel: true, label: 'Cluster' },
+    nodeOptions: { show: true, showLabel: true },
+    nodes: [{ name: 'node-a', ready: true, cpu: { used: 1, total: 4 }, memory: { used: 2, total: 8 } }, { name: 'node-b', ready: false, cpu: { used: null, total: 2 }, memory: { used: null, total: 4 } }],
+  };
+  const root = el.shadowRoot;
+  assert.equal(root.querySelector('.title').textContent, 'Cluster');
+  assert.deepEqual([...root.querySelectorAll('.meter')].map((m) => m.getAttribute('aria-label')), ['CPU: 25% (1.5 / 6 cores)', 'Memory: 25% (3 GB / 12 GB)']);
+  assert.deepEqual([...root.querySelectorAll('li')].map((li) => li.textContent), ['node-aCPU 25%Memory 25%', 'node-b ✕ not readyCPU –Memory –']);
 });

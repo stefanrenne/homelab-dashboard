@@ -408,6 +408,7 @@ collection's widgets under [Widget collection](https://stefanrenne.github.io/hom
 | `openmeteo` | `latitude`, `longitude` (required), `label`, `timezone`, `units` (`metric`/`imperial`), `cache` (minutes), `format` |
 | `openweathermap` | `latitude`, `longitude`, `apiKey` (secret; or `provider: openweathermap`), `label`, `units`, `cache`, `format` |
 | `stocks` | `watchlist` (up to 8 symbols), `apiKey` (secret; or `provider: finnhub`), `color`, `cache` |
+| `kubernetes` | `cluster` (`show`, `cpu`, `memory`, `showLabel`, `label`), `nodes` (`show`, `cpu`, `memory`, `showLabel`); needs metrics-server and RBAC on nodes |
 | `search` | `provider`, `url`, `target`, `filter` (default true: typing filters the services, Enter opens the only match) |
 | `resources` | `cpu`, `memory` (both off by default), `disk` (list of mount points), `label` |
 | `http-status` | `url` (required), `method` (`HEAD`/`GET`) |

@@ -22,7 +22,6 @@ Generic ones built in, service-specific ones in the widgets collection.
 
 - [ ] Weather without coordinates: the browser's location (homepage, needs HTTPS), passed to the server for that request
 - [ ] Glances (collection)
-- [ ] Kubernetes cluster and nodes (built in, uses the service account)
 - [ ] Longhorn (collection)
 - [ ] Unifi Controller (collection)
 

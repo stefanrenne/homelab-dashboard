@@ -2,6 +2,7 @@
 // labelled for homepage (`homepage.name` + `homepage.group`) work too, so an existing
 // setup carries over. Only GET calls on the Docker API (hard rule 9).
 
+import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
 import { serviceFromLabels } from './labels.js';
@@ -9,6 +10,15 @@ import { serviceFromLabels } from './labels.js';
 export const DEFAULT_SOCKET = '/var/run/docker.sock';
 export const LABEL_PREFIX = 'homelab.';
 export const HOMEPAGE_PREFIX = 'homepage.';
+
+/**
+ * With no servers in docker.yaml, a socket mounted at `socket` is used as the server `local`,
+ * so mounting /var/run/docker.sock is all it takes. `socket: null` turns this off.
+ */
+export function withMountedSocket(servers, socket = DEFAULT_SOCKET, exists = fs.existsSync) {
+  if (servers.length > 0 || !socket || !exists(socket)) return servers;
+  return [{ name: 'local', socket, discover: true, implicit: true }];
+}
 
 export function dockerGet(server, path, { timeoutMs = 5000 } = {}) {
   return new Promise((resolve, reject) => {

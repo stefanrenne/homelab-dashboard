@@ -16,7 +16,10 @@ choosing a Docker image. The dashboard limits the damage where it can:
 - `npm pack` runs with `--ignore-scripts`; nothing from a package runs during installation.
 - `git`, `npm` and `ping` get validated arguments without a shell (no `-`-prefixed refs or names).
 - A built-in widget id cannot be taken over by a plugin.
-- The container runs as an unprivileged user.
+- The dashboard, and so every widget, runs as the unprivileged `node` user. The entrypoint is
+  root only to give `node` a mounted Docker socket's group, before the dashboard starts.
+- A mounted Docker socket gives every widget the whole Docker API (`:ro` does not limit it).
+  Use a docker-socket-proxy with `CONTAINERS=1` when you install widgets you do not fully trust.
 
 Not (yet) done: running `server.js` in a separate worker with its own limits. See `todo.md`.
 

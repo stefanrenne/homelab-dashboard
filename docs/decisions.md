@@ -44,6 +44,13 @@ and every call has a timeout. Workers are on the to-do list for resource isolati
 The status dot and widgets then share one runtime, cache and error handling, and a third-party
 widget can serve as a status check by returning `status`.
 
+## A mounted Docker socket works without a proxy (2026-10-24)
+Mounting `/var/run/docker.sock` is what people try first, and it used to fail with EACCES
+because the image ran as `node`. The entrypoint now starts as root, adds `node` to the socket's
+group and drops to `node` (su-exec) before anything else runs; with no servers in docker.yaml
+the mounted socket is used as `local`. The docker-socket-proxy stays the recommendation: `:ro`
+does not limit the Docker API, and widget code runs in the same process.
+
 ## The widgets collection is always installed (2026-10-24)
 Radarr, Sonarr, Unraid and the rest should work without first finding and adding a plugin
 source. The collection stays a separate repository (its own releases, the same contract as any

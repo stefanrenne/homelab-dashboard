@@ -3,8 +3,9 @@
 FROM node:24-alpine
 
 # git: installs widget packages from git sources. iputils-ping: the ping widget
-# (busybox ping needs root; iputils' ping works for the unprivileged user).
-RUN apk add --no-cache git iputils-ping tini
+# (busybox ping needs root; iputils' ping works for the unprivileged user). su-exec: the
+# entrypoint drops from root to `node` after giving it the Docker socket's group.
+RUN apk add --no-cache git iputils-ping tini su-exec
 
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -22,12 +23,10 @@ ENV HD_VERSION=${VERSION} \
     PORT=3000 \
     HOST=0.0.0.0
 
-# Start with the example config when /config is empty.
-RUN mkdir -p /config && chown node:node /config \
- && printf '#!/bin/sh\nset -e\nif [ -z "$(ls -A /config 2>/dev/null)" ]; then cp -r /app/config.example/. /config/; fi\nexec node /app/src/server.js "$@"\n' > /usr/local/bin/start \
- && chmod +x /usr/local/bin/start
+# docker/start.sh: Docker socket group, then the dashboard as `node` (never as root).
+COPY docker/start.sh /usr/local/bin/start
+RUN mkdir -p /config && chown node:node /config && chmod +x /usr/local/bin/start
 
-USER node
 VOLUME /config
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \

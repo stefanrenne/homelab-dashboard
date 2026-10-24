@@ -10,6 +10,7 @@ import { loadRegistry } from './plugins/loader.js';
 import { syncPlugins, withDefaultPlugins, DEFAULT_PLUGINS } from './plugins/installer.js';
 import { WidgetRuntime } from './plugins/runtime.js';
 import { Discovery, mergeDiscovered } from './discovery/index.js';
+import { withMountedSocket, DEFAULT_SOCKET } from './discovery/docker.js';
 import { buildState } from './layout.js';
 import { describeError, scrub } from './plugins/runtime.js';
 
@@ -56,6 +57,7 @@ export async function createApp({
   discovery: discoveryOptions = {},
   timeoutMs,
   defaultPlugins = DEFAULT_PLUGINS,
+  dockerSocket = DEFAULT_SOCKET,
 } = {}) {
   const sseClients = new Set();
   const runtime = new WidgetRuntime({ registry: new Map(), log, timeoutMs });
@@ -85,6 +87,7 @@ export async function createApp({
   function reload({ update = false } = {}) {
     chain = chain.then(async () => {
       const config = loadConfig(configDir, { env });
+      config.docker = withMountedSocket(config.docker, dockerSocket);
       const entries = withDefaultPlugins(config.settings.plugins, defaultPlugins);
       const pluginResult = await syncPlugins({ configDir, entries, update, log });
       const { widgets, errors } = await loadRegistry({ builtinDir, external: pluginResult.installed });

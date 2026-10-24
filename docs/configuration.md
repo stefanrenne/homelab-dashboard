@@ -136,6 +136,9 @@ The homepage form (a one-item list) and a plain map (`GitHub: { href: ... }`) bo
 
 ## docker.yaml
 
+Without servers here, a socket mounted at `/var/run/docker.sock` is used as `local`
+(see [Discovery](discovery.md)).
+
 ```yaml
 local:
   socket: /var/run/docker.sock

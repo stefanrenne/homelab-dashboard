@@ -39,7 +39,7 @@ export class Discovery {
       try {
         found.push(...(await this.sources.docker(server)).map((s) => ({ ...s, origin: `docker:${server.name}` })));
       } catch (err) {
-        errors.push({ file: 'docker.yaml', path: server.name, message: `discovery: ${err.message}` });
+        errors.push({ file: 'docker.yaml', path: server.implicit ? `${server.name} (the mounted ${server.socket})` : server.name, message: `discovery: ${err.message}` });
       }
     }
     if (this.config.kubernetes.mode === 'cluster') {

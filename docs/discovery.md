@@ -7,7 +7,23 @@ a small "auto" badge. Sources are polled every `discovery.interval` (default 30 
 
 ## Docker
 
-List the server in `docker.yaml` (see configuration.md). Then label containers:
+Mount the Docker socket, or list a server in `docker.yaml` (see configuration.md):
+
+```yaml
+# compose.yaml, the simplest form
+services:
+  dashboard:
+    image: ghcr.io/stefanrenne/homelab-dashboard:latest
+    volumes:
+      - ./config:/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+```
+
+When `docker.yaml` lists no servers, a socket mounted at `/var/run/docker.sock` is used as the
+server `local`. The container starts as root only to give its `node` user the socket's group,
+then runs the dashboard as `node`; no `--group-add` needed.
+
+Then label containers:
 
 ```yaml
 labels:
@@ -31,17 +47,21 @@ or `ping` when those are set.
 `homepage.widget.*`, ...) are discovered as they are, and `{{HOMEPAGE_VAR_*}}` in their
 labels is filled in from the environment. `homelab.*` labels win when a container has both.
 
-**Access.** Only `GET /containers/json` and `GET /containers/<name>/json|stats` are used.
-Recommended: [docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy) with only
-`CONTAINERS=1`, and `host: docker-proxy` in docker.yaml. A directly mounted socket
-(`/var/run/docker.sock:/var/run/docker.sock:ro`) is usually `root:root 660`. The container runs
-as `node`, so add the socket's group: `--group-add $(stat -c %g /var/run/docker.sock)`.
-On Docker Desktop that group is `0`.
+**Access.** The dashboard only calls `GET /containers/json` and `GET /containers/<name>/json|stats`.
+But `:ro` on a socket does not make the Docker API read-only: whoever can reach the socket can
+start and remove containers, which amounts to root on the host. Third-party widgets run inside
+the dashboard process, so they could reach it too. The safer setup is a
+[docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy) with only
+`CONTAINERS=1`, and `host: docker-proxy` in docker.yaml (see `docker-compose.example.yml`).
+
+A container started with `--user` (or Kubernetes `runAsUser`) skips the group step; give it the
+socket's group yourself then: `--group-add $(stat -c %g /var/run/docker.sock)`.
 
 ## Kubernetes
 
 `kubernetes.yaml`: `mode: cluster`. The dashboard then uses its service account to list Ingresses
-in all namespaces. RBAC:
+in all namespaces. The image starts as root and drops to `node` itself; with
+`runAsNonRoot: true` in the pod's security context, also set `runAsUser: 1000`. RBAC:
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1

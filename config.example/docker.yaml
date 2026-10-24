@@ -1,6 +1,6 @@
 # Docker servers, for "container:" status and for auto-discovery of containers with
-# homelab.* labels (see docs/discovery.md). Mount the socket read-only, or better,
-# use a docker-socket-proxy.
+# homelab.* labels (see docs/discovery.md). With no servers listed here, a mounted
+# /var/run/docker.sock is used as "local" by itself. Safer: a docker-socket-proxy.
 #
 # local:
 #   socket: /var/run/docker.sock

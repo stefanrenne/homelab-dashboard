@@ -8,8 +8,14 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - The [widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets) is always
   installed at its newest release; sources under `plugins:` extend it. Listing that repository
   yourself (pinned, or with `only:`) replaces the default.
+- A mounted `/var/run/docker.sock` works by itself: no docker-socket-proxy, `--group-add` or
+  `docker.yaml` needed (a proxy is still the safer choice).
 - Documentation site: [stefanrenne.github.io/homelab-dashboard](https://stefanrenne.github.io/homelab-dashboard/),
   with a page per widget (built-in and the widgets collection): setup, fields, options and an example.
+
+### Changed
+- The image starts as root to set up the Docker socket's group, then runs the dashboard as
+  `node`. With Kubernetes `runAsNonRoot: true`, also set `runAsUser: 1000`.
 
 ## [0.2.0] - 2026-10-24
 

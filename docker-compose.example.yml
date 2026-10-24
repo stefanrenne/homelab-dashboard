@@ -1,4 +1,6 @@
 # Example: the dashboard with Docker discovery through a read-only socket proxy.
+# Simpler but less safe: leave out docker-proxy and mount the socket in the dashboard itself
+# (- /var/run/docker.sock:/var/run/docker.sock:ro); it is used without a docker.yaml.
 services:
   dashboard:
     image: ghcr.io/stefanrenne/homelab-dashboard:latest

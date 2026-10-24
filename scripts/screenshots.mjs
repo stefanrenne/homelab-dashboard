@@ -11,7 +11,7 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const out = root + 'docs/images/';
 const quiet = { info() {}, warn() {}, error() {} };
 
-const app = await createApp({ configDir: root + 'config.example', log: quiet, defaultPlugins: [] });
+const app = await createApp({ configDir: root + 'config.example', log: quiet, defaultPlugins: [], dockerSocket: null });
 const server = http.createServer(app.handler).listen(0, '127.0.0.1');
 await new Promise((r) => server.once('listening', r));
 const url = `http://127.0.0.1:${server.address().port}/`;

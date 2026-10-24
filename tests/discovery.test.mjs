@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs';
-import { servicesFromContainers, discoverDocker } from '../src/discovery/docker.js';
+import { servicesFromContainers, discoverDocker, withMountedSocket } from '../src/discovery/docker.js';
 import { servicesFromIngresses, k8sApiUrl } from '../src/discovery/kubernetes.js';
 import { Discovery, mergeDiscovered } from '../src/discovery/index.js';
 import { serviceFromLabels } from '../src/discovery/labels.js';
@@ -59,6 +59,16 @@ test('docker: discovery over a unix socket', async () => {
   } finally {
     await srv.close();
   }
+});
+
+test('docker: a mounted socket is the server "local" only when docker.yaml has none', () => {
+  const yes = () => true;
+  const no = () => false;
+  const nas = [{ name: 'nas', url: 'http://nas:2375', discover: true }];
+  assert.deepEqual(withMountedSocket([], '/var/run/docker.sock', yes), [{ name: 'local', socket: '/var/run/docker.sock', discover: true, implicit: true }]);
+  assert.deepEqual(withMountedSocket([], '/var/run/docker.sock', no), []);
+  assert.equal(withMountedSocket(nas, '/var/run/docker.sock', yes), nas);
+  assert.deepEqual(withMountedSocket([], null, yes), []);
 });
 
 test('kubernetes: enabled ingresses with href derived from rules and TLS', () => {

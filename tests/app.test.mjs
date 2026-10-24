@@ -17,7 +17,7 @@ async function startApp(files, env = {}) {
     fs.mkdirSync(path.dirname(path.join(configDir, name)), { recursive: true });
     fs.writeFileSync(path.join(configDir, name), text);
   }
-  const app = await createApp({ configDir, env, log: silentLog, defaultPlugins: [] });
+  const app = await createApp({ configDir, env, log: silentLog, defaultPlugins: [], dockerSocket: null });
   const server = http.createServer(app.handler);
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -151,6 +151,7 @@ test('secrets from discovered labels stay out of the layout', async () => {
     env: { HOMEPAGE_VAR_KEY: SECRET },
     log: silentLog,
     defaultPlugins: [],
+    dockerSocket: null,
     discovery: {
       docker: async () => [{ group: 'G', name: 'S', weight: 0,
         def: { href: 'http://s.lan', widget: { type: 'custom-api', url: 'http://s.lan/', mappings: [{ field: 'a' }], extra: '{{HOMEPAGE_VAR_KEY}}' } } }],
@@ -307,13 +308,13 @@ test('the default plugins are installed without settings.yaml, and settings.yaml
   const defaultPlugins = [{ source: `git+file://${repo}#latest` }];
 
   const configDir = tmpDir('hd-app-');
-  const app = await createApp({ configDir, log: silentLog, defaultPlugins });
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins, dockerSocket: null });
   assert.deepEqual(Object.keys(readLock(configDir)), [defaultPlugins[0].source]);
   assert.deepEqual(app.layout.messages.errors, []);
   app.close();
 
   fs.writeFileSync(path.join(configDir, 'settings.yaml'), 'plugins:\n  - path: ./missing\n');
-  const extended = await createApp({ configDir, log: silentLog, defaultPlugins });
+  const extended = await createApp({ configDir, log: silentLog, defaultPlugins, dockerSocket: null });
   assert.deepEqual(Object.keys(readLock(configDir)), [defaultPlugins[0].source]);
   assert.ok(extended.layout.messages.errors.some((e) => e.path === 'plugins: ./missing'), JSON.stringify(extended.layout.messages.errors));
   extended.close();
@@ -332,8 +333,28 @@ test('a widget of your own wins over the same id in the default plugins, without
   const local = path.join(configDir, 'local-counter');
   fs.cpSync(path.resolve('examples/widget-template'), local, { recursive: true });
   fs.writeFileSync(path.join(configDir, 'settings.yaml'), 'plugins:\n  - path: ./local-counter\n');
-  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [{ source: `git+file://${repo}#latest` }] });
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [{ source: `git+file://${repo}#latest` }], dockerSocket: null });
   assert.deepEqual(app.layout.messages.errors, []);
   assert.equal(app.runtime.registry.get('example-counter').source, './local-counter');
   app.close();
+});
+
+test('a mounted Docker socket is discovered without docker.yaml', async () => {
+  const socketPath = path.join(tmpDir('hd-sock-'), 'docker.sock');
+  const srv = await serve((req, res) => {
+    res.setHeader('content-type', 'application/json');
+    res.end(JSON.stringify([{ Id: 'a1', Names: ['/grafana'], State: 'running', Labels: { 'homelab.name': 'Grafana', 'homelab.group': 'Monitoring' } }]));
+  }, { socketPath });
+  const configDir = tmpDir('hd-app-');
+  fs.writeFileSync(path.join(configDir, 'docker.yaml'), '# only comments, like config.example\n');
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [], dockerSocket: socketPath });
+  try {
+    for (let i = 0; i < 50 && !JSON.stringify(app.layout).includes('Grafana'); i++) await new Promise((r) => setTimeout(r, 20));
+    const group = app.layout.groups.find((g) => g.name === 'Monitoring');
+    assert.equal(group?.services[0].name, 'Grafana');
+    assert.deepEqual(app.layout.messages.errors, []);
+  } finally {
+    app.close();
+    await srv.close();
+  }
 });

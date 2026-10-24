@@ -26,6 +26,7 @@ pulled in through `plugins:` in `settings.yaml`. A single Docker container, Node
 | `config.example/` | Example config: the default for an empty `/config` and for `npm run dev`. |
 | `deploy/` | Your own installations (config, compose file, preview scripts). Ignored by git; never referenced from the rest of the codebase. |
 | `tests/` | `node:test` for everything, jsdom for the frontend, fixtures in `tests/fixtures/`. |
+| `docker/start.sh` | Image entrypoint: Docker socket group for `node`, example config into an empty `/config`, then the dashboard as `node`. |
 | `scripts/pages.sh`, `scripts/pages-widgets.mjs` | Stage the GitHub Pages site: `docs/`, the README as home page, a page per widget. |
 | `scripts/screenshots.mjs` | Recreates the README screenshots (Playwright, not in `package.json`). |
 | `../homelab-dashboard-widgets` | Separate repo ([GitHub](https://github.com/stefanrenne/homelab-dashboard-widgets)): the homepage-style widgets (radarr, unraid, ...) as a collection. Not part of this codebase on purpose. |
@@ -114,8 +115,10 @@ the image and smoke-tests it.
 
 See `docs/decisions.md` for the background. In short:
 - A path check must happen on the **resolved** path: `assets/../server.js` starts with `assets/`.
-- The image runs as `node` (uid 1000); `/var/run/docker.sock` is usually `root:root 660`, so
-  discovery fails with EACCES. Use a docker-socket-proxy, or `--group-add <gid of the socket>`.
+- The dashboard runs as `node` (uid 1000); `/var/run/docker.sock` is usually `root:root 660`.
+  `docker/start.sh` starts as root, adds `node` to the socket's group and drops to `node` with
+  su-exec. Started with `--user`, that step is skipped and discovery gets EACCES without
+  `--group-add <gid of the socket>`. Never run `server.js` itself as root.
 - BusyBox `ping` needs root; the image installs `iputils-ping`. macOS and Linux disagree on `-W`
   units, so the ping widget relies on the process timeout instead.
 - `fs.watch` on macOS can report one save as several events spread beyond the debounce; tests

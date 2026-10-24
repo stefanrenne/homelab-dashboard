@@ -336,6 +336,7 @@ Icons, as in homepage:
     cpu: true
     memory: true
     disk: ["/", "/mnt/data"]
+    cputemp: true       # also uptime, network (true or an interface), expanded, units, diskUnits
 - search:
     provider: duckduckgo   # duckduckgo, google, bing, startpage, baidu, brave, custom (+ url: https://x/?q={q})
     showSearchSuggestions: true   # suggestions while typing (google, duckduckgo, bing, baidu, brave; custom needs suggestionUrl)

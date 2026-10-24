@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { serve, fakeCtx, tmpDir } from './helpers.mjs';
 import { widgetFetch } from '../src/plugins/runtime.js';
@@ -9,7 +10,7 @@ import { loadRegistry } from '../src/plugins/loader.js';
 import httpStatus from '../widgets/http-status/server.js';
 import customApi, { pick } from '../widgets/custom-api/server.js';
 import docker, { cpuPercent } from '../widgets/docker/server.js';
-import resources from '../widgets/resources/server.js';
+import resources, { PATHS as RESOURCE_PATHS, formatUptime, formatBytes } from '../widgets/resources/server.js';
 import { parseLatency } from '../widgets/ping/server.js';
 
 const LANGS = ['en', 'nl', 'fr', 'de', 'es', 'ca', 'he', 'hr', 'hu', 'it', 'nb-NO', 'pt', 'ru', 'sv', 'vi', 'zh-Hans', 'zh-Hant'];
@@ -243,4 +244,55 @@ test('resources widget: meters are exposed with role, value and a spoken label',
   assert.equal(missing.getAttribute('aria-label'), 'Media Disk: /gone not found');
   assert.ok(missing.classList.contains('missing'));
   w.close();
+});
+
+
+test('resources: CPU temperature, uptime, network rates, expanded details and binary disk units', async () => {
+  const fake = tmpDir('hd-sys-');
+  const sys = path.join(fake, 'sys');
+  const proc = path.join(fake, 'proc');
+  const put = (rel, text) => { fs.mkdirSync(path.dirname(path.join(fake, rel)), { recursive: true }); fs.writeFileSync(path.join(fake, rel), text); };
+  put('sys/class/thermal/thermal_zone0/temp', '48000\n');
+  put('sys/class/thermal/thermal_zone1/temp', '61500\n');
+  put('sys/class/net/lo/statistics/rx_bytes', '0');
+  put('sys/class/net/eth0/statistics/rx_bytes', '1000000');
+  put('sys/class/net/eth0/statistics/tx_bytes', '500000');
+  put('proc/net/route', 'Iface\tDestination\tGateway\neth0\t00000000\t0101A8C0\n');
+  const saved = { ...RESOURCE_PATHS };
+  Object.assign(RESOURCE_PATHS, { sys, proc });
+  try {
+    const opts = { cpu: false, memory: true, disk: [os.tmpdir()], cputemp: true, uptime: true, network: 'true', expanded: true, diskUnits: 'bbytes', units: 'metric' };
+    const ctx = fakeCtx(opts);
+    const first = await resources.fetch(ctx);
+    const byKey = Object.fromEntries(first.blocks.map((b) => [b.key, b]));
+    assert.deepEqual([byKey.cputemp.value, byKey.cputemp.unit], [61.5, '°C'], 'the hottest zone');
+    assert.match(byKey.uptime.value, /^\d+(d \d+h|h \d+m|m)$/);
+    assert.equal(byKey.rx.value, null, 'no rate before a second sample');
+    const disk = first.meters.find((m) => m.kind === 'disk');
+    assert.match(disk.text, /iB$/, 'diskUnits: bbytes');
+    assert.match(disk.detail, /^[\d.]+ \w*iB \/ [\d.]+ \w*iB$/, 'expanded: used / total');
+    assert.ok(first.meters.find((m) => m.kind === 'memory').detail.includes(' / '));
+    assert.equal(first.meters.find((m) => m.kind === 'network').caption, 'eth0', 'the default route');
+
+    // a second sample one second later: 2 MB in, 1 MB out
+    ctx.cache.set('net:eth0', { ...ctx.cache.get('net:eth0'), at: Date.now() - 1000 });
+    put('sys/class/net/eth0/statistics/rx_bytes', '3000000');
+    put('sys/class/net/eth0/statistics/tx_bytes', '1500000');
+    const second = await resources.fetch(ctx);
+    const rx = second.blocks.find((b) => b.key === 'rx').value;
+    assert.match(rx, /^(1\.9|2|2\.\d) MB\/s$/);
+
+    const f = await resources.fetch(fakeCtx({ disk: [], cputemp: true, units: 'imperial', tempmin: 50, tempmax: 200 }));
+    assert.deepEqual([f.blocks[0].value, f.blocks[0].unit], [142.7, '°F']);
+    assert.equal(Math.round(f.meters[0].percent), 62);
+
+    Object.assign(RESOURCE_PATHS, { sys: path.join(fake, 'none'), proc: path.join(fake, 'none') });
+    const none = await resources.fetch(fakeCtx({ disk: [], cputemp: true, network: 'true' }));
+    assert.deepEqual(none.blocks.map((b) => [b.key, b.value]), [['cputemp', null], ['rx', null], ['tx', null]], 'macOS: no readings, no crash');
+  } finally {
+    Object.assign(RESOURCE_PATHS, saved);
+  }
+  assert.equal(formatUptime(93784), '1d 2h');
+  assert.equal(formatUptime(3700), '1h 1m');
+  assert.equal(formatBytes(1536, true), '1.5 KiB');
 });

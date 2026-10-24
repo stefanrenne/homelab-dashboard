@@ -659,3 +659,13 @@ test('/api/suggest: a search widget\'s own settings, quicklaunch falling back to
     await ac.close();
   }
 });
+
+test('refresh: a bare number of 1000 or more is milliseconds (homepage), smaller is seconds', async () => {
+  const t = await startApp({ 'widgets.yaml': '- resources:\n    cpu: true\n    refresh: 3000\n- datetime:\n    refresh: 30\n' });
+  try {
+    const layout = await (await t.get('/api/layout')).json();
+    assert.deepEqual(layout.header.map((w) => w.refreshMs), [3000, 30000]);
+  } finally {
+    await t.close();
+  }
+});

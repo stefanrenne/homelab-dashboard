@@ -22,7 +22,8 @@ export function checkSchema(schema) {
 function coerce(def, value) {
   switch (def.type) {
     case 'string':
-      return typeof value === 'string' || typeof value === 'number' ? { value: String(value) } : { error: 'expected text' };
+      // booleans too, for options such as homepage's `network: true` (or an interface name)
+      return ['string', 'number', 'boolean'].includes(typeof value) ? { value: String(value) } : { error: 'expected text' };
     case 'url':
       try {
         const url = new URL(String(value));

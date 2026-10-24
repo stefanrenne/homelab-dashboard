@@ -103,7 +103,7 @@ widget declares an option with the same name:
 | Key | Meaning |
 |---|---|
 | `refreshInterval` | Refresh time of this instance in milliseconds (homepage's name). Minimum 1000. |
-| `refresh` | The same as a duration: `5s`, `1h`. |
+| `refresh` | The same as a duration: `5s`, `1h`. A bare number of 1000 or more is milliseconds (homepage's `refresh: 3000`); a smaller one is seconds. |
 | `fields` | List of block keys to show, e.g. `[cpu, memoryPercent]`. The widget's order is kept. |
 | `hideErrors` / `hide_errors` | `true` hides the error box of this widget. |
 | `provider` | Fills options the entry leaves out from `settings.yaml` `providers.<name>`: a map fills the options it names, a text the first unset `secret: true` option. Every provider value is treated as a secret. A widget that declares its own `provider` option keeps it. |

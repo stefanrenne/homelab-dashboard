@@ -51,6 +51,9 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   `logpath` the log stays on stdout only.
 - Search suggestions (`showSearchSuggestions`, `suggestionUrl`) in the search widget and quick launch,
   as in homepage; the server asks the search engine because of the page's CSP.
+- Resources widget (1.4.0): `cputemp` (with `tempmin`, `tempmax`, `units`), `uptime`, `network`,
+  `expanded` and `diskUnits`, as in homepage. A bare `refresh` of 1000 or more is milliseconds,
+  homepage's form; a smaller number stays seconds.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

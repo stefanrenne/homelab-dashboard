@@ -80,6 +80,8 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     let refreshMs = widget.manifest.refreshMs;
     try {
       if (own.refreshInterval !== undefined) refreshMs = Number(own.refreshInterval);
+      // homepage's info widgets take `refresh: 3000` in milliseconds; a smaller bare number stays seconds
+      else if (typeof own.refresh === 'number' && own.refresh >= 1000) refreshMs = own.refresh;
       else if (own.refresh !== undefined) refreshMs = parseDuration(own.refresh);
       if (!Number.isFinite(refreshMs)) throw new Error(`invalid refreshInterval "${own.refreshInterval}"`);
     } catch (err) {

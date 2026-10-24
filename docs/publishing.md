@@ -22,6 +22,6 @@ A change to the widget API is a release note of its own: say which `apiVersion` 
 ## Dependabot
 
 `.github/dependabot.yml` opens grouped weekly PRs for GitHub Actions, npm and the Docker base
-image. `dependabot-automerge.yml` merges them when CI passes. A PR that changes a workflow file
+image. The Node major in the image is kept on an LTS line by hand (Dependabot ignores Node majors). `dependabot-automerge.yml` merges them when CI passes. A PR that changes a workflow file
 needs a fine-grained token in the repository secret `AUTOMERGE_TOKEN` (Contents, Pull requests and
 Workflows: read and write); without it those PRs wait for a manual merge.

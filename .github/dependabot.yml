@@ -24,3 +24,8 @@ updates:
     groups:
       docker:
         patterns: ["*"]
+    # Node majors alternate between LTS (even) and short-lived (odd) lines; an automatic major
+    # bump once moved the image to Node 25. Majors are updated by hand, to the next LTS.
+    ignore:
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]

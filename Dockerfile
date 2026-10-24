@@ -1,5 +1,6 @@
 # homelab-dashboard: one Node process, config in /config.
-FROM node:25-alpine
+# An LTS line (even major). Dependabot only bumps within it; a new LTS is a manual change.
+FROM node:24-alpine
 
 # git: installs widget packages from git sources. iputils-ping: the ping widget
 # (busybox ping needs root; iputils' ping works for the unprivileged user).

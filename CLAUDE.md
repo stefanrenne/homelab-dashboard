@@ -108,6 +108,8 @@ See `docs/decisions.md` for the background. In short:
 - `HEAD` must be answered like `GET`: status checks (including on this dashboard) use HEAD.
 - `os.freemem()` on macOS only counts free pages, so memory looks almost full in development.
 - Do not name a CSS class `row` or `column` for layout: `.row` is the widget row style.
+- Node majors alternate LTS (even) and short-lived (odd). Dependabot once auto-merged
+  `node:25-alpine`; Node majors are now ignored by Dependabot and bumped by hand to the next LTS.
 - Docker's `label` filter is AND-only; discovery lists all containers and matches both
   `homelab.*` and `homepage.*` itself.
 - Values in discovered labels must go through `substitute()` too, or `{{HOMEPAGE_VAR_*}}`

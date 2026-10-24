@@ -136,3 +136,47 @@ test('Discovery: errors per source, onChange only when something changed', async
   assert.equal(changes, 2);
   d.stop();
 });
+
+test('labels: index notation for widgets and mappings, more fields (homepage\'s examples)', () => {
+  const svc = serviceFromLabels({
+    'homepage.group': 'Media', 'homepage.name': 'Emby', 'homepage.icon': 'emby.png', 'homepage.href': 'http://emby.home/',
+    'homepage.statusStyle': 'dot', 'homepage.showStats': 'true', 'homepage.target': '_self',
+    'homepage.widgets[0].type': 'emby', 'homepage.widgets[0].url': 'http://emby.home', 'homepage.widgets[0].key': 'k',
+    'homepage.widgets[1].type': 'customapi', 'homepage.widgets[1].url': 'http://argus.service/api',
+    'homepage.widgets[1].mappings[0].label': 'Deployed Version', 'homepage.widgets[1].mappings[0].field.status': 'deployed_version',
+    'homepage.widgets[1].mappings[1].label': 'Latest Version', 'homepage.widgets[1].headers.X-Auth-Key': 'secret',
+  }, 'homepage.');
+  assert.equal(svc.def.statusStyle, 'dot');
+  assert.equal(svc.def.showStats, true);
+  assert.equal(svc.def.target, '_self');
+  assert.deepEqual(svc.def.widgets[0], { type: 'emby', url: 'http://emby.home', key: 'k' });
+  assert.deepEqual(svc.def.widgets[1].mappings, [{ label: 'Deployed Version', field: { status: 'deployed_version' } }, { label: 'Latest Version' }]);
+  assert.deepEqual(svc.def.widgets[1].headers, { 'X-Auth-Key': 'secret' });
+});
+
+test('labels: instance labels win for this dashboard and are ignored by others', () => {
+  const labels = {
+    'homepage.group': 'Media', 'homepage.name': 'Emby', 'homepage.href': 'http://emby.default/',
+    'homepage.instance.internal.href': 'http://emby.lan/', 'homepage.instance.public.href': 'https://emby.example.com/',
+    'homepage.instance.public.description': 'Public only',
+  };
+  assert.equal(serviceFromLabels(labels, 'homepage.', 'internal').def.href, 'http://emby.lan/');
+  const pub = serviceFromLabels(labels, 'homepage.', 'public');
+  assert.equal(pub.def.href, 'https://emby.example.com/');
+  assert.equal(pub.def.description, 'Public only');
+  const none = serviceFromLabels(labels, 'homepage.');
+  assert.equal(none.def.href, 'http://emby.default/');
+  assert.equal(none.def.description, undefined);
+});
+
+test('Discovery passes settings.instanceName to the sources', async () => {
+  const seen = [];
+  const d = new Discovery({
+    log: silentLog,
+    docker: async (server) => { seen.push(['docker', server.instanceName]); return []; },
+    kubernetes: async (opts) => { seen.push(['kubernetes', opts.instanceName]); return []; },
+  });
+  await d.configure({ settings: { instanceName: 'public', discovery: { interval: '1h' } }, docker: [{ name: 'local', socket: '/x', discover: true }], kubernetes: { mode: 'cluster' } });
+  d.stop();
+  assert.deepEqual(seen, [['docker', 'public'], ['kubernetes', 'public']]);
+});

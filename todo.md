@@ -15,7 +15,6 @@ Already there: title, theme, color, language (5 of homepage's ±40), target, bac
 headerStyle, showTitle, layout per group (columns, row/column style, header, initiallyCollapsed),
 hideErrors, status labels, container stats on click, search widget, bookmarks.
 
-- [ ] `instanceName` for discovery when several dashboards share one Docker host (`homepage.instance.<name>.*` labels)
 - [ ] `hideVersion`, update check against GitHub releases (`disableUpdateCheck`)
 - [ ] `disableIndexing` (robots meta and robots.txt)
 - [ ] `base` path for running behind a reverse proxy under a sub path
@@ -42,6 +41,7 @@ Generic ones built in, service-specific ones in the widgets collection.
 ### Phase 3: integrations (core)
 
 - [ ] Docker over TLS (`tls` with CA/cert/key files in docker.yaml)
+- [ ] Order by weight within a group: YAML services weigh (index + 1) × 100, discovered ones `weight` (default 0), ties by name
 - [ ] Docker Swarm services and stacks
 - [ ] Proxmox: VM/LXC status and stats per service (`proxmoxNode`, `proxmoxVMID`, `proxmox.yaml`)
 - [ ] Kubernetes: `kubeconfig` mode for running outside the cluster

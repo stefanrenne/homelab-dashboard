@@ -39,6 +39,30 @@ labels:
   homelab.widget.url: http://grafana:3000/api/health
   homelab.widget.mappings: '[{"field":"version","label":"Version"}]'   # JSON for lists and maps
   homelab.widget.headers.Authorization: "Bearer {{HD_VAR_GRAFANA}}"    # dots make nested maps
+  homelab.statusStyle: dot           # also target, showStats
+```
+
+Several widgets and lists use homepage's index notation:
+
+```yaml
+labels:
+  homelab.widgets[0].type: emby
+  homelab.widgets[0].url: http://emby.lan
+  homelab.widgets[1].type: custom-api
+  homelab.widgets[1].url: http://argus.lan/api/v1/service/summary/emby
+  homelab.widgets[1].mappings[0].label: Deployed version
+  homelab.widgets[1].mappings[0].field.status: deployed_version
+```
+
+**Several dashboards on one Docker host**: give each an `instanceName` in settings.yaml. A label
+with `instance.<name>.` after the prefix applies to that dashboard only and wins over the plain
+label; the other dashboards ignore it.
+
+```yaml
+labels:
+  homelab.name: Emby
+  homelab.instance.internal.href: http://emby.lan
+  homelab.instance.public.href: https://emby.example.com
 ```
 
 A discovered container always gets its Docker state as a status label, next to `siteMonitor`

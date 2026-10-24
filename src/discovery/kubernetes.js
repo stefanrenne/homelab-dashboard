@@ -38,14 +38,14 @@ export function k8sGet(path, { apiUrl = k8sApiUrl(), saDir = K8S_SA_DIR, timeout
 }
 
 /** Pure mapping from an IngressList to discovered services. */
-export function servicesFromIngresses(list) {
+export function servicesFromIngresses(list, instanceName = null) {
   const out = [];
   for (const ing of list.items ?? []) {
     const ann = ing.metadata?.annotations ?? {};
     const prefix = [ANNOTATION_PREFIX, HOMEPAGE_PREFIX].find((p) => ann[p + 'enabled'] === 'true');
     if (!prefix) continue;
     const labels = { [prefix + 'name']: ing.metadata.name, ...ann };
-    const svc = serviceFromLabels(labels, prefix);
+    const svc = serviceFromLabels(labels, prefix, instanceName);
     svc.group ??= ing.metadata.namespace ?? 'Kubernetes';
     if (!svc.def.href) {
       const rule = ing.spec?.rules?.find((r) => r.host);
@@ -60,6 +60,6 @@ export function servicesFromIngresses(list) {
   return out;
 }
 
-export async function discoverKubernetes(opts) {
-  return servicesFromIngresses(await k8sGet('/apis/networking.k8s.io/v1/ingresses', opts));
+export async function discoverKubernetes(opts = {}) {
+  return servicesFromIngresses(await k8sGet('/apis/networking.k8s.io/v1/ingresses', opts), opts.instanceName);
 }

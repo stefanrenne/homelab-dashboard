@@ -35,6 +35,9 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - `showStats`, in settings.yaml and per service: container stats open from the start, as in homepage.
 - `providers` in settings.yaml: shared keys and logins that widget entries use with
   `provider: <name>`, as in homepage. Provider values never reach the browser.
+- Discovery labels: homepage's index notation (`homelab.widgets[0].type`,
+  `homelab.widget.mappings[0].label`), `target`, `statusStyle` and `showStats`, and labels per
+  dashboard with `instanceName` (`homelab.instance.<name>.href`), as in homepage.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

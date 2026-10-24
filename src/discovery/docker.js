@@ -53,9 +53,9 @@ export function servicesFromContainers(containers, server) {
     const labels = c.Labels ?? {};
     // homepage only discovers containers that have both a name and a group.
     const svc = labels[LABEL_PREFIX + 'name']
-      ? serviceFromLabels(labels, LABEL_PREFIX)
+      ? serviceFromLabels(labels, LABEL_PREFIX, server.instanceName)
       : labels[HOMEPAGE_PREFIX + 'group']
-        ? serviceFromLabels(labels, HOMEPAGE_PREFIX)
+        ? serviceFromLabels(labels, HOMEPAGE_PREFIX, server.instanceName)
         : null;
     if (!svc) continue;
     const container = (c.Names?.[0] ?? '').replace(/^\//, '');

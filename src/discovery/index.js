@@ -37,14 +37,15 @@ export class Discovery {
     const errors = [];
     for (const server of this.config.docker.filter((s) => s.discover)) {
       try {
-        found.push(...(await this.sources.docker(server)).map((s) => ({ ...s, origin: `docker:${server.name}` })));
+        const withInstance = { ...server, instanceName: this.config.settings?.instanceName ?? null };
+        found.push(...(await this.sources.docker(withInstance)).map((s) => ({ ...s, origin: `docker:${server.name}` })));
       } catch (err) {
         errors.push({ file: 'docker.yaml', path: server.implicit ? `${server.name} (the mounted ${server.socket})` : server.name, message: `discovery: ${err.message}` });
       }
     }
     if (this.config.kubernetes.mode === 'cluster') {
       try {
-        found.push(...(await this.sources.kubernetes()).map((s) => ({ ...s, origin: 'kubernetes' })));
+        found.push(...(await this.sources.kubernetes({ instanceName: this.config.settings?.instanceName ?? null })).map((s) => ({ ...s, origin: 'kubernetes' })));
       } catch (err) {
         errors.push({ file: 'kubernetes.yaml', path: 'mode', message: `discovery: ${err.message}` });
       }

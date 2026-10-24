@@ -124,7 +124,7 @@ export function normalizeSettings(raw, ctx) {
     }
   }
   settings.showTitle = settings.showTitle !== false;
-  for (const key of ['description', 'favicon', 'startUrl']) {
+  for (const key of ['description', 'favicon', 'startUrl', 'instanceName']) {
     if (settings[key] === undefined || settings[key] === null) delete settings[key];
     else if (typeof settings[key] !== 'string') {
       ctx.warn(file, key, 'expected text, ignored');

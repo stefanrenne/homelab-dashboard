@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node src/server.js --config config.example --port 3000",
-    "test": "node --test --test-force-exit \"tests/**/*.test.mjs\""
+    "test": "node --test --test-force-exit \"tests/**/*.test.mjs\"",
+    "new-widget": "node scripts/new-widget.mjs"
   },
   "dependencies": {
     "yaml": "^2.8.1"

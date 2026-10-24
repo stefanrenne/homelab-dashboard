@@ -7,11 +7,17 @@ A widget is a folder that you keep in your own repository. The dashboard never n
 Start from [homelab-dashboard-widget-example](https://github.com/stefanrenne/homelab-dashboard-widget-example) (**Use this template** on GitHub): the
 same widget as [`examples/widget-template`](../../examples/widget-template), set up as a
 repository with tests that run without the dashboard and CI that releases a version tag, so
-users can install it with `#latest`. Then rename:
+users can install it with `#latest`. Then give it your widget's id:
 
-- `id`, `name` and `version` in `widget.yaml`
-- `hd-example-counter` in `client.js` → `hd-<your id>`
-- `name` in `package.json` (convention: `hd-widget-<id>`)
+```bash
+npm run rename -- my-nas --name "My NAS"
+```
+
+That renames `example-counter` everywhere: the `id` and `name` in `widget.yaml`, the `hd-<id>`
+element in `client.js`, `name` in `package.json` (`hd-widget-<id>`), the README and the tests.
+
+Without GitHub, `npm run new-widget -- my-nas [folder]` in a clone of the dashboard copies
+`examples/widget-template` to a new folder with the same renaming.
 
 ## 2. Declare the options
 

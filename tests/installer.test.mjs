@@ -281,3 +281,18 @@ test('a git collection is installed once and locked as <repo>@<commit>', async (
 test('only must be a list of names', () => {
   assert.throws(() => parseSource({ path: 'x', only: 'radarr' }), /only: expected a list/);
 });
+
+test('scripts/new-widget: the template under a new id loads, with nothing of example-counter left', async () => {
+  const { renameWidget } = await import('../scripts/new-widget.mjs');
+  const dir = path.join(tmpDir('hd-new-'), 'my-nas');
+  fs.cpSync(TEMPLATE, dir, { recursive: true });
+  const changed = renameWidget(dir, 'my-nas', 'My NAS');
+  assert.ok(changed.includes('widget.yaml') && changed.includes('client.js'));
+  const widget = await loadWidget(dir, { source: 'path' });
+  assert.deepEqual([widget.id, widget.manifest.name], ['my-nas', 'My NAS']);
+  const all = fs.readdirSync(dir, { recursive: true }).filter((f) => fs.statSync(path.join(dir, f)).isFile()).map((f) => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
+  assert.ok(!/example-counter|ExampleCounter|Example counter/.test(all));
+  assert.match(all, /customElements\.define\('hd-my-nas', MyNas\)/);
+  assert.match(fs.readFileSync(path.join(dir, 'README.md'), 'utf8'), /^# My NAS\n/);
+  assert.throws(() => renameWidget(dir, 'My Widget'), /not a widget id/);
+});

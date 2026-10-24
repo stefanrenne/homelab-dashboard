@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import YAML from 'yaml';
-import { syncPlugins, parseSource, readLock } from '../src/plugins/installer.js';
+import { syncPlugins, parseSource, readLock, latestTag } from '../src/plugins/installer.js';
 import { loadWidget } from '../src/plugins/loader.js';
 import { WidgetRuntime } from '../src/plugins/runtime.js';
 import { validateOptions } from '../src/plugins/options.js';
@@ -31,6 +31,8 @@ test('parseSource: kinds, pinning and unsafe input', () => {
   assert.equal(parseSource({ source: 'git+https://github.com/a/b#v1.2.0' }).floating, false);
   assert.equal(parseSource({ source: 'git+https://github.com/a/b#main' }).floating, true);
   assert.equal(parseSource({ source: 'git+https://github.com/a/b' }).floating, true);
+  assert.equal(parseSource({ source: 'git+https://github.com/a/b#latest' }).floating, false);
+  assert.equal(parseSource({ source: 'git+https://github.com/a/b#latest' }).latest, true);
   assert.equal(parseSource({ source: 'npm:@scope/hd-widget@1.0.0' }).name, '@scope/hd-widget');
   assert.equal(parseSource({ source: 'npm:hd-widget@^1.0.0' }).floating, true);
   assert.throws(() => parseSource({ source: 'git+--upload-pack=x' }), /unsupported git URL/);
@@ -79,6 +81,43 @@ test('a floating ref warns, stays on the locked commit, and moves only on update
 
   const updated = await syncPlugins({ configDir, entries, update: true, log: silentLog });
   assert.equal(path.basename(updated.installed[0].dir), 'example-counter@1.2.0');
+});
+
+test('latestTag: highest release by number, no pre-releases or other tags', () => {
+  assert.equal(latestTag(['v1.2.0', 'v1.10.0', 'v1.9.3', 'v2.0.0-beta.1', 'nightly']), 'v1.10.0');
+  assert.equal(latestTag(['1.0.0', 'v0.9.0']), '1.0.0');
+  assert.equal(latestTag(['main', 'v2.0.0-rc.1']), undefined);
+});
+
+test('#latest installs the newest release tag, not main, and moves only on update', async () => {
+  const { url, repo, git } = templateRepo();
+  const configDir = tmpDir();
+  const entries = [{ source: `git+${url}#latest` }];
+  const first = await syncPlugins({ configDir, entries, log: silentLog });
+  assert.deepEqual(first.errors, []);
+  assert.deepEqual(first.warnings, []);
+  assert.equal(path.basename(first.installed[0].dir), 'example-counter@1.0.0');
+  assert.equal(readLock(configDir)[`git+${url}#latest`].tag, 'v1.0.0');
+
+  // A new release; the lock keeps the installed one until an update.
+  fs.writeFileSync(path.join(repo, 'widget.yaml'), fs.readFileSync(path.join(repo, 'widget.yaml'), 'utf8').replace('1.1.0', '1.2.0'));
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qam', 'v1.2');
+  git('tag', 'v1.2.0');
+  git('tag', 'v1.3.0-beta.1');
+  const again = await syncPlugins({ configDir, entries, log: silentLog });
+  assert.equal(path.basename(again.installed[0].dir), 'example-counter@1.0.0');
+
+  const updated = await syncPlugins({ configDir, entries, update: true, log: silentLog });
+  assert.equal(path.basename(updated.installed[0].dir), 'example-counter@1.2.0');
+  assert.equal(readLock(configDir)[`git+${url}#latest`].tag, 'v1.2.0');
+});
+
+test('#latest without a release tag is an error on the widget, not a crash', async () => {
+  const { url, git } = templateRepo();
+  git('tag', '-d', 'v1.0.0');
+  const out = await syncPlugins({ configDir: tmpDir(), entries: [{ source: `git+${url}#latest` }], log: silentLog });
+  assert.equal(out.installed.length, 0);
+  assert.match(out.errors[0].message, /no release tag/);
 });
 
 test('a locked source needs no network on the next start', async () => {

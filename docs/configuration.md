@@ -47,6 +47,7 @@ discovery:
   interval: 30s
 plugins:
   - source: git+https://github.com/someone/hd-widget-x#v1.0.0   # tag, branch or 40-char commit
+  - source: git+https://github.com/someone/hd-widget-v#latest   # the newest release tag
   - source: npm:hd-widget-y@2.0.1
   - source: git+https://github.com/someone/widgets#v3.0.0
     subdir: widgets/z                                           # a repo with several widgets
@@ -54,6 +55,11 @@ plugins:
   - source: git+https://github.com/someone/widgets#v1.0.0      # a collection: every widget in it,
     only: [radarr, sonarr]                                      # or only these folders
 ```
+
+`#latest` installs the highest release tag (`v1.2.3` or `1.2.3`; pre-releases such as
+`v2.0.0-beta.1` are skipped) and records it in `plugins/plugins.lock.yaml`. A restart keeps
+that release; `POST /api/plugins/sync?update=1` (or deleting its entry from the lock file) moves
+it to the newest release. A branch named `latest` can no longer be used as `#latest`.
 
 A source without `widget.yaml` at its root is a **collection**: every folder with a
 `widget.yaml` directly in it, or in its `widgets/` folder, is installed.

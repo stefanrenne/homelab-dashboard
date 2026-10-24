@@ -1,6 +1,7 @@
 // Installs external widget packages listed under `plugins:` in settings.yaml.
 //
 //   - source: git+https://github.com/someone/hd-widget-x#v1.2.0   (tag, branch or commit)
+//   - source: git+https://github.com/someone/hd-widget-x#latest   (the newest release tag)
 //   - source: npm:hd-widget-y@2.0.1
 //   - path: ./my-widgets/z                                        (relative to the config dir)
 //   any of them with `subdir: widgets/x` for one widget out of a repository.
@@ -28,6 +29,8 @@ const GIT_URL = /^(https?:\/\/|ssh:\/\/|file:\/\/|git@)[^\s]+$/;
 const NPM_NAME = /^(@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*$/;
 const PINNED_REF = /^([0-9a-f]{40}|v?\d+\.\d+\.\d+([-+][\w.-]+)?)$/;
 const PINNED_VERSION = /^\d+\.\d+\.\d+([-+][\w.-]+)?$/;
+const RELEASE_TAG = /^v?(\d+)\.(\d+)\.(\d+)$/;
+export const LATEST_REF = 'latest';
 
 /** Parses a plugin entry from settings.yaml. Throws on anything unsafe or unknown. */
 export function parseSource(entry) {
@@ -44,7 +47,9 @@ export function parseSource(entry) {
     const [url, ref = ''] = source.slice(4).split('#');
     if (!GIT_URL.test(url)) throw new Error(`"${source}": unsupported git URL`);
     if (ref.startsWith('-') || /\s/.test(ref)) throw new Error(`"${source}": invalid ref`);
-    return { kind: 'git', key: source + (subdir ? `:${subdir}` : ''), url, ref, subdir, floating: !PINNED_REF.test(ref) };
+    // #latest resolves to the newest release tag; the lock pins it like a tag, so no warning
+    const latest = ref === LATEST_REF;
+    return { kind: 'git', key: source + (subdir ? `:${subdir}` : ''), url, ref, subdir, latest, floating: !latest && !PINNED_REF.test(ref) };
   }
   if (source.startsWith('npm:')) {
     const spec = source.slice(4);
@@ -186,23 +191,49 @@ function place(pkgRoot, subdir, pluginsRoot, collectionName) {
   return name;
 }
 
+/** The highest release tag (v1.2.3 or 1.2.3, no pre-releases) out of `names`, or undefined. */
+export function latestTag(names) {
+  const version = (name) => RELEASE_TAG.exec(name)?.slice(1).map(Number);
+  const newer = (a, b) => {
+    for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i];
+    return false;
+  };
+  let best;
+  for (const name of names) {
+    const v = version(name);
+    if (v && (!best || newer(v, version(best)))) best = name;
+  }
+  return best;
+}
+
+async function resolveLatestTag(url, run) {
+  const out = await run('git', ['ls-remote', '--tags', '--refs', '--', url]);
+  const names = out.split('\n').map((line) => line.split('refs/tags/')[1]).filter(Boolean);
+  const tag = latestTag(names);
+  if (!tag) throw new Error(`${url} has no release tag (v1.2.3) for #${LATEST_REF}`);
+  return tag;
+}
+
 async function installGit(src, pluginsRoot, run, locked) {
   const tmp = freshTmp(pluginsRoot);
   const checkout = path.join(tmp, 'repo');
+  let tag = locked?.tag;
   try {
     const commit = locked?.commit;
     if (commit || /^[0-9a-f]{40}$/.test(src.ref)) {
       await run('git', ['clone', '--quiet', '--', src.url, checkout]);
       await run('git', ['-C', checkout, 'checkout', '--quiet', '--detach', commit ?? src.ref]);
     } else {
-      const branch = src.ref ? ['--branch', src.ref] : [];
+      tag = src.latest ? await resolveLatestTag(src.url, run) : undefined;
+      const ref = tag ?? src.ref;
+      const branch = ref ? ['--branch', ref] : [];
       await run('git', ['clone', '--quiet', '--depth', '1', ...branch, '--', src.url, checkout]);
     }
     const resolved = (await run('git', ['-C', checkout, 'rev-parse', 'HEAD'])).trim();
     fs.rmSync(path.join(checkout, '.git'), { recursive: true, force: true });
     const repo = path.basename(src.url.replace(/\/+$/, '')).replace(/\.git$/, '');
     const dir = place(checkout, src.subdir, pluginsRoot, `${repo}@${resolved.slice(0, 12)}`);
-    return { dir, commit: resolved };
+    return tag ? { dir, commit: resolved, tag } : { dir, commit: resolved };
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

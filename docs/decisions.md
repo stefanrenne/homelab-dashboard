@@ -47,6 +47,8 @@ widget can serve as a status check by returning `status`.
 ## Lock file instead of always fetching (2026-10-23)
 A start must not depend on GitHub or npm being reachable, and must not silently pick up new
 code. `plugins.lock.yaml` records the commit or integrity; `?update=1` moves floating refs.
+`#latest` is resolved to a release tag once and locked like one, so it saves users from editing a
+version without picking up code on a restart.
 
 ## Node.js without a build step, one runtime dependency (2026-10-23)
 Widget authors write the server and client in the same language. `yaml` is the only runtime

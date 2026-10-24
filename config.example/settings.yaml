@@ -17,7 +17,7 @@ layout:
 discovery:
   interval: 30s
 
-# Widgets from outside this repository. Pin a tag/commit or exact version.
+# Widgets from outside this repository. Pin a tag/commit (or #latest) or exact version.
 plugins: []
 #  - source: git+https://github.com/someone/hd-widget-pihole#v1.2.0
 #  - source: npm:hd-widget-adguard@2.0.1

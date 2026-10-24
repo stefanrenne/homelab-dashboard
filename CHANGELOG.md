@@ -4,6 +4,10 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+- `#latest` for git plugin sources: installs the newest release tag and locks it, so the
+  widgets collection no longer needs an explicit version in `settings.yaml`.
+
 ## [0.1.0] - 2026-10-24
 
 ### Added

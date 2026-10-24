@@ -62,7 +62,7 @@ Tdarr, What's up Docker, Portainer and Unraid are in
 ```yaml
 # settings.yaml
 plugins:
-  - source: git+https://github.com/stefanrenne/homelab-dashboard-widgets#v0.2.0
+  - source: git+https://github.com/stefanrenne/homelab-dashboard-widgets#latest
   - source: git+https://github.com/someone/hd-widget-pihole#v1.2.0
   - source: npm:hd-widget-adguard@2.0.1
   - path: ./my-widgets/garage-door

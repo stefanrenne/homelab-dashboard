@@ -9,28 +9,14 @@ are where that makes sense (hard rule 6 still holds for our own keys). Compared 
 against homepage's docs: 164 service widgets, 13 info widgets, the settings page and the
 services, docker, kubernetes, proxmox and custom CSS/JS pages.
 
-### Phase 1: settings and layout (core, this repo)
-
-Already there: title, theme, color, language (5 of homepage's ±40), target, background,
-headerStyle, showTitle, layout per group (columns, row/column style, header, initiallyCollapsed),
-hideErrors, status labels, container stats on click, search widget, bookmarks.
-
-
-### Phase 2: info widgets (header)
-
-Generic ones built in, service-specific ones in the widgets collection.
-
-
-### Phase 3: integrations (core)
-
-
 ### Phase 4: service widgets (homelab-dashboard-widgets)
 
+Phases 1 to 3 (settings and layout, info widgets, integrations) are done; see `completed.md`.
 
 Each with a fixture, a test and a README (its CLAUDE.md). homepage's field names, so `fields:`
 carries over.
 
-Batch 1, the most used (39):
+Batch 1, the most used (39; 18 done):
 
 - [ ] Nextcloud
 - [ ] Immich

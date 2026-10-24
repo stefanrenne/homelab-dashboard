@@ -1,12 +1,16 @@
 name: Pages
 
 # The documentation site (https://stefanrenne.github.io/homelab-dashboard/): docs/ plus the
-# README as home page, built with Jekyll and the just-the-docs theme (docs/_config.yml).
+# README as home page, and a page per widget (built-in, and the widgets collection at its newest
+# release), built with Jekyll and the just-the-docs theme (docs/_config.yml).
 on:
   push:
     branches: [main]
-    paths: [docs/**, README.md, scripts/pages.sh, .github/workflows/pages.yml]
+    paths: [docs/**, README.md, widgets/**, scripts/pages.sh, scripts/pages-widgets.mjs, .github/workflows/pages.yml]
   workflow_dispatch:
+  # picks up a new release of the widgets collection
+  schedule:
+    - cron: "41 5 * * *"
 
 permissions:
   contents: read
@@ -22,7 +26,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - run: scripts/pages.sh site-src "$GITHUB_REPOSITORY"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --omit=dev --no-audit --no-fund
+      - name: Newest release of the widgets collection
+        id: collection
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "tag=$(gh release view --repo stefanrenne/homelab-dashboard-widgets --json tagName --jq .tagName)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          repository: stefanrenne/homelab-dashboard-widgets
+          ref: ${{ steps.collection.outputs.tag }}
+          path: collection
+      - run: scripts/pages.sh site-src "$GITHUB_REPOSITORY" collection "${{ steps.collection.outputs.tag }}"
       - uses: actions/configure-pages@v5
       - uses: actions/jekyll-build-pages@v1
         with:

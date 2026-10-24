@@ -66,7 +66,22 @@ at the top of the page.
 Test `fetch` without the dashboard by calling it with a fake ctx. `tests/installer.test.mjs` in
 the dashboard repo shows how the template is tested end to end.
 
-## 6. Publish
+## 6. Document it
+
+Give the widget a `README.md` in its folder, in the format the built-in widgets and the
+[widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets) use, so users find
+the same things in the same place:
+
+1. `# <name>`, as in `widget.yaml`.
+2. What it shows, and what the user must set up in the service: where the API key is, which ids
+   to fill in, when an option is only needed with authentication on.
+3. `## Fields`: every block `key`, so users know what to put in `fields:`.
+4. `## Example`: a complete `services.yaml` entry, with the key through `{{HD_VAR_...}}`.
+
+Give each option in `widget.yaml` a line comment when its name does not explain it
+(`url: { type: url, required: true }   # e.g. http://radarr:7878`).
+
+## 7. Publish
 
 - **git**: push, tag `v1.0.0` (match `version` in widget.yaml). Users add
   `source: git+https://github.com/you/hd-widget-x#v1.0.0`. Several widgets in one repo:

@@ -154,6 +154,10 @@ mode: cluster   # or disabled (default)
 
 ## Built-in widgets
 
+Each has its own page with fields and an example under
+[Built-in widgets](https://stefanrenne.github.io/homelab-dashboard/widgets/built-in/); the
+collection's widgets under [Widget collection](https://stefanrenne.github.io/homelab-dashboard/widgets/collection/).
+
 | Type | Options |
 |---|---|
 | `datetime` | `locale`, `dateStyle`, `timeStyle` |

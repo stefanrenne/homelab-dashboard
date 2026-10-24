@@ -24,6 +24,22 @@ test('every built-in widget has its i18n keys in every language', async () => {
   }
 });
 
+test('every built-in widget has a README for its docs page: title, example, real fields', async () => {
+  const { widgets } = await loadRegistry({ builtinDir: path.resolve('widgets') });
+  for (const w of widgets.values()) {
+    const dir = path.resolve('widgets', w.id);
+    const readme = fs.readFileSync(path.join(dir, 'README.md'), 'utf8');
+    assert.equal(readme.split('\n')[0], `# ${w.manifest.name}`, `${w.id}: the title is the manifest name`);
+    const example = readme.split(/^## Example$/m)[1] ?? '';
+    assert.match(example, new RegExp(`type: ${w.id}\\b|- ${w.id}:`), `${w.id}: an example that uses it`);
+    const fields = readme.split(/^## Fields$/m)[1]?.split(/^## /m)[0] ?? '';
+    const server = fs.existsSync(path.join(dir, 'server.js')) ? fs.readFileSync(path.join(dir, 'server.js'), 'utf8') : '';
+    for (const [, key] of fields.matchAll(/`([a-z][A-Za-z]*)`/g)) {
+      assert.ok(server.includes(`'${key}'`), `${w.id}: field ${key} is not a block of server.js`);
+    }
+  }
+});
+
 test('http-status: up, login wall, server error and offline', async () => {
   const codes = { '/ok': 200, '/login': 401, '/broken': 503, '/nohead': 405 };
   const srv = await serve((req, res) => {

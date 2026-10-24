@@ -10,6 +10,7 @@ import { loadRegistry } from '../src/plugins/loader.js';
 import httpStatus from '../widgets/http-status/server.js';
 import customApi, { pick } from '../widgets/custom-api/server.js';
 import docker, { cpuPercent } from '../widgets/docker/server.js';
+import stocks, { API as FINNHUB } from '../widgets/stocks/server.js';
 import openweathermap, { API as OWM, condition as owmCondition } from '../widgets/openweathermap/server.js';
 import openmeteo, { API as OPEN_METEO, condition as wmoCondition } from '../widgets/openmeteo/server.js';
 import resources, { PATHS as RESOURCE_PATHS, formatUptime, formatBytes } from '../widgets/resources/server.js';
@@ -402,4 +403,49 @@ test('openweathermap: the current weather with the key on the server, night icon
   }
   assert.deepEqual([211, 301, 501, 521, 601, 741, 800, 802, 804, 900].map(owmCondition),
     ['thunderstorm', 'drizzle', 'rain', 'showers', 'snow', 'fog', 'clear', 'partlyCloudy', 'cloudy', 'unknown']);
+});
+
+
+test('stocks: Finnhub quotes for up to eight symbols, unknown ones, the cache and errors', async () => {
+  const asked = [];
+  let status = 200;
+  const srv = await serve((req, res) => {
+    const q = new URL(req.url, 'http://x').searchParams;
+    asked.push([q.get('symbol'), q.get('token')]);
+    res.statusCode = status;
+    const quote = { AAPL: { c: 231.5, dp: 1.234 }, MSFT: { c: 410, dp: -0.5 }, NOPE: { c: 0, dp: null } }[q.get('symbol')] ?? { c: 10, dp: 0 };
+    res.end(JSON.stringify(quote));
+  });
+  const saved = FINNHUB.url;
+  FINNHUB.url = `${srv.url}/api/v1/quote`;
+  try {
+    const ctx = fakeCtx({ watchlist: ['aapl', 'MSFT', 'nope', 'A', 'B', 'C', 'D', 'E', 'F'], apiKey: 'k3y', color: true, cache: 1 });
+    const out = await stocks.fetch(ctx);
+    assert.equal(asked.length, 8, 'at most eight symbols');
+    assert.deepEqual(asked[0], ['AAPL', 'k3y']);
+    assert.deepEqual(out.quotes.slice(0, 3), [
+      { symbol: 'AAPL', price: 231.5, change: 1.23 }, { symbol: 'MSFT', price: 410, change: -0.5 }, { symbol: 'NOPE', price: null, change: null },
+    ]);
+    assert.deepEqual(out.blocks[0], { key: 'AAPL', label: 'AAPL', value: 231.5 });
+    await stocks.fetch(ctx);
+    assert.equal(asked.length, 8, 'cached');
+    status = 403;
+    await assert.rejects(stocks.fetch(fakeCtx({ watchlist: ['AAPL'], apiKey: 'bad', color: true, cache: 1 })), /Finnhub answered 403/);
+  } finally {
+    FINNHUB.url = saved;
+    await srv.close();
+  }
+});
+
+test('stocks client: price, arrow and change; colour can be turned off', async () => {
+  const { el } = await renderClient('stocks', {});
+  el.t = (k) => ({ up: 'up', down: 'down', unknownSymbol: 'Unknown symbol' })[k] ?? k;
+  el.data = { color: true, quotes: [{ symbol: 'AAPL', price: 231.5, change: 1.23 }, { symbol: 'MSFT', price: 410, change: -0.5 }, { symbol: 'NOPE', price: null, change: null }] };
+  const items = [...el.shadowRoot.querySelectorAll('li')];
+  assert.deepEqual(items.map((li) => li.textContent), ['AAPL231.50 ▲+1.23%', 'MSFT410.00 ▼-0.50%', 'NOPEUnknown symbol']);
+  assert.equal(items[0].getAttribute('aria-label'), 'AAPL: 231.50, up 1.23%');
+  assert.ok(items[1].querySelector('.chg').classList.contains('down'));
+  assert.equal(el.shadowRoot.querySelector('ul').className, 'color');
+  el.data = { color: false, quotes: [] };
+  assert.equal(el.shadowRoot.querySelector('ul').className, '');
 });

@@ -59,6 +59,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   `type: icon` options, resolved like service icons.
 - Open-Meteo weather widget: the current temperature and weather, no key needed, as in homepage.
 - OpenWeatherMap weather widget, with `apiKey` or `provider: openweathermap`, as in homepage.
+- Stocks widget: price and day change of up to eight symbols from Finnhub, with ▲/▼ and
+  optional colour, as in homepage.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

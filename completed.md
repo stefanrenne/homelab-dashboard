@@ -36,3 +36,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 2: logo widget and the `icon` option type.
 - 2026-10-24: homepage parity, phase 2: Open-Meteo weather widget.
 - 2026-10-24: homepage parity, phase 2: OpenWeatherMap widget (not checked against the live API: needs a key).
+- 2026-10-24: homepage parity, phase 2: stocks widget (Finnhub; not checked against the live API: needs a key).

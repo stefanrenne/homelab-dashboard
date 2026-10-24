@@ -32,36 +32,18 @@ carries over.
 
 Batch 1, the most used (39):
 
-- [ ] PiHole
-- [ ] Adguard Home
-- [ ] Plex
-- [ ] Jellyfin
-- [ ] Emby
-- [ ] Home Assistant
-- [ ] Proxmox
-- [ ] Proxmox Backup Server
-- [ ] qBittorrent
-- [ ] Transmission
-- [ ] Deluge
-- [ ] NZBget
-- [ ] Lidarr
-- [ ] Readarr
-- [ ] Jackett
-- [ ] Ombi
 - [ ] Nextcloud
 - [ ] Immich
 - [ ] Paperless-ngx
 - [ ] Uptime Kuma
 - [ ] Traefik
 - [ ] Nginx Proxy Manager
-- [ ] Glances
 - [ ] TrueNas
 - [ ] Synology Disk Station
 - [ ] OpenMediaVault
 - [ ] Speedtest Tracker
 - [ ] Gitea
 - [ ] Grafana
-- [ ] Unifi Controller
 - [ ] Tailscale
 - [ ] Authentik
 - [ ] Audiobookshelf

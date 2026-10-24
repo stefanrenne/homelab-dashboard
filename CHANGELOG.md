@@ -41,6 +41,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - `hideVersion: false` shows the version in the footer, with a daily check for a newer release
   (`disableUpdateCheck` turns that off). Hidden by default, unlike homepage.
 - `disableIndexing`: a robots meta tag and a `/robots.txt` that disallows crawlers, as in homepage.
+- `base` for running behind a reverse proxy under a sub path, as in homepage. The page now asks
+  for its data and widget code with relative URLs.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

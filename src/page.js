@@ -15,8 +15,8 @@ export const SHADE_800 = {
   purple: '#6b21a8', fuchsia: '#86198f', pink: '#9d174d', rose: '#9f1239',
 };
 
-/** An icon URL without the page's #hd-mask marker. */
-const plainIcon = (icon) => resolveIcon(icon)?.split('#')[0] ?? null;
+/** An icon URL without the page's #hd-mask marker, and /icons/… relative (for settings.base). */
+const plainIcon = (icon) => resolveIcon(icon)?.split('#')[0].replace(/^\/icons\//, 'icons/') ?? null;
 
 const scrub = (value, secrets) => [...secrets].reduce((s, secret) => s.split(secret).join('***'), String(value));
 
@@ -26,7 +26,10 @@ const escapeHtml = (value) =>
 /** `html` with the head filled in from normalized `settings`. */
 export function renderIndex(html, settings, secrets = new Set()) {
   const clean = (value) => escapeHtml(scrub(value, secrets));
-  const head = ['<link rel="manifest" href="site.webmanifest">'];
+  const head = [];
+  // settings.base first, so every relative URL after it resolves under it
+  if (settings.base) head.push(`<base href="${clean(settings.base)}">`);
+  head.push('<link rel="manifest" href="site.webmanifest">');
   if (settings.disableIndexing === true) head.push('<meta name="robots" content="noindex, nofollow">');
   if (settings.description) head.push(`<meta name="description" content="${clean(settings.description)}">`);
   const favicon = plainIcon(settings.favicon);

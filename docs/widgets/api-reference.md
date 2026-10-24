@@ -15,6 +15,10 @@ my-widget/
   package.json  optional   only for npm publishing; must contain "type": "module"
 ```
 
+Load assets relative to your module, not from an absolute path, so the widget also works when
+the dashboard runs under a sub path (`base` in settings.yaml):
+`new URL('./assets/icon.svg', import.meta.url)`.
+
 A package without `server.js` is client-only (like `datetime` and `search`). A package
 without `client.js` is rendered by the dashboard from `blocks`.
 

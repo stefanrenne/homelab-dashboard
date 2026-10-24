@@ -217,7 +217,8 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       name: widget.manifest.name,
       version: widget.manifest.version,
       source: widget.source,
-      client: widget.hasClient ? `/widgets/${type}/client.js?v=${encodeURIComponent(widget.manifest.version)}` : null,
+      // relative, so the page also works under settings.base
+      client: widget.hasClient ? `./widgets/${type}/client.js?v=${encodeURIComponent(widget.manifest.version)}` : null,
       i18n: { ...(widget.i18n.en ?? {}), ...(widget.i18n[lang] ?? {}) },
     };
   }

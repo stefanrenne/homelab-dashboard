@@ -16,7 +16,7 @@ test('renderIndex: title, description and favicon in the head, escaped', () => {
 
 test('renderIndex: favicon as a dashboard-icons name or a config icon, nothing when unset', () => {
   assert.match(renderIndex(HTML, { title: 'x', favicon: 'proxmox.svg' }), /<link rel="icon" href="https:\/\/cdn\.jsdelivr\.net\/[^"]+\/svg\/proxmox\.svg">/);
-  assert.match(renderIndex(HTML, { title: 'x', favicon: '/icons/lab.png' }), /<link rel="icon" href="\/icons\/lab\.png">/);
+  assert.match(renderIndex(HTML, { title: 'x', favicon: '/icons/lab.png' }), /<link rel="icon" href="icons\/lab\.png">/);
   const plain = renderIndex(HTML, { title: 'x' });
   assert.ok(!plain.includes('rel="icon"') && !plain.includes('name="description"'));
 });
@@ -38,7 +38,7 @@ test('renderManifest: name, start_url, colours, icons from pwa or the favicon, s
   const { renderManifest } = await import('../src/page.js');
   const plain = renderManifest({ title: 'Lab', color: 'emerald', pwa: {} });
   assert.deepEqual(plain, { name: 'Lab', short_name: 'Lab', start_url: '/', display: 'standalone', theme_color: '#065f46', background_color: '#065f46', icons: [] });
-  assert.deepEqual(renderManifest({ title: 'Lab', favicon: '/icons/lab.svg', pwa: {} }).icons, [{ src: '/icons/lab.svg', sizes: 'any' }]);
+  assert.deepEqual(renderManifest({ title: 'Lab', favicon: '/icons/lab.svg', pwa: {} }).icons, [{ src: 'icons/lab.svg', sizes: 'any' }]);
 
   const full = renderManifest({
     title: 'Lab', description: 'My lab', startUrl: '/#media', color: 'nope',
@@ -50,4 +50,10 @@ test('renderManifest: name, start_url, colours, icons from pwa or the favicon, s
   assert.match(full.icons[0].src, /\/png\/proxmox\.png$/);
   assert.deepEqual(full.shortcuts, [{ name: 'Media', url: '/#media', description: 'tab' }]);
   assert.ok(renderIndex(HTML, { title: 'x' }).includes('<link rel="manifest" href="site.webmanifest">'));
+});
+
+test('renderIndex: settings.base as the first tag in the head', () => {
+  const out = renderIndex(HTML, { title: 'x', base: 'https://lab.example.com/dashboard/' });
+  const injected = out.slice(out.indexOf('<base'), out.indexOf('</head>'));
+  assert.ok(injected.startsWith('<base href="https://lab.example.com/dashboard/">\n<link rel="manifest"'));
 });

@@ -519,11 +519,15 @@ function safeHref(href) {
   return /^\s*(javascript|data|vbscript):/i.test(href) ? null : href;
 }
 
+/** Paths on this dashboard (/icons/…) relative, so they also work under settings.base. */
+const localPath = (src) => (typeof src === 'string' && src.startsWith('/icons/') ? src.slice(1) : src);
+
 /**
  * An icon as an <img>, or, for single-colour icons (mdi-…, si-…: the server marks their URL with
  * #hd-mask or #hd-mask=<hex>), a mask filled with that colour or with settings.iconStyle.
  */
 function iconImage(src, cls) {
+  src = localPath(src);
   const mask = /#hd-mask(?:=([0-9a-f]+))?$/.exec(src);
   if (!mask) return el('img', { class: cls || null, src, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
   const span = el('span', { class: 'mask-icon' + (cls ? ' ' + cls : ''), 'aria-hidden': 'true' });
@@ -755,7 +759,7 @@ function mountWidget(instance, extraClass, name) {
 function poll(instance, onResult) {
   const run = async () => {
     try {
-      const res = await fetch(`/api/widgets/${encodeURIComponent(instance.instanceId)}`);
+      const res = await fetch(`api/widgets/${encodeURIComponent(instance.instanceId)}`);
       onResult(await res.json());
     } catch (err) {
       onResult({ ok: false, error: translate('offline') });
@@ -852,7 +856,7 @@ function renderMessages(messages) {
 async function runAction(service) {
   toast(translate('running', { name: service.name }));
   try {
-    const res = await fetch(`/api/run/${encodeURIComponent(service.id)}`, { method: 'POST', headers: { 'x-requested-with': 'homelab-dashboard' } });
+    const res = await fetch(`api/run/${encodeURIComponent(service.id)}`, { method: 'POST', headers: { 'x-requested-with': 'homelab-dashboard' } });
     const out = await res.json();
     if (out.ok) toast(translate('runOk', { name: service.name }));
     else toast(translate('runFailed', { name: service.name, reason: out.error || `HTTP ${out.status}` }), { error: true });
@@ -986,7 +990,7 @@ function applyBackground(s) {
   const bg = document.getElementById('bg');
   const b = s.background;
   bg.hidden = !b;
-  bg.style.backgroundImage = b ? `url("${encodeURI(b.image)}")` : '';
+  bg.style.backgroundImage = b ? `url("${encodeURI(localPath(b.image))}")` : '';
   const filters = [];
   if (b?.blur) filters.push(`blur(${b.blur}px)`);
   if (b?.saturate !== undefined) filters.push(`saturate(${b.saturate}%)`);
@@ -1274,7 +1278,7 @@ function render(data) {
 
 async function load() {
   try {
-    const res = await fetch('/api/layout');
+    const res = await fetch('api/layout');
     render(await res.json());
   } catch (err) {
     document.getElementById('messages').replaceChildren(el('div', { class: 'msg', text: translate('offline') }));
@@ -1284,7 +1288,7 @@ async function load() {
 
 function connectEvents() {
   if (typeof EventSource === 'undefined') return;
-  const events = new EventSource('/api/events');
+  const events = new EventSource('api/events');
   let timer = null;
   events.addEventListener('reload', () => {
     clearTimeout(timer);

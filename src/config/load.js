@@ -124,13 +124,17 @@ export function normalizeSettings(raw, ctx) {
     }
   }
   settings.showTitle = settings.showTitle !== false;
-  for (const key of ['description', 'favicon', 'startUrl', 'instanceName']) {
+  for (const key of ['description', 'favicon', 'startUrl', 'instanceName', 'base']) {
     if (settings[key] === undefined || settings[key] === null) delete settings[key];
     else if (typeof settings[key] !== 'string') {
       ctx.warn(file, key, 'expected text, ignored');
       delete settings[key];
     } else settings[key] = settings[key].trim();
   }
+  if (settings.base !== undefined && !/^https?:\/\/[^\s"<>]+$/.test(settings.base)) {
+    ctx.warn(file, 'base', 'expected a full URL such as https://lab.example.com/dashboard/, ignored');
+    delete settings.base;
+  } else if (settings.base && !settings.base.endsWith('/')) settings.base += '/';
   settings.pwa = normalizePwa(settings.pwa, file, ctx);
   for (const key of ['fullWidth', 'useEqualHeights', 'disableCollapse', 'groupsInitiallyCollapsed', 'showStats', 'hideVersion', 'disableUpdateCheck', 'disableIndexing']) {
     if (settings[key] !== undefined && typeof settings[key] !== 'boolean') {

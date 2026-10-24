@@ -26,3 +26,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 1: `instanceName` and homepage's label notation for discovery.
 - 2026-10-24: homepage parity, phase 1: `hideVersion` and the update check.
 - 2026-10-24: homepage parity, phase 1: `disableIndexing`.
+- 2026-10-24: homepage parity, phase 1: `base` (sub path behind a reverse proxy).

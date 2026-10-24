@@ -78,7 +78,8 @@ async function page(results = RESULTS) {
     runScripts: 'dangerously',
     url: 'http://localhost/',
     beforeParse(window) {
-      window.fetch = async (url) => ({ json: async () => structuredClone(results[url] ?? { ok: false, error: 'nope' }) });
+      // the page asks relative URLs (api/layout); resolve them as the browser does
+      window.fetch = async (url) => ({ json: async () => structuredClone(results[new URL(url, 'http://localhost/').pathname] ?? { ok: false, error: 'nope' }) });
     },
   });
   await new Promise((r) => setTimeout(r, 30));
@@ -369,7 +370,7 @@ test('bookmarks as icons only (per group or bookmarksStyle) and category icons',
   assert.equal(doc.querySelector('[data-group="Network"] h2 .group-icon').getAttribute('src'), 'https://example.com/net.png');
   const dev = doc.querySelector('#bookmarks .group');
   assert.ok(dev.classList.contains('icons-only'));
-  assert.equal(dev.querySelector('h2 .group-icon').getAttribute('src'), '/icons/dev.svg');
+  assert.equal(dev.querySelector('h2 .group-icon').getAttribute('src'), 'icons/dev.svg', 'relative, for settings.base');
   const link = dev.querySelector('.bm');
   assert.ok(link.querySelector('.bn').classList.contains('sr-only'), 'the name stays for screen readers');
   assert.equal(link.title, 'GitHub – Code');

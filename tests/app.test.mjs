@@ -387,7 +387,7 @@ test('the page carries description and favicon from settings.yaml', async () => 
     assert.equal(res.headers.get('content-type'), 'text/html; charset=utf-8');
     assert.match(html, /<title>My lab<\/title>/);
     assert.match(html, /<meta name="description" content="Start page of the lab">/);
-    assert.match(html, /<link rel="icon" href="\/icons\/lab\.svg">/);
+    assert.match(html, /<link rel="icon" href="icons\/lab\.svg">/);
   } finally {
     await t.close();
   }
@@ -406,7 +406,7 @@ test('/site.webmanifest from settings.yaml, with pwa icons and shortcuts', async
     assert.equal(m.name, 'My lab');
     assert.equal(m.start_url, '/#media');
     assert.equal(m.theme_color, '#115e59');
-    assert.deepEqual(m.icons, [{ src: '/icons/app-192.png', sizes: '192x192', type: 'image/png' }]);
+    assert.deepEqual(m.icons, [{ src: 'icons/app-192.png', sizes: '192x192', type: 'image/png' }]);
     assert.deepEqual(m.shortcuts, [{ name: 'Media', url: '/#media' }]);
     const warnings = (await (await t.get('/api/layout')).json()).messages.warnings;
     assert.ok(warnings.some((w) => w.path === 'pwa.icons[1]'), JSON.stringify(warnings));

@@ -259,3 +259,10 @@ test('quicklaunch settings are checked; provider custom needs a url', () => {
   assert.deepEqual(bad.warnings.map((w) => w.path).sort(), ['quicklaunch.hideVisitURL', 'quicklaunch.mobileButtonPosition', 'quicklaunch.url']);
   assert.deepEqual(bad.settings.quicklaunch, {});
 });
+
+test('base: a full URL, given a trailing slash; anything else is ignored with a warning', () => {
+  assert.equal(loadConfig(configDir({ 'settings.yaml': 'base: https://lab.example.com/dashboard\n' })).settings.base, 'https://lab.example.com/dashboard/');
+  const bad = loadConfig(configDir({ 'settings.yaml': 'base: /dashboard\n' }));
+  assert.equal(bad.settings.base, undefined);
+  assert.deepEqual(bad.warnings.map((w) => w.path), ['base']);
+});

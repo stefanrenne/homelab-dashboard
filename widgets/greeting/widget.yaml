@@ -1,0 +1,8 @@
+id: greeting
+name: Greeting
+version: 1.0.0
+apiVersion: 1
+description: A line of text in the header, as in homepage's greeting widget.
+options:
+  text: { type: string, required: true }
+  text_size: { type: enum, values: [xs, sm, md, xl, 2xl, 3xl, 4xl], default: xl }   # homepage's sizes

@@ -20,7 +20,6 @@ hideErrors, status labels, container stats on click, search widget, bookmarks.
 
 Generic ones built in, service-specific ones in the widgets collection.
 
-- [ ] Greeting (built in)
 - [ ] Logo (built in)
 - [ ] Open-Meteo weather (built in, no key)
 - [ ] OpenWeatherMap (built in, key through `providers`)

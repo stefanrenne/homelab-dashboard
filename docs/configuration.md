@@ -403,6 +403,7 @@ collection's widgets under [Widget collection](https://stefanrenne.github.io/hom
 | Type | Options |
 |---|---|
 | `datetime` | `locale`, `dateStyle`, `timeStyle` |
+| `greeting` | `text` (required), `text_size` (`xs` … `4xl`) |
 | `search` | `provider`, `url`, `target`, `filter` (default true: typing filters the services, Enter opens the only match) |
 | `resources` | `cpu`, `memory` (both off by default), `disk` (list of mount points), `label` |
 | `http-status` | `url` (required), `method` (`HEAD`/`GET`) |

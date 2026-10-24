@@ -296,3 +296,23 @@ test('resources: CPU temperature, uptime, network rates, expanded details and bi
   assert.equal(formatUptime(3700), '1h 1m');
   assert.equal(formatBytes(1536, true), '1.5 KiB');
 });
+
+/** A client-only widget's element, rendered in jsdom with the given options. */
+async function renderClient(id, options, props = {}) {
+  const { JSDOM } = await import('jsdom');
+  const dom = new JSDOM('<!doctype html><html lang="en"><body></body></html>', { runScripts: 'outside-only', url: 'http://localhost/' });
+  dom.window.eval(fs.readFileSync(path.resolve('widgets', id, 'client.js'), 'utf8'));
+  const el = dom.window.document.createElement(`hd-${id}`);
+  Object.assign(el, { options, t: (k) => k, ...props });
+  dom.window.document.body.append(el);
+  return { el, window: dom.window };
+}
+
+test('greeting: the text, in homepage\'s sizes', async () => {
+  const { el } = await renderClient('greeting', { text: 'Welcome <home>', text_size: '3xl' });
+  const box = el.shadowRoot.querySelector('.text');
+  assert.equal(box.textContent, 'Welcome <home>');
+  assert.equal(box.style.fontSize, '1.875rem');
+  const plain = await renderClient('greeting', { text: 'Hi' });
+  assert.equal(plain.el.shadowRoot.querySelector('.text').style.fontSize, '1.25rem');
+});

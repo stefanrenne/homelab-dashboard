@@ -54,6 +54,7 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Resources widget (1.4.0): `cputemp` (with `tempmin`, `tempmax`, `units`), `uptime`, `network`,
   `expanded` and `diskUnits`, as in homepage. A bare `refresh` of 1000 or more is milliseconds,
   homepage's form; a smaller number stays seconds.
+- Greeting widget: a line of text in the header (`text`, `text_size`), as in homepage.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

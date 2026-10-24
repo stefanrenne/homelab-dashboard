@@ -75,14 +75,20 @@ export class Discovery {
 
 /**
  * Merges discovered services into the YAML groups. YAML wins: a discovered service with
- * the same group and name as a YAML service is skipped. Returns { groups, warnings }.
+ * the same group and name as a YAML service is skipped. Within a group services are ordered
+ * by weight, as in homepage: a YAML service weighs its `weight` or (its position + 1) × 100,
+ * a discovered one its `weight` label or 0; ties go by name. Returns { groups, warnings }.
  */
 export function mergeDiscovered(yamlGroups, found) {
-  const groups = yamlGroups.map((g) => ({ ...g, services: [...g.services], groups: g.groups ?? [] }));
+  const weigh = (g) => ({
+    ...g,
+    services: g.services.map((s, i) => ({ ...s, weight: s.weight ?? (i + 1) * 100 })),
+    groups: (g.groups ?? []).map(weigh),
+  });
+  const groups = yamlGroups.map(weigh);
   const warnings = [];
   const ctx = { error: (file, p, message) => warnings.push({ file, path: p, message }), warn: () => {} };
-  const sorted = [...found].sort((a, b) => a.weight - b.weight || a.name.localeCompare(b.name));
-  for (const svc of sorted) {
+  for (const svc of found) {
     let group = groups.find((g) => g.name === svc.group);
     if (!group) {
       group = { name: svc.group, services: [], groups: [] };
@@ -90,7 +96,12 @@ export function mergeDiscovered(yamlGroups, found) {
     }
     if (group.services.some((s) => s.name === svc.name)) continue;
     const service = normalizeService(svc.name, svc.def, svc.origin, svc.name, ctx);
-    if (service) group.services.push({ ...service, discovered: svc.origin });
+    if (service) group.services.push({ ...service, weight: svc.weight ?? 0, discovered: svc.origin });
   }
+  const order = (g) => {
+    g.services.sort((a, b) => a.weight - b.weight || a.name.localeCompare(b.name));
+    g.groups.forEach(order);
+  };
+  groups.forEach(order);
   return { groups, warnings };
 }

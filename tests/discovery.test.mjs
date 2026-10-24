@@ -120,6 +120,23 @@ test('Discovery substitutes variables in labels and records them as secrets', as
   assert.deepEqual([...d.secrets], ['k-123']);
 });
 
+test('merge: weight orders a group as in homepage: YAML (position + 1) x 100, discovered 0, ties by name', () => {
+  const yaml = [{
+    name: 'G',
+    services: [{ name: 'First', widgets: [] }, { name: 'Second', widgets: [] }, { name: 'Last', weight: 1000, widgets: [] }],
+    groups: [{ name: 'Nested', services: [{ name: 'Z', weight: 5, widgets: [] }, { name: 'Y', widgets: [] }], groups: [] }],
+  }];
+  const { groups } = mergeDiscovered(yaml, [
+    { group: 'G', name: 'Unweighted', def: {}, weight: 0, origin: 'docker:local' },
+    { group: 'G', name: 'Between', def: {}, weight: 150, origin: 'docker:local' },
+    { group: 'G', name: 'Also200', def: {}, weight: 200, origin: 'kubernetes' },
+  ]);
+  assert.deepEqual(groups[0].services.map((s) => [s.name, s.weight]), [
+    ['Unweighted', 0], ['First', 100], ['Between', 150], ['Also200', 200], ['Second', 200], ['Last', 1000],
+  ]);
+  assert.deepEqual(groups[0].groups[0].services.map((s) => s.name), ['Z', 'Y'], 'nested groups by weight too');
+});
+
 test('merge: YAML wins, new groups are added, weight orders discovered services', () => {
   const yaml = [{ name: 'Media', services: [{ name: 'Plex', href: 'http://yaml', widgets: [] }] }];
   const { groups } = mergeDiscovered(yaml, [

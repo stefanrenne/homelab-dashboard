@@ -157,6 +157,12 @@ half:
   assert.match(cfg.errors[0].message, /cannot read tls\/nope.pem: ENOENT/);
 });
 
+test('services: weight is a number, as in homepage', () => {
+  const cfg = loadConfig(configDir({ 'services.yaml': '- G:\n    - A: { weight: 50 }\n    - B: { weight: "7" }\n    - C: { weight: soon }\n' }));
+  assert.deepEqual(cfg.services[0].services.map((s) => s.weight), [50, 7, undefined]);
+  assert.deepEqual(cfg.warnings.map((w) => w.path), ['[0].G[2].C.weight']);
+});
+
 test('parseDuration and safeJoin', () => {
   assert.equal(parseDuration('10s'), 10_000);
   assert.equal(parseDuration('500ms'), 500);

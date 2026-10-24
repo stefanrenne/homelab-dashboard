@@ -70,8 +70,13 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Docker over TLS: `tls: { caFile, certFile, keyFile }` for a server in docker.yaml, as in
   homepage, for discovery and `container:` status. Widget API: `ctx.fetch(url, { tls: { ca,
   cert, key } })`.
+- `weight` for services in services.yaml, as in homepage.
 
 ### Changed
+- Services in a group are ordered by weight, as in homepage: a services.yaml service weighs
+  (its position + 1) × 100 unless it sets `weight`, a discovered one its `weight` label or 0,
+  ties by name. Discovered services without a weight now come before the YAML ones; give them
+  a `weight` label (e.g. `"1000"`) to keep them at the end.
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).
 
 ## [0.4.0] - 2026-10-24

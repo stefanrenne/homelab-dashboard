@@ -27,7 +27,7 @@ export const DEFAULT_SETTINGS = {
 };
 
 const SERVICE_KEYS = new Set([
-  'href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'widget', 'widgets', 'target', 'statusStyle', 'showStats',
+  'href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'widget', 'widgets', 'target', 'statusStyle', 'showStats', 'weight',
 ]);
 export const STATUS_STYLES = ['dot', 'basic'];
 
@@ -335,6 +335,11 @@ export function normalizeService(name, def, file, p, ctx) {
   if (def.statusStyle !== undefined) {
     if (STATUS_STYLES.includes(def.statusStyle)) service.statusStyle = def.statusStyle;
     else ctx.warn(file, `${p}.statusStyle`, 'expected dot or basic, ignored');
+  }
+  if (def.weight !== undefined && def.weight !== null) {
+    const weight = Number(def.weight);
+    if (Number.isFinite(weight)) service.weight = weight;
+    else ctx.warn(file, `${p}.weight`, 'expected a number, ignored');
   }
   for (const key of ['href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'target']) {
     if (def[key] !== undefined && def[key] !== null) service[key] = String(def[key]);

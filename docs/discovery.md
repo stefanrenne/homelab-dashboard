@@ -33,7 +33,7 @@ labels:
   homelab.icon: grafana.svg
   homelab.href: http://grafana.lan
   homelab.description: Dashboards
-  homelab.weight: "10"               # order within the group (low first)
+  homelab.weight: "10"               # order within the group, low first (default 0; services.yaml ones weigh 100, 200, ...)
   homelab.siteMonitor: http://grafana:3000/api/health   # otherwise: container state
   homelab.widget.type: custom-api
   homelab.widget.url: http://grafana:3000/api/health

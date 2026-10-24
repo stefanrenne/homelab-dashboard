@@ -227,6 +227,7 @@ footer; that choice is remembered in their browser and overrides `theme` and `co
         description: One line
         statusStyle: dot              # overrides settings.statusStyle for this service
         showStats: true               # overrides settings.showStats for this service
+        weight: 50                    # order within the group, low first; default (position + 1) x 100
         target: _self                 # overrides settings.target; hidden-iframe: the dashboard
                                       # server calls the URL (a webhook) and shows how it went
         # status check, the first one that is set:

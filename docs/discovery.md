@@ -20,7 +20,8 @@ services:
 ```
 
 When `docker.yaml` lists no servers, a socket mounted at `/var/run/docker.sock` is used as the
-server `local`. The container starts as root only to give its `node` user the socket's group,
+server `local`. Once it lists a server, only the listed ones are used; see
+[docker.yaml](configuration.md#dockeryaml) for names, several hosts and `discover: false`. The container starts as root only to give its `node` user the socket's group,
 then runs the dashboard as `node`; no `--group-add` needed.
 
 Then label containers:

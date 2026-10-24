@@ -136,18 +136,37 @@ The homepage form (a one-item list) and a plain map (`GitHub: { href: ... }`) bo
 
 ## docker.yaml
 
-Without servers here, a socket mounted at `/var/run/docker.sock` is used as `local`
-(see [Discovery](discovery.md)).
+The Docker servers, for `container:` status labels and for [discovery](discovery.md) of
+labelled containers. Each top-level key is a name you choose (`local`, `green`, `nas`, ...):
 
 ```yaml
-local:
-  socket: /var/run/docker.sock
+green:
+  socket: /var/run/docker.sock   # the socket as mounted in the dashboard's container
 nas:
-  host: 192.168.1.20      # a Docker API or docker-socket-proxy
+  host: 192.168.1.20             # a Docker API or docker-socket-proxy
   port: 2375
   protocol: http
-  discover: false         # only for container status, do not add its containers
+  discover: false                # only for container status, do not add its containers
 ```
+
+| Key | Default | What |
+|---|---|---|
+| `socket` | | Path of a Docker socket inside the container. Mount it: `/var/run/docker.sock:/var/run/docker.sock:ro` |
+| `host` | | Host name or IP of a Docker API or socket proxy (instead of `socket`) |
+| `port` | `2375` | Port of that API |
+| `protocol` | `http` | `http` or `https` |
+| `discover` | `true` | `false`: use the server for `container:` status only, without adding its containers |
+
+The name is what `server:` refers to in `services.yaml`, and what config messages show.
+
+- **No servers here** (no file, or only comments): a socket mounted at `/var/run/docker.sock`
+  is used as the server `local` by itself. For a single Docker host on the same machine,
+  mounting the socket is all it takes.
+- **One or more servers here**: only those are used. To use the mounted socket next to another
+  server, list it too, as `green` above.
+- **One server**: services with `container:` use it; `server:` is optional.
+  **Several servers**: give such services `server: <name>`. Discovered containers always
+  carry the server they were found on.
 
 ## kubernetes.yaml
 

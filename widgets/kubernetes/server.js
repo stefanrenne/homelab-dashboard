@@ -68,13 +68,18 @@ async function getWith(ctx, path) {
   return res.json();
 }
 
+/** A GET on the cluster: the connection in the options, else the pod's service account. Also used by kubernetes-pods. */
+export function k8sJson(ctx, path) {
+  return ctx.options.url ? getWith(ctx, path) : get(path, ctx.signal);
+}
+
 const pct = (used, total) => (total > 0 ? Math.round((1000 * used) / total) / 10 : null);
 
 export default {
   async fetch(ctx) {
     const cluster = { show: true, cpu: true, memory: true, showLabel: true, label: 'cluster', ...(ctx.options.cluster ?? {}) };
     const nodeOpts = { show: true, cpu: true, memory: true, showLabel: true, ...(ctx.options.nodes ?? {}) };
-    const load = (path) => (ctx.options.url ? getWith(ctx, path) : get(path, ctx.signal));
+    const load = (path) => k8sJson(ctx, path);
     const [nodeList, metricList] = await Promise.all([
       load('/api/v1/nodes'),
       load('/apis/metrics.k8s.io/v1beta1/nodes').catch((err) => {

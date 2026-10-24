@@ -11,6 +11,7 @@ import httpStatus from '../widgets/http-status/server.js';
 import customApi, { pick } from '../widgets/custom-api/server.js';
 import docker, { cpuPercent } from '../widgets/docker/server.js';
 import proxmoxvm, { memoryBlock } from '../widgets/proxmoxvm/server.js';
+import kubernetesPods from '../widgets/kubernetes-pods/server.js';
 import kubernetes, { PATHS as K8S, cores, bytes as k8sBytes } from '../widgets/kubernetes/server.js';
 import stocks, { API as FINNHUB } from '../widgets/stocks/server.js';
 import openweathermap, { API as OWM, condition as owmCondition } from '../widgets/openweathermap/server.js';
@@ -213,6 +214,50 @@ test('proxmoxvm: state, CPU and memory of a VM or container, with homepage\'s AP
     await srv.close();
   }
   assert.deepEqual(memoryBlock(undefined).value, null);
+});
+
+test('kubernetes-pods: state, pods, CPU and memory of an app\'s pods, as in homepage', async () => {
+  const pod = (name, phase, limit) => ({ metadata: { name }, status: { phase }, spec: { containers: [{ resources: limit ? { limits: { cpu: limit } } : {} }] } });
+  const pods = {
+    'app.kubernetes.io/name=jellyfin': [pod('j1', 'Running', '500m'), pod('j2', 'Running', '500m')],
+    'app.kubernetes.io/name=half': [pod('h1', 'Running'), pod('h2', 'Pending')],
+    'app.kubernetes.io/name=down': [pod('d1', 'Failed')],
+    'app.kubernetes.io/instance in (a, b)': [pod('j1', 'Running')],
+  };
+  const asked = [];
+  const srv = await serve((req, res) => {
+    const url = new URL(req.url, 'http://x');
+    asked.push(url.pathname);
+    if (url.pathname === '/api/v1/namespaces/media/pods') return res.end(JSON.stringify({ items: pods[url.searchParams.get('labelSelector')] ?? [] }));
+    if (url.pathname === '/apis/metrics.k8s.io/v1beta1/namespaces/media/pods') {
+      return res.end(JSON.stringify({ items: [
+        { metadata: { name: 'j1' }, containers: [{ usage: { cpu: '250m', memory: '500Mi' } }] },
+        { metadata: { name: 'j2' }, containers: [{ usage: { cpu: '50m', memory: '600Mi' } }] },
+        { metadata: { name: 'h1' }, containers: [{ usage: { cpu: '20m', memory: '100M' } }] },
+        { metadata: { name: 'other' }, containers: [{ usage: { cpu: '4', memory: '9Gi' } }] },
+      ] }));
+    }
+    res.statusCode = 404;
+    res.end('{}');
+  });
+  const run = (options) => {
+    const signal = new AbortController().signal;
+    return kubernetesPods.fetch(fakeCtx({ namespace: 'media', url: srv.url, token: 't', ...options }, { signal, fetch: (i, init) => widgetFetch(i, init, undefined, signal) }));
+  };
+  try {
+    const j = await run({ app: 'jellyfin' });
+    assert.deepEqual([j.status, j.statusText], ['up', 'running']);
+    assert.deepEqual(j.blocks.map((b) => [b.key, b.value, b.unit]), [['status', 'running', undefined], ['pods', '2/2', undefined], ['cpu', 30, '%'], ['mem', 1.2, 'GB']]);
+    const half = await run({ app: 'half' });
+    assert.deepEqual([half.status, half.blocks[1].value, half.blocks[1].status, half.blocks[2].value], ['warn', '1/2', 'warn', 0.02], 'no limits: cores');
+    const down = await run({ app: 'down' });
+    assert.deepEqual([down.status, down.statusText, down.blocks.length], ['down', 'not running', 2]);
+    assert.equal((await run({ app: 'nope' })).statusText, 'not found');
+    assert.equal((await run({ app: 'x', podSelector: 'app.kubernetes.io/instance in (a, b)' })).blocks[1].value, '1/1', 'podSelector wins over app');
+    await assert.rejects(run({}), /app or podSelector/);
+  } finally {
+    await srv.close();
+  }
 });
 
 test('resources: memory and disk now, CPU from the second call on', async () => {

@@ -1,0 +1,172 @@
+{
+  "en": {
+    "status": "Status",
+    "pods": "Pods",
+    "cpu": "CPU",
+    "memory": "Memory",
+    "running": "running",
+    "partial": "partial",
+    "not running": "not running",
+    "not found": "not found"
+  },
+  "nl": {
+    "status": "Status",
+    "pods": "Pods",
+    "cpu": "CPU",
+    "memory": "Geheugen",
+    "running": "actief",
+    "partial": "deels actief",
+    "not running": "niet actief",
+    "not found": "niet gevonden"
+  },
+  "fr": {
+    "status": "Statut",
+    "pods": "Pods",
+    "cpu": "CPU",
+    "memory": "Mémoire",
+    "running": "actif",
+    "partial": "partiel",
+    "not running": "arrêté",
+    "not found": "introuvable"
+  },
+  "de": {
+    "status": "Status",
+    "pods": "Pods",
+    "cpu": "CPU",
+    "memory": "Speicher",
+    "running": "läuft",
+    "partial": "teilweise",
+    "not running": "läuft nicht",
+    "not found": "nicht gefunden"
+  },
+  "es": {
+    "status": "Estado",
+    "pods": "Pods",
+    "cpu": "CPU",
+    "memory": "Memoria",
+    "running": "en marcha",
+    "partial": "parcial",
+    "not running": "detenido",
+    "not found": "no encontrado"
+  },
+  "ca": {
+    "status": "Estat",
+    "pods": "Pods",
+    "cpu": "CPU",
+    "memory": "Memòria",
+    "running": "en marxa",
+    "partial": "parcial",
+    "not running": "aturat",
+    "not found": "no trobat"
+  },
+  "he": {
+    "status": "מצב",
+    "pods": "פודים",
+    "cpu": "מעבד",
+    "memory": "זיכרון",
+    "running": "פועל",
+    "partial": "חלקי",
+    "not running": "לא פועל",
+    "not found": "לא נמצא"
+  },
+  "hr": {
+    "status": "Stanje",
+    "pods": "Podovi",
+    "cpu": "CPU",
+    "memory": "Memorija",
+    "running": "radi",
+    "partial": "djelomično",
+    "not running": "ne radi",
+    "not found": "nije pronađeno"
+  },
+  "hu": {
+    "status": "Állapot",
+    "pods": "Podok",
+    "cpu": "CPU",
+    "memory": "Memória",
+    "running": "fut",
+    "partial": "részleges",
+    "not running": "nem fut",
+    "not found": "nem található"
+  },
+  "it": {
+    "status": "Stato",
+    "pods": "Pod",
+    "cpu": "CPU",
+    "memory": "Memoria",
+    "running": "in esecuzione",
+    "partial": "parziale",
+    "not running": "non attivo",
+    "not found": "non trovato"
+  },
+  "nb-NO": {
+    "status": "Status",
+    "pods": "Poder",
+    "cpu": "CPU",
+    "memory": "Minne",
+    "running": "kjører",
+    "partial": "delvis",
+    "not running": "kjører ikke",
+    "not found": "ikke funnet"
+  },
+  "pt": {
+    "status": "Estado",
+    "pods": "Pods",
+    "cpu": "CPU",
+    "memory": "Memória",
+    "running": "em execução",
+    "partial": "parcial",
+    "not running": "parado",
+    "not found": "não encontrado"
+  },
+  "ru": {
+    "status": "Состояние",
+    "pods": "Поды",
+    "cpu": "ЦП",
+    "memory": "Память",
+    "running": "работает",
+    "partial": "частично",
+    "not running": "не работает",
+    "not found": "не найден"
+  },
+  "sv": {
+    "status": "Status",
+    "pods": "Poddar",
+    "cpu": "CPU",
+    "memory": "Minne",
+    "running": "körs",
+    "partial": "delvis",
+    "not running": "körs inte",
+    "not found": "hittades inte"
+  },
+  "vi": {
+    "status": "Trạng thái",
+    "pods": "Pod",
+    "cpu": "CPU",
+    "memory": "Bộ nhớ",
+    "running": "đang chạy",
+    "partial": "một phần",
+    "not running": "không chạy",
+    "not found": "không tìm thấy"
+  },
+  "zh-Hans": {
+    "status": "状态",
+    "pods": "Pod",
+    "cpu": "CPU",
+    "memory": "内存",
+    "running": "运行中",
+    "partial": "部分运行",
+    "not running": "未运行",
+    "not found": "未找到"
+  },
+  "zh-Hant": {
+    "status": "狀態",
+    "pods": "Pod",
+    "cpu": "CPU",
+    "memory": "記憶體",
+    "running": "執行中",
+    "partial": "部分執行",
+    "not running": "未執行",
+    "not found": "找不到"
+  }
+}

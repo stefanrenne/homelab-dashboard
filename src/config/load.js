@@ -28,7 +28,7 @@ export const DEFAULT_SETTINGS = {
 
 const SERVICE_KEYS = new Set([
   'href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'widget', 'widgets', 'target', 'statusStyle', 'showStats', 'weight',
-  'proxmoxNode', 'proxmoxVMID', 'proxmoxType',
+  'proxmoxNode', 'proxmoxVMID', 'proxmoxType', 'app', 'namespace', 'podSelector', 'external',
 ]);
 export const STATUS_STYLES = ['dot', 'basic'];
 
@@ -346,10 +346,12 @@ export function normalizeService(name, def, file, p, ctx) {
   if (def.proxmoxType !== undefined && !['qemu', 'lxc'].includes(def.proxmoxType)) {
     ctx.warn(file, `${p}.proxmoxType`, 'expected qemu or lxc, ignored');
   }
-  for (const key of ['href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'target', 'proxmoxNode', 'proxmoxVMID']) {
+  for (const key of ['href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'target', 'proxmoxNode', 'proxmoxVMID', 'app', 'namespace', 'podSelector']) {
     if (def[key] !== undefined && def[key] !== null) service[key] = String(def[key]);
   }
   if (['qemu', 'lxc'].includes(def.proxmoxType)) service.proxmoxType = def.proxmoxType;
+  // homepage's external: true: a Kubernetes app without a pod status label
+  if (def.external === true || def.external === 'true') service.external = true;
   const widgets = [];
   if (def.widget !== undefined) widgets.push([def.widget, `${p}.widget`]);
   if (def.widgets !== undefined) {

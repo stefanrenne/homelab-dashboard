@@ -177,6 +177,25 @@ contexts: [{ name: c, context: { cluster: c, user: u } }]
   }
 });
 
+test('app, namespace and podSelector: a pods status label, as in homepage; external leaves it out', async () => {
+  const t = await startApp({
+    'services.yaml': `
+- G:
+    - A: { app: jellyfin, namespace: media }
+    - B: { app: matrix, namespace: comms, podSelector: "app.kubernetes.io/instance in (a, b)" }
+    - C: { app: outside, external: true }
+`,
+  });
+  try {
+    const [a, b, c] = t.app.layout.groups[0].services;
+    assert.deepEqual(a.statuses.map((s) => [s.kind, s.type, s.options.app, s.options.namespace]), [['pods', 'kubernetes-pods', 'jellyfin', 'media']]);
+    assert.equal(b.statuses[0].options.podSelector, 'app.kubernetes.io/instance in (a, b)');
+    assert.deepEqual(c.statuses, []);
+  } finally {
+    await t.close();
+  }
+});
+
 test('refreshInterval, fields and hide_errors belong to the dashboard, not the widget', async () => {
   const upstream = await serve((req, res) => res.end(JSON.stringify({ a: 1, b: 2, c: 3 })));
   const t = await startApp({

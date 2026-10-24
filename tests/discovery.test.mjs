@@ -237,6 +237,7 @@ test('kubernetes: discovery lists Ingresses, IngressRoutes of both Traefik group
       ['Route', 'https://route.lan/'], ['plain', 'https://plain.lan/'],
     ]);
     assert.equal(asked.filter((u) => u.includes('/gateways/')).length, 1, 'one Gateway lookup per parent');
+    assert.deepEqual([all[0].def.app, all[0].def.namespace], ['grafana', 'monitoring'], 'the app\'s pods, as in homepage');
     asked.length = 0;
     assert.deepEqual((await discoverKubernetes({ connection, config: { ingress: false } })).length, 0);
     assert.deepEqual(asked, [], 'ingress: false lists nothing');
@@ -249,6 +250,13 @@ test('kubernetes: discovery lists Ingresses, IngressRoutes of both Traefik group
   } finally {
     await noCrd.close();
   }
+});
+
+test('kubernetes: app, pod-selector and external annotations, as in homepage', () => {
+  const ing = (annotations) => ({ items: [{ metadata: { name: 'web', namespace: 'apps', annotations: { 'gethomepage.dev/enabled': 'true', ...annotations } }, spec: {} }] });
+  assert.deepEqual(servicesFromIngresses(ing({}))[0].def, { app: 'web', namespace: 'apps' });
+  assert.deepEqual(servicesFromIngresses(ing({ 'gethomepage.dev/app': 'site', 'gethomepage.dev/pod-selector': '' }))[0].def, { app: 'site', namespace: 'apps', podSelector: '' });
+  assert.deepEqual(servicesFromIngresses(ing({ 'gethomepage.dev/external': 'true' }))[0].def, { external: true });
 });
 
 test('kubernetes: gethomepage.dev annotations work too', () => {

@@ -78,7 +78,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       const found = config.proxmox?.[String(options.node)] ?? config.proxmox?.[''];
       return found ? { ...found, ...options } : options;
     }
-    if (type === 'kubernetes' && config.kubernetes?.mode === 'default') {
+    if ((type === 'kubernetes' || type === 'kubernetes-pods') && config.kubernetes?.mode === 'default') {
       try {
         const c = k8sConnection(config.kubernetes);
         const filled = { url: c.url, token: c.token, username: c.username, password: c.password, tlsCa: c.ca, tlsCert: c.cert, tlsKey: c.key, insecure: c.insecure };
@@ -183,6 +183,11 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       const conn = server?.url ? { url: server.url, ...tls } : server?.socket ? { socket: server.socket } : {};
       if (server?.swarm) conn.swarm = true;
       out.push({ kind: 'container', ...addInstance(id('container'), 'docker', { container: service.container, ...conn }, where) });
+    }
+    // homepage's app (+ namespace, podSelector): the app's pods, unless external
+    if (service.app && !service.external) {
+      const options = { app: service.app, ...(service.namespace ? { namespace: service.namespace } : {}), ...(service.podSelector !== undefined ? { podSelector: service.podSelector } : {}) };
+      out.push({ kind: 'pods', ...addInstance(id('pods'), 'kubernetes-pods', options, where) });
     }
     if (service.proxmoxNode && service.proxmoxVMID) {
       const node = proxmoxNode(service.proxmoxNode, where);

@@ -239,6 +239,10 @@ footer; that choice is remembered in their browser and overrides `theme` and `co
         proxmoxNode: pve              # Proxmox VM or container state (proxmoxvm widget, proxmox.yaml)
         proxmoxVMID: 101
         proxmoxType: qemu             # qemu (a VM, default) or lxc (a container)
+        app: app                      # Kubernetes: the pods labelled app.kubernetes.io/name=app (kubernetes-pods widget)
+        namespace: apps               # their namespace (default: default)
+        podSelector: tier=web         # another label selector instead of app's
+        external: true                # no pod status for this app
         # widgets:
         widget:
           type: custom-api
@@ -454,6 +458,7 @@ collection's widgets under [Widget collection](https://stefanrenne.github.io/hom
 | `http-status` | `url` (required), `method` (`HEAD`/`GET`) |
 | `ping` | `host` (required; a name, IP or URL) |
 | `docker` | `container` (required), `socket` or `url`, `swarm`, `tlsCa`/`tlsCert`/`tlsKey` (secret) |
+| `kubernetes-pods` | `namespace`, `app` or `podSelector`, and the connection from kubernetes.yaml (`url`, `token`, `tlsCa`, ...) |
 | `proxmoxvm` | `node`, `vmid` (required), `type` (`qemu`/`lxc`), and `url`, `token`, `secret` (secret), `insecure` from proxmox.yaml when left out |
 | `custom-api` | `url` (required), `method`, `headers` (secret), `body`, `display` (`block`/`list`), `mappings` (required: `field`, `label`, `format` (`number`/`percent`/`bytes`/`text`), `scale`, `prefix`, `suffix`, `remap: [{ value, to }, { any: true, to }]`) |
 

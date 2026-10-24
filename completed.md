@@ -46,3 +46,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 3: Proxmox VM/LXC status and stats per service (`proxmox.yaml`, built-in `proxmoxvm`; tested against a fake API, not a live Proxmox).
 - 2026-10-24: homepage parity, phase 3: Kubernetes outside the cluster (`mode: default`, a kubeconfig without dependencies; tested against local API servers, not a live cluster).
 - 2026-10-24: homepage parity, phase 3: Kubernetes discovery of Traefik IngressRoutes and Gateway API HTTPRoutes (tested against a fake API).
+- 2026-10-24: homepage parity, phase 3: Kubernetes pod status and stats per service (`app`, `namespace`, `podSelector`, built-in `kubernetes-pods`; tested against a fake API). Phase 3 done.

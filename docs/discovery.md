@@ -138,6 +138,10 @@ rules:
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["list"]
+  # pod status labels (app:, and discovered services)
+  - apiGroups: ["", "metrics.k8s.io"]
+    resources: ["pods"]
+    verbs: ["list"]
   # only with traefik: true
   - apiGroups: ["traefik.io", "traefik.containo.us"]
     resources: ["ingressroutes"]
@@ -169,6 +173,12 @@ metadata:
 ```
 
 homepage's `gethomepage.dev/*` annotations work as well.
+
+**Pod status.** As in homepage, a discovered Ingress or route gets the state of its app's pods
+as a label (the [Kubernetes pods](widgets/built-in/kubernetes-pods.html) widget): the pods
+labelled `app.kubernetes.io/name=<its name>` in its namespace. `homelab.dev/app` names another
+app, `homelab.dev/pod-selector` takes a label selector, and `homelab.dev/external: "true"` leaves
+the label out. This needs `list` on `pods` (and `pods.metrics.k8s.io` for CPU and memory).
 
 **Traefik and the Gateway API**, as in homepage: Ingresses are listed by default; add
 `traefik: true` for Traefik's IngressRoutes (`traefik.io` and the older `traefik.containo.us`)

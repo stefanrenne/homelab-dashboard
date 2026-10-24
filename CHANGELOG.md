@@ -82,6 +82,9 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Kubernetes discovery of Traefik IngressRoutes (`traefik: true`) and Gateway API HTTPRoutes
   (`gateway: true`), as in homepage, with a link from their host when `href` is not set.
   `ingress: false` skips Ingresses.
+- Kubernetes pod status per service: `app`, `namespace` and `podSelector` (and `external`), as in
+  homepage, with the pods' state, CPU and memory on a click; discovered Ingresses and routes get
+  it too. Built-in `kubernetes-pods` widget.
 
 ### Changed
 - Services in a group are ordered by weight, as in homepage: a services.yaml service weighs

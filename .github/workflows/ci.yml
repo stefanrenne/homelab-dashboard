@@ -3,37 +3,108 @@ name: CI
 on:
   push:
     branches: [main]
-    tags: ['v*']
+    tags: ["v*"]
   pull_request:
+  workflow_dispatch:
+  # weekly rebuild of latest, so security fixes of the base image (node:22-alpine) reach the
+  # image without a code change
+  schedule:
+    - cron: "23 4 * * 1"
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: "22"
           cache: npm
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - run: npm test
 
+  # On a pull request the image is built and smoke-tested too, without pushing: an update of the
+  # build actions or the base image is tested before it is merged.
   image:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - name: Build
-        uses: docker/build-push-action@v6
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v4
+      # the version in the image: 1.2.3 for a tag v1.2.3, otherwise main-<short sha>
+      - id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then echo "version=${GITHUB_REF_NAME#v}"; else echo "version=main-${GITHUB_SHA::7}"; fi >> "$GITHUB_OUTPUT"
+      - name: Build for the smoke test (amd64)
+        uses: docker/build-push-action@v7
         with:
           context: .
-          push: false
-          tags: homelab-dashboard:ci
+          platforms: linux/amd64
+          pull: true
           load: true
+          tags: homelab-dashboard:ci
+          build-args: VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       - name: Smoke test
         run: |
           docker run -d --name hd -p 3000:3000 homelab-dashboard:ci
-          for i in $(seq 1 20); do curl -fs http://127.0.0.1:3000/api/health && break; sleep 1; done
+          for i in $(seq 1 30); do curl -fs http://127.0.0.1:3000/api/health && break; sleep 1; done
+          curl -fs http://127.0.0.1:3000/api/health | grep -q '"version":"${{ steps.version.outputs.version }}"'
           curl -fs http://127.0.0.1:3000/api/layout | grep -q '"groups"'
+          curl -fs http://127.0.0.1:3000/ | grep -q '<title>'
           docker logs hd
+      - uses: docker/login-action@v4
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short
+      - name: Build and push (amd64, arm64)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          pull: true
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=gha
+
+  # A tag v1.2.3 becomes a GitHub release with that version's section of CHANGELOG.md.
+  release:
+    needs: image
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Release notes from CHANGELOG.md
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then echo "::error::CHANGELOG.md has no section for $version"; exit 1; fi
+          printf '\n```bash\ndocker pull ghcr.io/%s:%s\n```\n' "$GITHUB_REPOSITORY" "$version" >> notes.md
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md --verify-tag

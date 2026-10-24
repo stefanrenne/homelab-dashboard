@@ -13,7 +13,10 @@ COPY public ./public
 COPY widgets ./widgets
 COPY config.example ./config.example
 
-ENV NODE_ENV=production \
+# The version reported by /api/health: 1.2.3 for a release, main-<sha> for other builds (CI sets it).
+ARG VERSION=dev
+ENV HD_VERSION=${VERSION} \
+    NODE_ENV=production \
     HD_CONFIG_DIR=/config \
     PORT=3000 \
     HOST=0.0.0.0

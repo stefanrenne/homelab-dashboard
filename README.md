@@ -28,9 +28,10 @@ get a pull request merged here first.
 ## Quick start
 
 ```bash
-docker build -t homelab-dashboard .
-docker run -d -p 3000:3000 -v ./config:/config homelab-dashboard
+docker run -d -p 3000:3000 -v ./config:/config ghcr.io/stefanrenne/homelab-dashboard:latest
 ```
+
+Images are built for amd64 and arm64: `latest` follows `main`, `0.1.0` / `0.1` are releases.
 
 On first start an empty `config` folder is filled with the example config. Edit the YAML files
 and the open page updates by itself. See [docker-compose.example.yml](docker-compose.example.yml)
@@ -54,9 +55,14 @@ for Docker discovery through a read-only socket proxy.
 
 ## Third-party widgets
 
+Ready-made widgets for Radarr, Sonarr, Bazarr, Prowlarr, SABnzbd, Seerr, Stash, Tautulli,
+Tdarr, What's up Docker, Portainer and Unraid are in
+[homelab-dashboard-widgets](https://github.com/stefanrenne/homelab-dashboard-widgets):
+
 ```yaml
 # settings.yaml
 plugins:
+  - source: git+https://github.com/stefanrenne/homelab-dashboard-widgets#v0.2.0
   - source: git+https://github.com/someone/hd-widget-pihole#v1.2.0
   - source: npm:hd-widget-adguard@2.0.1
   - path: ./my-widgets/garage-door
@@ -79,4 +85,4 @@ Writing one takes a manifest and one function. Start from
 
 ## License
 
-MIT
+[MIT](LICENSE)

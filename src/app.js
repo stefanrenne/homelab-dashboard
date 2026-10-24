@@ -19,7 +19,8 @@ import { safeJoin } from './util.js';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const BUILTIN_WIDGETS = path.join(ROOT, 'widgets');
 export const PUBLIC_DIR = path.join(ROOT, 'public');
-export const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
+// HD_VERSION is set by the Docker build (1.2.3 or main-<sha>); otherwise package.json's version.
+export const VERSION = process.env.HD_VERSION || JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',

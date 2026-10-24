@@ -1,8 +1,7 @@
 # Example: the dashboard with Docker discovery through a read-only socket proxy.
 services:
   dashboard:
-    image: homelab-dashboard:latest
-    build: .
+    image: ghcr.io/stefanrenne/homelab-dashboard:latest
     ports:
       - "3000:3000"
     volumes:

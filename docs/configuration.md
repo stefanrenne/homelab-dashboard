@@ -154,7 +154,7 @@ mode: cluster   # or disabled (default)
 
 Widgets for radarr, sonarr, bazarr, prowlarr, sabnzbd, seerr, stash, tautulli, tdarr, What's
 up Docker, Portainer and Unraid are in the separate
-[homelab-dashboard-widgets](../../homelab-dashboard-widgets) collection.
+[homelab-dashboard-widgets](https://github.com/stefanrenne/homelab-dashboard-widgets) collection.
 
 ## Migration
 

@@ -2,7 +2,6 @@
 
 Open work, roughly in order of value. Move an item to `completed.md` when it is done.
 
-- [ ] Publish the image (GHCR) from CI on a `v*` tag; see docs/publishing.md.
 - [ ] Kubernetes: also read `kubeconfig` (mode `kubeconfig`) for running outside the cluster.
 - [ ] Kubernetes: discover Services and Traefik IngressRoutes, not only Ingresses.
 - [ ] `HD_ALLOWED_HOSTS` check on the Host header (DNS rebinding), like homepage's `HOMEPAGE_ALLOWED_HOSTS`.

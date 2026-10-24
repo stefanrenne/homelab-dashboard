@@ -27,7 +27,8 @@ pulled in through `plugins:` in `settings.yaml`. A single Docker container, Node
 | `deploy/` | Your own installations (config, compose file, preview scripts). Ignored by git; never referenced from the rest of the codebase. |
 | `tests/` | `node:test` for everything, jsdom for the frontend, fixtures in `tests/fixtures/`. |
 | `scripts/screenshots.mjs` | Recreates the README screenshots (Playwright, not in `package.json`). |
-| `../homelab-dashboard-widgets` | Separate repo: the homepage-style widgets (radarr, unraid, ...) as a collection. Not part of this codebase on purpose. |
+| `../homelab-dashboard-widgets` | Separate repo ([GitHub](https://github.com/stefanrenne/homelab-dashboard-widgets)): the homepage-style widgets (radarr, unraid, ...) as a collection. Not part of this codebase on purpose. |
+| `.github/` | CI (tests, image smoke test, amd64+arm64 image to GHCR, release on a tag), Dependabot and its auto-merge. |
 | `docs/` | Architecture, configuration, widgets (authoring, API reference, security), discovery, development, publishing, decisions. |
 | `todo.md` / `completed.md` | Open and finished work. Update them when you pick something up or finish it. |
 | `CHANGELOG.md` | What changed per version, for users. A user-visible change gets a line under `## [Unreleased]`. |

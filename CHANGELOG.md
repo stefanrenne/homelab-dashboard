@@ -4,6 +4,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-24
+
 ### Added
 - YAML configuration: settings, services, header widgets, bookmarks, Docker and Kubernetes,
   with `{{HD_VAR_*}}`/`{{HD_FILE_*}}` variables and hot reload.
@@ -11,6 +13,7 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Third-party widgets from git, npm or a local folder, pinned in `plugins/plugins.lock.yaml`.
 - Docker label and Kubernetes Ingress discovery.
 - Dashboard in five languages with dark, light and auto theme.
+- Docker image for amd64 and arm64 on ghcr.io/stefanrenne/homelab-dashboard.
 - homepage look: Manrope, Tailwind colour palettes, status labels in the card corners
   (response time, "down", container state; click a container label for its stats), rows for
   queues and lists, an error box per widget, and footer buttons for theme, colour and refresh.

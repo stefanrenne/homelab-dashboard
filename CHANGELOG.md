@@ -4,6 +4,12 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Fixed
+- Old plugin versions piled up in `plugins/`: after each sync the folders the lock file no
+  longer points at (older versions, removed sources) are deleted.
+- A failed plugin update (offline, a broken release) dropped the plugin; it now keeps the
+  version that worked and shows the error.
+
 ## [0.3.0] - 2026-10-24
 
 ### Added

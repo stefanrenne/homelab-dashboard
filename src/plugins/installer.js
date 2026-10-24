@@ -16,7 +16,8 @@
 //
 // Downloads land in <config>/plugins/<id>@<version>. plugins.lock.yaml records what a
 // source resolved to (commit or tarball integrity), so later starts reuse the same files
-// without network access until a sync with `update` is asked for. The app writes
+// without network access until a sync with `update` is asked for. Folders the lock file no
+// longer points at (older versions, removed sources) are deleted after each sync. The app writes
 // nowhere else in the config dir (hard rule 5).
 
 import fs from 'node:fs';
@@ -140,14 +141,22 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
         });
       }
       const locked = lock[src.key];
+      const lockedHere = Boolean(locked?.dir && fs.existsSync(path.join(pluginsRoot, locked.dir)));
       let record;
-      if (!update && locked && locked.dir && fs.existsSync(path.join(pluginsRoot, locked.dir))) {
+      if (!update && lockedHere) {
         record = locked;
       } else {
-        record = src.kind === 'git'
-          ? await installGit(src, pluginsRoot, run, update ? null : locked)
-          : await installNpm(src, pluginsRoot, run, update ? null : locked);
-        log.info(`plugins: installed ${label} as ${record.dir}`);
+        try {
+          record = src.kind === 'git'
+            ? await installGit(src, pluginsRoot, run, update ? null : locked)
+            : await installNpm(src, pluginsRoot, run, update ? null : locked);
+          log.info(`plugins: installed ${label} as ${record.dir}`);
+        } catch (err) {
+          if (!lockedHere) throw err;
+          // an update that fails (offline, a bad release) keeps the version that worked
+          errors.push({ source: label, message: `update failed, keeping ${locked.dir}: ${err.message}` });
+          record = locked;
+        }
       }
       nextLock[src.key] = record;
       const root = path.join(pluginsRoot, record.dir, src.subdir);
@@ -158,7 +167,22 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
   }
 
   if (entries.some((e) => !e.path) || Object.keys(lock).length) writeLock(configDir, nextLock);
+  removeUnlocked(pluginsRoot, nextLock, log);
   return { installed, errors, warnings };
+}
+
+/**
+ * Deletes the package folders in <config>/plugins that the lock file no longer points at:
+ * older versions after an update, and sources that were removed from settings.yaml.
+ */
+function removeUnlocked(pluginsRoot, lock, log) {
+  if (!fs.existsSync(pluginsRoot)) return;
+  const keep = new Set(Object.values(lock).map((r) => r.dir));
+  for (const entry of fs.readdirSync(pluginsRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory() || keep.has(entry.name)) continue;
+    fs.rmSync(path.join(pluginsRoot, entry.name), { recursive: true, force: true });
+    if (entry.name !== '.tmp') log.info(`plugins: removed ${entry.name}, no longer in the lock file`);
+  }
 }
 
 /** The widget folders of a package: the package itself, or the widgets of a collection. */

@@ -133,6 +133,39 @@ test('withDefaultPlugins: own entries come first, an entry for the same reposito
   assert.equal(DEFAULT_PLUGINS[0].source, 'git+https://github.com/stefanrenne/homelab-dashboard-widgets#latest');
 });
 
+test('a sync removes the folders the lock file no longer points at', async () => {
+  const { url, repo, git } = templateRepo();
+  const configDir = tmpDir();
+  const pluginsRoot = path.join(configDir, 'plugins');
+  const entries = [{ source: `git+${url}#main` }];
+  await syncPlugins({ configDir, entries, log: silentLog });
+  fs.writeFileSync(path.join(repo, 'widget.yaml'), fs.readFileSync(path.join(repo, 'widget.yaml'), 'utf8').replace('1.1.0', '1.2.0'));
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qam', 'v1.2');
+
+  await syncPlugins({ configDir, entries, update: true, log: silentLog });
+  assert.deepEqual(fs.readdirSync(pluginsRoot).sort(), ['example-counter@1.2.0', 'plugins.lock.yaml']);
+
+  // the source is taken out of settings.yaml: its folder goes too
+  await syncPlugins({ configDir, entries: [], log: silentLog });
+  assert.deepEqual(fs.readdirSync(pluginsRoot), ['plugins.lock.yaml']);
+  assert.deepEqual(readLock(configDir), {});
+});
+
+test('a failed update keeps the locked version, its folder and its lock entry', async () => {
+  const { url, repo } = templateRepo();
+  const configDir = tmpDir();
+  const entries = [{ source: `git+${url}#v1.0.0` }];
+  await syncPlugins({ configDir, entries, log: silentLog });
+  const before = readLock(configDir);
+  fs.rmSync(repo, { recursive: true }); // the source is gone (offline, deleted)
+
+  const out = await syncPlugins({ configDir, entries, update: true, log: silentLog });
+  assert.match(out.errors[0].message, /^update failed, keeping example-counter@1\.0\.0: /);
+  assert.equal(path.basename(out.installed[0].dir), 'example-counter@1.0.0');
+  assert.deepEqual(readLock(configDir), before);
+  assert.ok(fs.existsSync(path.join(configDir, 'plugins', 'example-counter@1.0.0')));
+});
+
 test('a locked source needs no network on the next start', async () => {
   const { url, repo } = templateRepo();
   const configDir = tmpDir();

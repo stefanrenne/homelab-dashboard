@@ -14,7 +14,7 @@ skipped and the rest keeps working.
 | `docker.yaml` | Docker servers (status and discovery) |
 | `kubernetes.yaml` | Kubernetes discovery |
 | `icons/` | Your own icons, used as `icon: /icons/name.svg` |
-| `plugins/` | Managed by the dashboard: downloaded widgets and `plugins.lock.yaml` |
+| `plugins/` | Managed by the dashboard: downloaded widgets and `plugins.lock.yaml`. Older versions and removed sources are deleted after each sync |
 
 ## Variables
 
@@ -65,7 +65,8 @@ own with the same id as one in the collection (for example a local checkout unde
 `#latest` installs the highest release tag (`v1.2.3` or `1.2.3`; pre-releases such as
 `v2.0.0-beta.1` are skipped) and records it in `plugins/plugins.lock.yaml`. A restart keeps
 that release; `POST /api/plugins/sync?update=1` (or deleting its entry from the lock file) moves
-it to the newest release. A branch named `latest` can no longer be used as `#latest`.
+it to the newest release. The folder of the previous version is then deleted. An update that
+fails (offline, a broken release) keeps the version that worked and says so in the messages. A branch named `latest` can no longer be used as `#latest`.
 
 A source without `widget.yaml` at its root is a **collection**: every folder with a
 `widget.yaml` directly in it, or in its `widgets/` folder, is installed.

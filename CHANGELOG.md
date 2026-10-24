@@ -79,6 +79,9 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Kubernetes outside the cluster: `mode: default` in kubernetes.yaml reads a kubeconfig, as in
   homepage (`kubeconfig:`, `$KUBECONFIG` or `~/.kube/config`; a token, client certificate or
   password, no credential plugins), for discovery and the kubernetes widget.
+- Kubernetes discovery of Traefik IngressRoutes (`traefik: true`) and Gateway API HTTPRoutes
+  (`gateway: true`), as in homepage, with a link from their host when `href` is not set.
+  `ingress: false` skips Ingresses.
 
 ### Changed
 - Services in a group are ordered by weight, as in homepage: a services.yaml service weighs

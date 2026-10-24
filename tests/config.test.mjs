@@ -181,6 +181,9 @@ test('kubernetes.yaml: mode default (a kubeconfig, as in homepage) with kubeconf
   assert.ok(path.isAbsolute(cfg.kubernetes.kubeconfig) && cfg.kubernetes.kubeconfig.endsWith(path.join('kube', 'config')));
   assert.equal(cfg.kubernetes.context, 'lab');
   assert.match(loadConfig(configDir({ 'kubernetes.yaml': 'mode: kubeconfig\n' })).errors[0].message, /mode: default/);
+  const kinds = loadConfig(configDir({ 'kubernetes.yaml': 'mode: cluster\ningress: false\ntraefik: true\ngateway: yes please\n' }));
+  assert.deepEqual(kinds.kubernetes, { mode: 'cluster', ingress: false, traefik: true });
+  assert.deepEqual(kinds.warnings.map((w) => w.path), ['gateway']);
 });
 
 test('parseDuration and safeJoin', () => {

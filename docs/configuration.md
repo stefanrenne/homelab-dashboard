@@ -426,6 +426,9 @@ Make the token under **Datacenter > Permissions > API Tokens** and give it the r
 mode: cluster              # in the cluster (its service account); default: a kubeconfig; disabled (when unset)
 kubeconfig: kube/config    # mode: default only; relative to the config folder. Else $KUBECONFIG or ~/.kube/config
 context: home              # mode: default only; else the kubeconfig's current context
+ingress: true              # discover Ingresses (default true)
+traefik: false             # discover Traefik IngressRoutes
+gateway: false             # discover Gateway API HTTPRoutes
 ```
 
 See [Discovery](discovery.md#kubernetes). The built-in `kubernetes` widget uses the same

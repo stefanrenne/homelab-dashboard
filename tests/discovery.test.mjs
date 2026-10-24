@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs';
 import { servicesFromContainers, discoverDocker, withMountedSocket } from '../src/discovery/docker.js';
-import { servicesFromIngresses, k8sApiUrl, discoverKubernetes } from '../src/discovery/kubernetes.js';
+import { servicesFromIngresses, k8sApiUrl, discoverKubernetes, ingressRouteHref, httpRouteHref, listenerScheme } from '../src/discovery/kubernetes.js';
 import { readKubeconfig, kubeconfigPath, k8sConnection } from '../src/discovery/kubeconfig.js';
 import { Discovery, mergeDiscovered } from '../src/discovery/index.js';
 import { serviceFromLabels } from '../src/discovery/labels.js';
@@ -191,6 +191,63 @@ contexts: [{ name: c, context: { cluster: c, user: u } }]
     assert.deepEqual(out.map((s) => s.name), ['Grafana', 'wiki']);
   } finally {
     api.close();
+  }
+});
+
+test('kubernetes: links from Traefik IngressRoutes and Gateway API HTTPRoutes', () => {
+  assert.equal(ingressRouteHref({ spec: { tls: {}, routes: [{ match: 'Host(`grafana.lan`) && PathPrefix(`/ui`)' }] } }), 'https://grafana.lan/ui');
+  assert.equal(ingressRouteHref({ spec: { routes: [{ match: 'PathPrefix(`/x`)' }, { match: 'Host( `wiki.lan` )' }] } }), 'http://wiki.lan/');
+  assert.equal(ingressRouteHref({ spec: { routes: [{ match: 'HostRegexp(`.+`)' }] } }), null);
+  const route = { metadata: { namespace: 'apps' }, spec: { hostnames: ['app.lan'], parentRefs: [{ name: 'gw', namespace: 'infra', sectionName: 'websecure' }], rules: [{ matches: [{ path: { type: 'PathPrefix', value: '/app' } }] }] } };
+  assert.equal(httpRouteHref(route, new Map([['infra/gw/websecure', 'https']])), 'https://app.lan/app');
+  assert.equal(httpRouteHref(route), 'http://app.lan/app', 'an unknown gateway: http, as in homepage');
+  assert.equal(httpRouteHref({ ...route, spec: { ...route.spec, rules: [{ matches: [{ path: { type: 'RegularExpression', value: '/.*' } }] }] } }), null);
+  assert.equal(httpRouteHref({ ...route, spec: { ...route.spec, hostnames: ['*.lan'] } }), null);
+  const gateway = { spec: { listeners: [{ name: 'web', protocol: 'HTTP' }, { name: 'websecure', protocol: 'HTTPS' }] } };
+  assert.deepEqual([listenerScheme(gateway, 'websecure'), listenerScheme(gateway, 'nope'), listenerScheme(null)], ['https', 'http', 'http']);
+});
+
+test('kubernetes: discovery lists Ingresses, IngressRoutes of both Traefik groups and HTTPRoutes, as kubernetes.yaml says', async () => {
+  const annotated = (name, extra = {}) => ({ uid: name, name, namespace: 'apps', annotations: { 'gethomepage.dev/enabled': 'true', ...extra } });
+  const asked = [];
+  const api = await serve((req, res) => {
+    asked.push(req.url);
+    const send = (body) => res.end(JSON.stringify(body));
+    switch (req.url) {
+      case '/apis/networking.k8s.io/v1/ingresses': return send(ingresses);
+      case '/apis/traefik.io/v1alpha1/ingressroutes': return send({ items: [
+        { metadata: annotated('dash'), spec: { tls: {}, routes: [{ match: 'Host(`dash.lan`)' }] } },
+        { metadata: annotated('both'), spec: { routes: [{ match: 'Host(`both.lan`)' }] } },
+      ] });
+      case '/apis/traefik.containo.us/v1alpha1/ingressroutes': return send({ items: [{ metadata: annotated('both'), spec: { routes: [{ match: 'Host(`both.lan`)' }] } }] });
+      case '/apis/gateway.networking.k8s.io/v1/httproutes': return send({ items: [
+        { metadata: annotated('route', { 'gethomepage.dev/name': 'Route' }), spec: { hostnames: ['route.lan'], parentRefs: [{ name: 'gw' }], rules: [{ matches: [{ path: { type: 'PathPrefix', value: '/' } }] }] } },
+        { metadata: annotated('plain'), spec: { hostnames: ['plain.lan'], parentRefs: [{ name: 'gw' }] } },
+      ] });
+      case '/apis/gateway.networking.k8s.io/v1/namespaces/apps/gateways/gw': return send({ spec: { listeners: [{ name: 'https', protocol: 'HTTPS' }] } });
+      default: res.statusCode = 404; return res.end('{}');
+    }
+  });
+  const connection = { url: api.url, token: 't' };
+  try {
+    const all = await discoverKubernetes({ connection, config: { traefik: true, gateway: true } });
+    assert.deepEqual(all.map((s) => [s.name, s.def.href]), [
+      ['Grafana', 'https://grafana.example.com/'], ['wiki', 'http://wiki.lan/docs'],
+      ['dash', 'https://dash.lan/'], ['both', 'http://both.lan/'],
+      ['Route', 'https://route.lan/'], ['plain', 'https://plain.lan/'],
+    ]);
+    assert.equal(asked.filter((u) => u.includes('/gateways/')).length, 1, 'one Gateway lookup per parent');
+    asked.length = 0;
+    assert.deepEqual((await discoverKubernetes({ connection, config: { ingress: false } })).length, 0);
+    assert.deepEqual(asked, [], 'ingress: false lists nothing');
+  } finally {
+    await api.close();
+  }
+  const noCrd = await serve((req, res) => { res.statusCode = req.url.includes('traefik') ? 404 : 200; res.end(JSON.stringify({ items: [] })); });
+  try {
+    assert.deepEqual(await discoverKubernetes({ connection: { url: noCrd.url }, config: { traefik: true } }), [], 'Traefik not installed is no error');
+  } finally {
+    await noCrd.close();
   }
 });
 

@@ -138,6 +138,14 @@ rules:
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["list"]
+  # only with traefik: true
+  - apiGroups: ["traefik.io", "traefik.containo.us"]
+    resources: ["ingressroutes"]
+    verbs: ["list"]
+  # only with gateway: true
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["httproutes", "gateways"]
+    verbs: ["list", "get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -161,3 +169,18 @@ metadata:
 ```
 
 homepage's `gethomepage.dev/*` annotations work as well.
+
+**Traefik and the Gateway API**, as in homepage: Ingresses are listed by default; add
+`traefik: true` for Traefik's IngressRoutes (`traefik.io` and the older `traefik.containo.us`)
+and `gateway: true` for Gateway API HTTPRoutes to kubernetes.yaml, `ingress: false` to skip
+Ingresses. They take the same annotations. Without `href`, an IngressRoute links to the host
+and path of its first `Host(...)` match (https with `tls`), and an HTTPRoute to its first
+hostname and path, https when its Gateway's listener is HTTPS. A kind that is not installed is
+skipped.
+
+```yaml
+# kubernetes.yaml
+mode: cluster
+traefik: true
+gateway: true
+```

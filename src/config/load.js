@@ -492,5 +492,11 @@ export function normalizeKubernetes(raw, ctx, configDir = '.') {
   const out = { mode: raw.mode ?? 'disabled' };
   if (raw.kubeconfig) out.kubeconfig = path.resolve(configDir, String(raw.kubeconfig));
   if (raw.context) out.context = String(raw.context);
+  // what discovery lists, as in homepage: Ingresses (default on), Traefik IngressRoutes, Gateway API HTTPRoutes
+  for (const key of ['ingress', 'traefik', 'gateway']) {
+    if (raw[key] === undefined) continue;
+    if (typeof raw[key] === 'boolean') out[key] = raw[key];
+    else ctx.warn(file, key, 'expected true or false, ignored');
+  }
   return out;
 }

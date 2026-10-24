@@ -82,3 +82,10 @@ test('light cards are separated from the page by more than a shadow', () => {
   assert.match(block(':root[data-theme="light"]'), /--hd-card-border: var\(--t300\)/);
   assert.match(block('  .card {'), /border: 1px solid var\(--hd-card-border, transparent\)/);
 });
+
+test('block labels wrap to two lines with hyphenation instead of being cut off', () => {
+  const label = block('.block .l {');
+  assert.match(label, /-webkit-line-clamp: 2/);
+  assert.match(label, /hyphens: auto/);
+  assert.doesNotMatch(label, /text-overflow: ellipsis/);
+});

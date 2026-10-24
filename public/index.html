@@ -128,7 +128,10 @@
   .block { flex: 1 1 0; min-width: 64px; margin: 4px; padding: 4px; border-radius: 4px; background: var(--hd-block);
     display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 44px; }
   .block .v { font-size: .875rem; line-height: 1.25rem; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; font-variant-numeric: tabular-nums; }
-  .block .l { font-size: .75rem; line-height: 1rem; font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .block .l { font-size: .75rem; line-height: 1rem; font-weight: 700; text-transform: uppercase; max-width: 100%;
+    /* wrap to two lines (hyphenated in the page language) rather than cut a label off */
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; hyphens: auto; overflow-wrap: break-word; }
+  .sym { display: inline-block; margin-right: 3px; font-size: .75em; vertical-align: .05em; }
   .block.ok .v { color: var(--hd-ok); }
   .block.warn .v { color: var(--hd-warn); }
   .block.error .v { color: var(--hd-error); }
@@ -137,6 +140,14 @@
     display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .75rem; line-height: 1rem; }
   .row .rl { font-weight: 400; padding-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; z-index: 1; }
   .row .rv { font-weight: 500; text-align: right; white-space: nowrap; z-index: 1; }
+  .row.ok .rv { color: var(--hd-ok); }
+  .row.warn .rv, .row.warn .rl .sym { color: var(--hd-warn); }
+  .row.error .rv, .row.error .rl .sym { color: var(--hd-error); }
+  .row.more { justify-content: center; background: none; }
+  .row.more .rl { font-weight: 600; padding-left: 0; }
+  .row[tabindex] { cursor: pointer; }
+  .row.expanded { align-items: flex-start; }
+  .row.expanded .rl { white-space: normal; overflow-wrap: anywhere; }
   .row .progress { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--hd-text) 12%, transparent); }
   .api-error { margin: 4px; border-radius: 6px; background: var(--hd-error-bg); color: #f1f5f9; font-size: .75rem; text-align: center; }
   .api-error summary { cursor: pointer; padding: 8px; list-style: none; font-weight: 600; }
@@ -232,7 +243,7 @@ const I18N = {
     up: 'Online', down: 'Offline', warn: 'Degraded', unknown: 'Unknown', tagDown: 'Down',
     apiError: 'API Error Information', unknownWidget: 'Unknown widget type', discovered: 'discovered from',
     offline: 'Server unreachable, retrying…', clientFailed: 'Could not load the widget code',
-    containerStats: 'Show container stats', refresh: 'Refresh', color: 'Change color', started: 'Started',
+    containerStats: 'Show container stats', refresh: 'Refresh', color: 'Change color', started: 'Started', attention: 'Needs attention', problem: 'Problem',
     appearanceLight: "Light appearance",
     appearanceAuto: "Follow system appearance",
     appearanceDark: "Dark appearance",
@@ -253,7 +264,7 @@ const I18N = {
     up: 'Online', down: 'Offline', warn: 'Verstoord', unknown: 'Onbekend', tagDown: 'Offline',
     apiError: 'API-foutinformatie', unknownWidget: 'Onbekend widgettype', discovered: 'gevonden via',
     offline: 'Server onbereikbaar, opnieuw proberen…', clientFailed: 'De widgetcode kon niet geladen worden',
-    containerStats: 'Containerstatistieken tonen', refresh: 'Vernieuwen', color: 'Kleur wijzigen', started: 'Gestart',
+    containerStats: 'Containerstatistieken tonen', refresh: 'Vernieuwen', color: 'Kleur wijzigen', started: 'Gestart', attention: 'Vraagt aandacht', problem: 'Probleem',
     appearanceLight: "Licht uiterlijk",
     appearanceAuto: "Uiterlijk van het systeem volgen",
     appearanceDark: "Donker uiterlijk",
@@ -274,7 +285,7 @@ const I18N = {
     up: 'En ligne', down: 'Hors ligne', warn: 'Dégradé', unknown: 'Inconnu', tagDown: 'Hors ligne',
     apiError: 'Informations sur l’erreur API', unknownWidget: 'Type de widget inconnu', discovered: 'découvert via',
     offline: 'Serveur injoignable, nouvelle tentative…', clientFailed: 'Impossible de charger le code du widget',
-    containerStats: 'Afficher les statistiques du conteneur', refresh: 'Actualiser', color: 'Changer de couleur', started: 'Lancé',
+    containerStats: 'Afficher les statistiques du conteneur', refresh: 'Actualiser', color: 'Changer de couleur', started: 'Lancé', attention: 'Demande de l’attention', problem: 'Problème',
     appearanceLight: "Apparence claire",
     appearanceAuto: "Suivre l’apparence du système",
     appearanceDark: "Apparence sombre",
@@ -295,7 +306,7 @@ const I18N = {
     up: 'Online', down: 'Offline', warn: 'Beeinträchtigt', unknown: 'Unbekannt', tagDown: 'Offline',
     apiError: 'API-Fehlerinformationen', unknownWidget: 'Unbekannter Widget-Typ', discovered: 'gefunden über',
     offline: 'Server nicht erreichbar, neuer Versuch…', clientFailed: 'Widget-Code konnte nicht geladen werden',
-    containerStats: 'Container-Statistiken anzeigen', refresh: 'Aktualisieren', color: 'Farbe ändern', started: 'Gestartet',
+    containerStats: 'Container-Statistiken anzeigen', refresh: 'Aktualisieren', color: 'Farbe ändern', started: 'Gestartet', attention: 'Braucht Aufmerksamkeit', problem: 'Problem',
     appearanceLight: "Helles Erscheinungsbild",
     appearanceAuto: "Erscheinungsbild des Systems folgen",
     appearanceDark: "Dunkles Erscheinungsbild",
@@ -316,7 +327,7 @@ const I18N = {
     up: 'En línea', down: 'Sin conexión', warn: 'Degradado', unknown: 'Desconocido', tagDown: 'Caído',
     apiError: 'Información del error de la API', unknownWidget: 'Tipo de widget desconocido', discovered: 'descubierto en',
     offline: 'Servidor inaccesible, reintentando…', clientFailed: 'No se pudo cargar el código del widget',
-    containerStats: 'Mostrar estadísticas del contenedor', refresh: 'Actualizar', color: 'Cambiar color', started: 'Iniciado',
+    containerStats: 'Mostrar estadísticas del contenedor', refresh: 'Actualizar', color: 'Cambiar color', started: 'Iniciado', attention: 'Requiere atención', problem: 'Problema',
     appearanceLight: "Apariencia clara",
     appearanceAuto: "Seguir la apariencia del sistema",
     appearanceDark: "Apariencia oscura",
@@ -457,7 +468,42 @@ function widgetName(type) {
 
 function widgetT(type) {
   const strings = (layout.widgetTypes[type] && layout.widgetTypes[type].i18n) || {};
-  return (key) => (Object.prototype.hasOwnProperty.call(strings, key) ? strings[key] : translate(key));
+  // `vars` fill {name} placeholders, e.g. { label: 'poolUsed', vars: { pool: 'Trunk' } } -> "Trunk used"
+  return (key, vars) => {
+    const text = Object.prototype.hasOwnProperty.call(strings, key) ? strings[key] : translate(key);
+    return vars ? text.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)) : text;
+  };
+}
+
+/** A shape next to the colour for warn and error, so status is not carried by colour alone. */
+function statusSymbol(status) {
+  if (status !== 'warn' && status !== 'error') return null;
+  const wrap = el('span', null, el('span', { class: 'sym', 'aria-hidden': 'true', text: status === 'warn' ? '▲' : '✕' }));
+  wrap.append(el('span', { class: 'sr-only', text: translate(status === 'warn' ? 'attention' : 'problem') + ': ' }));
+  return wrap;
+}
+
+/** Rows that do not fit can be opened to show their full text (click, Enter or Space). */
+function makeExpandable(row) {
+  const toggle = () => {
+    const open = row.classList.toggle('expanded');
+    row.setAttribute('aria-expanded', String(open));
+  };
+  row.addEventListener('click', toggle);
+  row.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggle();
+    }
+  });
+  const check = () => {
+    const label = row.querySelector('.rl');
+    if (label.scrollWidth > label.clientWidth || row.classList.contains('expanded')) {
+      row.tabIndex = 0;
+      row.setAttribute('aria-expanded', String(row.classList.contains('expanded')));
+    }
+  };
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(check);
 }
 
 /** Turns a raw widget error into what went wrong and what to check, with the raw text as detail. */
@@ -492,25 +538,29 @@ function renderResult(container, instance, result, name) {
     const grid = el('div', { class: 'blocks' });
     for (const b of data.blocks) {
       const value = typeof b.value === 'string' ? t(b.value) : formatValue(b.value);
-      // "22%" like homepage; other units get a space ("12 ms", "3 MiB").
+      // "22%" like homepage; other units get a space ("12 ms", "3 MB").
       const shown = b.unit && b.value !== null && b.value !== undefined ? `${value}${b.unit === '%' ? '' : ' '}${b.unit}` : value;
-      grid.append(el('div', { class: 'block' + (b.status ? ' ' + b.status : ''), title: `${t(b.label)}: ${shown}` },
-        el('div', { class: 'v', text: shown }),
-        el('div', { class: 'l', text: t(b.label) })));
+      const label = t(b.label, b.vars);
+      const v = el('div', { class: 'v' }, statusSymbol(b.status), shown);
+      grid.append(el('div', { class: 'block' + (b.status ? ' ' + b.status : ''), title: `${label}: ${shown}` },
+        v, el('div', { class: 'l', text: label })));
     }
     container.append(grid);
   }
   if (Array.isArray(data.rows) && data.rows.length) {
     const list = el('div', { class: 'rows' });
     for (const r of data.rows) {
-      const row = el('div', { class: 'row', title: r.label });
+      const label = t(r.label, r.vars);
+      const more = r.label === 'moreItems';
+      const row = el('div', { class: 'row' + (r.status ? ' ' + r.status : '') + (more ? ' more' : ''), title: label });
       if (typeof r.progress === 'number') {
         const bar = el('div', { class: 'progress' });
         bar.style.width = `${r.progress}%`;
         row.append(bar);
       }
       const value = r.value === null || r.value === undefined ? '' : typeof r.value === 'string' ? t(r.value) : formatValue(r.value);
-      row.append(el('span', { class: 'rl', text: t(r.label) }), el('span', { class: 'rv', text: value }));
+      row.append(el('span', { class: 'rl' }, statusSymbol(r.status), label), el('span', { class: 'rv', text: value }));
+      if (!more) makeExpandable(row);
       list.append(row);
     }
     container.append(list);

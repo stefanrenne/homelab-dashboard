@@ -29,6 +29,7 @@ without `client.js` is rendered by the dashboard from `blocks`.
 | `description` | no | One line, for docs and catalogues. |
 | `refresh` | no | Cache time of a result: `500ms`, `10s`, `5m`, `1h` or seconds. Default `30s`. The browser polls at this rate (minimum 2 s). |
 | `options` | no | Map of option name to schema (below). |
+| `defaultFields` | no | Block keys shown when the entry has no `fields`, e.g. `[cpu, memoryPercent]`. Without it every block shows. |
 
 ### Option schema
 
@@ -78,8 +79,16 @@ An object; all fields are optional.
 | `status` | `up`, `down`, `warn` or `unknown`. Used when the widget is a service's status check. |
 | `latency` | Milliseconds, shown next to the status dot. |
 | `statusText` | Text for the status label in the card corner instead of the latency (e.g. `healthy`). Translated when it is a key. |
-| `blocks` | List of `{ key?, label, value, unit?, status? }`. `label` is a string, translated through `i18n.json` when it is a key. `value` is a string, number or `null` (shown as –). A string value is translated too when it is a key. `status` is `ok`, `warn`, `error` or `unknown` and colours the value. `key` names the block for `fields` (default: the label). |
-| `rows` | List of `{ label, value?, progress? }`, shown below the blocks as label-left/value-right lines (a download queue, current streams, `display: list`). `progress` (0–100) fills the row's background. |
+| `blocks` | List of `{ key?, label, vars?, value, unit?, status? }`. `label` is a string, translated through `i18n.json` when it is a key; `vars` fill `{name}` placeholders in that translation (`{ label: 'poolUsed', vars: { pool: 'Trunk' } }` with `"poolUsed": "{pool} used"`). `value` is a string, number or `null` (shown as –). A string value is translated too when it is a key. `status` is `ok`, `warn`, `error` or `unknown`: warn and error get a colour and a shape (▲, ✕) and are announced to screen readers. `key` names the block for `fields` (default: the label). |
+| `rows` | List of `{ label, vars?, value?, status?, progress? }`, shown below the blocks as label-left/value-right lines (a download queue, current streams, `display: list`). `status` marks a row like a block. `progress` (0–100) fills the row's background. A row whose text does not fit opens on click, Enter or Space. A row labelled `moreItems` with `vars: { count }` closes a shortened list ("+3 more"). |
+
+### Writing labels
+
+Labels sit in blocks of about 65px on a phone when a card has four of them. Keep every
+translation short: whole words (no abbreviations), at most two lines; the dashboard wraps and
+hyphenates in the page language, and never cuts a label off. Show amounts in decimal units
+(kB, MB, GB) and durations as `m:ss` or `h:mm:ss`. Mark counts that need someone's attention
+(failures, pending requests, updates) with `status: 'warn'`.
 | anything else | Free-form JSON for `client.js`. |
 
 ### Keys the dashboard keeps for itself
@@ -149,4 +158,4 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 
 | API | Dashboard | Change |
 |---|---|---|
-| 1 | 0.1.0 | First version. |
+| 1 | 0.1.0 | First version (including `vars`, row `status` and `defaultFields`). |

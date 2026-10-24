@@ -140,6 +140,8 @@ export function checkData(data) {
       if (typeof r !== 'object' || r === null || typeof r.label !== 'string') throw new Error(`rows[${i}]: needs a "label"`);
       if (r.value !== undefined && r.value !== null && !['string', 'number'].includes(typeof r.value)) throw new Error(`rows[${i}]: value must be text, a number or null`);
       if (r.progress !== undefined && !(typeof r.progress === 'number' && r.progress >= 0 && r.progress <= 100)) throw new Error(`rows[${i}]: progress must be 0-100`);
+      if (r.status !== undefined && !BLOCK_STATUSES.includes(r.status)) throw new Error(`rows[${i}]: unknown status "${r.status}"`);
+      checkVars(r.vars, `rows[${i}]`);
     });
   }
   if (data.blocks !== undefined) {
@@ -149,9 +151,19 @@ export function checkData(data) {
       if (b.value !== null && !['string', 'number'].includes(typeof b.value)) throw new Error(`blocks[${i}]: value must be text, a number or null`);
       if (b.status !== undefined && !BLOCK_STATUSES.includes(b.status)) throw new Error(`blocks[${i}]: unknown status "${b.status}"`);
       if (b.key !== undefined && typeof b.key !== 'string') throw new Error(`blocks[${i}]: key must be text`);
+      checkVars(b.vars, `blocks[${i}]`);
     });
   }
   return data;
+}
+
+/** `vars` fill `{name}` placeholders in a translated label: a map of text or numbers. */
+function checkVars(vars, where) {
+  if (vars === undefined) return;
+  if (typeof vars !== 'object' || vars === null || Array.isArray(vars)) throw new Error(`${where}: vars must be a map`);
+  for (const [k, v] of Object.entries(vars)) {
+    if (!['string', 'number'].includes(typeof v)) throw new Error(`${where}: vars.${k} must be text or a number`);
+  }
 }
 
 /** Keeps only the blocks named in `fields` (by `key`, else `label`), in the widget's order. */

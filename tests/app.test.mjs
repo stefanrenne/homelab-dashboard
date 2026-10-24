@@ -123,6 +123,24 @@ test('refreshInterval, fields and hide_errors belong to the dashboard, not the w
   }
 });
 
+test('without fields, a widget shows its defaultFields; fields in the entry win', async () => {
+  const dir = path.join(tmpDir('hd-df-'), 'df');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'widget.yaml'), 'id: df\nname: DF\nversion: 1.0.0\napiVersion: 1\ndefaultFields: [a, c]\n');
+  fs.writeFileSync(path.join(dir, 'server.js'), 'export default { async fetch() { return { blocks: [{ key: "a", label: "A", value: 1 }, { key: "b", label: "B", value: 2 }, { key: "c", label: "C", value: 3 }] } } }');
+  const t = await startApp({
+    'settings.yaml': `plugins:\n  - path: ${dir}\n`,
+    'services.yaml': '- G:\n    - D: { widget: { type: df } }\n    - E: { widget: { type: df, fields: [b] } }\n',
+  });
+  try {
+    const [d, e] = t.app.layout.groups[0].services;
+    assert.deepEqual((await t.json(`/api/widgets/${d.widgets[0].instanceId}`)).data.blocks.map((b) => b.key), ['a', 'c']);
+    assert.deepEqual((await t.json(`/api/widgets/${e.widgets[0].instanceId}`)).data.blocks.map((b) => b.key), ['b']);
+  } finally {
+    await t.close();
+  }
+});
+
 test('secrets from discovered labels stay out of the layout', async () => {
   const configDir = tmpDir('hd-app-');
   fs.writeFileSync(path.join(configDir, 'docker.yaml'), 'local:\n  socket: /tmp/x.sock\n');

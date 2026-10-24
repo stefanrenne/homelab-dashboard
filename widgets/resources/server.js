@@ -7,7 +7,7 @@ import fs from 'node:fs/promises';
 
 const level = (pct) => (pct >= 95 ? 'error' : pct >= 85 ? 'warn' : 'ok');
 const round = (n) => Math.round(n * 10) / 10;
-const UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+const UNITS = ['B', 'kB', 'MB', 'GB', 'TB', 'PB']; // decimal, as in every widget
 
 export function formatBytes(n) {
   let i = 0;

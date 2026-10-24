@@ -12,11 +12,12 @@ export function cpuPercent(stats) {
   return system > 0 ? Math.round((delta / system) * cpus * 1000) / 10 : 0;
 }
 
-export function memoryMiB(stats) {
+/** Memory in use without the page cache, in decimal megabytes (like every widget). */
+export function memoryMB(stats) {
   const usage = stats.memory_stats?.usage;
   if (usage === undefined) return null;
   const cache = stats.memory_stats.stats?.inactive_file ?? stats.memory_stats.stats?.cache ?? 0;
-  return Math.round((usage - cache) / 1048576);
+  return Math.round((usage - cache) / 1e6);
 }
 
 export default {
@@ -42,7 +43,7 @@ export default {
       const stats = await get(`/containers/${name}/stats?stream=false`);
       if (stats) {
         blocks.push({ label: 'cpu', value: cpuPercent(stats), unit: '%' });
-        blocks.push({ label: 'memory', value: memoryMiB(stats), unit: 'MiB' });
+        blocks.push({ label: 'memory', value: memoryMB(stats), unit: 'MB' });
       }
     }
     blocks[0].status = status === 'up' ? 'ok' : status === 'warn' ? 'warn' : 'error';

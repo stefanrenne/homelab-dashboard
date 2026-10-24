@@ -7,12 +7,13 @@ export function pick(obj, field) {
     .reduce((node, key) => (node === null || node === undefined ? undefined : node[key]), obj);
 }
 
-const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+// Decimal units (1 kB = 1000 B), the same in every widget.
+const BYTE_UNITS = ['B', 'kB', 'MB', 'GB', 'TB', 'PB'];
 
 export function formatBytes(n) {
   let i = 0;
-  while (Math.abs(n) >= 1024 && i < BYTE_UNITS.length - 1) {
-    n /= 1024;
+  while (Math.abs(n) >= 1000 && i < BYTE_UNITS.length - 1) {
+    n /= 1000;
     i++;
   }
   return `${Math.round(n * 10) / 10} ${BYTE_UNITS[i]}`;

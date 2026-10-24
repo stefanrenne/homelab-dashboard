@@ -24,6 +24,10 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   meters exposed to screen readers, and headings kept for screen readers when hidden.
 - The search box filters services as you type; Enter opens the only match or searches the web.
 - Appearance can go back to following the system (light / auto / dark).
+- Block labels wrap to two hyphenated lines instead of being cut off; long rows open on click.
+- Warn and error values get a shape (▲, ✕) next to the colour, announced to screen readers.
+- Widget API: `vars` in labels, `status` on rows, `defaultFields` in widget.yaml, "+N more" rows.
+- docker: container states translated; memory in decimal MB. custom-api and resources: decimal units.
 - Widget errors say what to check ("the API key was refused", "unreachable"), with the raw
   message as detail; network errors include their cause (`fetch failed (ECONNREFUSED)`).
 - Plugin collections: one source installs every widget in a repository (or `only:` some).

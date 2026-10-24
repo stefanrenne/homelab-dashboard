@@ -30,6 +30,9 @@ export function readManifest(dir) {
   if (typeof manifest.version !== 'string') problems.push('version: required (a string like "1.0.0")');
   if (!Number.isInteger(manifest.apiVersion)) problems.push('apiVersion: required (an integer)');
   problems.push(...checkSchema(manifest.options));
+  if (manifest.defaultFields !== undefined && (!Array.isArray(manifest.defaultFields) || manifest.defaultFields.some((f) => typeof f !== 'string'))) {
+    problems.push('defaultFields: a list of block keys');
+  }
   try {
     manifest.refreshMs = parseDuration(manifest.refresh, DEFAULT_REFRESH_MS);
   } catch (err) {

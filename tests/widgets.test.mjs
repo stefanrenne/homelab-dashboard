@@ -93,7 +93,7 @@ test('docker: running container over a unix socket', async () => {
   try {
     const out = await docker.fetch(ctxFor('plex'));
     assert.equal(out.status, 'up');
-    assert.deepEqual(out.blocks.map((b) => b.value), ['running (healthy)', 40, 200]);
+    assert.deepEqual(out.blocks.map((b) => b.value), ['running (healthy)', 40, 210]);
     assert.equal((await docker.fetch(ctxFor('nope'))).status, 'down');
   } finally {
     await srv.close();
@@ -137,7 +137,7 @@ test('custom-api: homepage mapping options and list display', async () => {
   assert.deepEqual(mapValue({ remap }, 'PLAYING'), { value: 'Playing', unit: undefined });
   assert.deepEqual(mapValue({ remap }, 'X'), { value: 'Other', unit: undefined });
   assert.deepEqual(mapValue({ suffix: '%' }, 24), { value: 24, unit: '%' });
-  assert.deepEqual(mapValue({ format: 'bytes' }, 1536), { value: '1.5 KB', unit: undefined });
+  assert.deepEqual(mapValue({ format: 'bytes' }, 1536), { value: '1.5 kB', unit: undefined });
   assert.deepEqual(mapValue({ format: 'percent', scale: 100 }, 0.5), { value: 50, unit: '%' });
   assert.deepEqual(mapValue({ prefix: 'v' }, '2.0.1'), { value: 'v2.0.1', unit: undefined });
   assert.deepEqual(mapValue({}, ''), { value: null });

@@ -71,7 +71,8 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       refreshMs = widget.manifest.refreshMs;
     }
     refreshMs = Math.max(MIN_REFRESH_MS, refreshMs);
-    const fields = Array.isArray(own.fields) ? own.fields.map(String) : null;
+    // No `fields` in the entry: the blocks the widget shows by default (widget.yaml defaultFields).
+    const fields = Array.isArray(own.fields) ? own.fields.map(String) : widget.manifest.defaultFields ?? null;
     const hideErrors = own.hideErrors === true || own.hide_errors === true;
     for (const e of optionErrors) errors.push({ ...where, message: `${type}: ${e}` });
     const secretValues = [...secrets];

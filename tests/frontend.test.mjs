@@ -36,6 +36,7 @@ const LAYOUT = {
             { instanceId: 'w-3', type: 'custom-api', options: {}, known: true, server: true, refreshMs: 5000 },
             { instanceId: 'w-4', type: 'custom-api', options: {}, known: true, server: true, refreshMs: 5000, hideErrors: true },
             { instanceId: 'w-5', type: 'custom-api', options: {}, known: true, server: true, refreshMs: 5000 },
+            { instanceId: 'w-6', type: 'queue', options: {}, known: true, server: true, refreshMs: 5000 },
           ],
         },
       ],
@@ -52,6 +53,7 @@ const LAYOUT = {
     ping: { name: 'Ping', client: null, i18n: {} },
     resources: { name: 'Resources', client: null, i18n: { cpu: 'CPU', memory: 'Geheugen' } },
     'custom-api': { name: 'Custom API', client: null, i18n: {} },
+    queue: { name: 'Queue', client: null, i18n: { pool: '{pool} gebruikt', importBlocked: 'Import geblokkeerd', moreItems: '+{count} meer' } },
   },
   messages: { errors: [{ file: 'services.yaml', path: '[0].G', message: 'expected a list' }], warnings: [] },
 };
@@ -63,6 +65,10 @@ const RESULTS = {
   '/api/widgets/s-3': { ok: true, data: { status: 'down', blocks: [] } },
   '/api/widgets/w-1': { ok: true, data: { blocks: [{ label: 'cpu', value: 12.25, unit: '%', status: 'ok' }, { label: 'memory', value: null, unit: '%' }] } },
   '/api/widgets/w-3': { ok: true, data: { blocks: [{ label: 'Wanted', value: 8 }], rows: [{ label: 'The Social Reckoning', value: 'import blocked - 00:00:00' }, { label: 'Silo', value: '03:54', progress: 40 }] } },
+  '/api/widgets/w-6': { ok: true, data: {
+    blocks: [{ label: 'pool', vars: { pool: 'Trunk' }, value: 35, unit: '%' }, { label: 'Failed', value: 2, status: 'warn' }, { label: 'Errors', value: 1, status: 'error' }],
+    rows: [{ label: 'Blocked movie', value: 'importBlocked', status: 'warn' }, { label: 'moreItems', vars: { count: 3 } }],
+  } },
   '/api/widgets/w-4': { ok: false, error: 'hidden failure' },
   '/api/widgets/w-5': { ok: false, error: 'connect ECONNREFUSED' },
 };
@@ -97,7 +103,7 @@ test('renders groups, cards, status labels, blocks, rows and bookmarks in the co
   assert.deepEqual([...router.querySelectorAll('.block .v')].map((n) => n.textContent), ['12,3%', '–']);
   const radarr = doc.querySelector('[data-service="svc-3"]');
   assert.deepEqual([...radarr.querySelectorAll('.tag')].map((t) => t.textContent), ['Offline']);
-  assert.deepEqual([...radarr.querySelectorAll('.row')].map((r) => [r.querySelector('.rl').textContent, r.querySelector('.rv').textContent]), [
+  assert.deepEqual([...radarr.querySelector('.widget').querySelectorAll('.row')].map((r) => [r.querySelector('.rl').textContent, r.querySelector('.rv').textContent]), [
     ['The Social Reckoning', 'import blocked - 00:00:00'], ['Silo', '03:54'],
   ]);
   assert.equal(radarr.querySelector('.row .progress').style.width, '40%');
@@ -202,5 +208,36 @@ test('every UI text exists in every language', async () => {
   for (const [name, shades] of Object.entries(PALETTES)) assert.equal(shades.split(' ').length, 11, name);
   assert.equal(w.HD.safeHref(' JavaScript:alert(1)'), null);
   assert.equal(w.HD.safeHref('smb://nas/share'), 'smb://nas/share');
+  w.close();
+});
+
+test('labels with vars, a shape next to warn/error colours, and "+N more" rows', async () => {
+  const w = await page();
+  const card = w.document.querySelector('[data-service="svc-3"]');
+  const widget = [...card.querySelectorAll('.widget')].at(-1);
+  const blocks = [...widget.querySelectorAll('.block')];
+  assert.equal(blocks[0].querySelector('.l').textContent, 'Trunk gebruikt');
+  assert.equal(blocks[0].querySelector('.sym'), null, 'no symbol without a status');
+  assert.equal(blocks[1].querySelector('.sym').textContent, '▲');
+  assert.equal(blocks[1].querySelector('.sym').getAttribute('aria-hidden'), 'true');
+  assert.equal(blocks[1].querySelector('.sr-only').textContent, 'Vraagt aandacht: ');
+  assert.equal(blocks[2].querySelector('.sym').textContent, '✕');
+  const rows = [...widget.querySelectorAll('.row')];
+  assert.equal(rows[0].className, 'row warn');
+  assert.equal(rows[0].querySelector('.rv').textContent, 'Import geblokkeerd');
+  assert.match(rows[0].querySelector('.rl').textContent, /^▲Vraagt aandacht: Blocked movie$/);
+  assert.equal(rows[1].className, 'row more');
+  assert.equal(rows[1].querySelector('.rl').textContent, '+3 meer');
+  w.close();
+});
+
+test('a row opens to show its full text', async () => {
+  const w = await page();
+  const row = w.document.querySelector('[data-service="svc-3"] .row');
+  row.click();
+  assert.ok(row.classList.contains('expanded'));
+  assert.equal(row.getAttribute('aria-expanded'), 'true');
+  row.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Enter' }));
+  assert.equal(row.classList.contains('expanded'), false);
   w.close();
 });

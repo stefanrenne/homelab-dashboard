@@ -131,3 +131,15 @@ test('error messages carry the network cause hidden behind "fetch failed"', asyn
   const real = await widgetFetch(closed, {}, undefined, new AbortController().signal).catch((e) => e);
   assert.equal(describeError(real), 'fetch failed (ECONNREFUSED)');
 });
+
+test('result: vars on blocks and rows, status on rows', () => {
+  assert.doesNotThrow(() => checkData({ blocks: [{ label: 'pool', vars: { pool: 'Trunk', n: 2 }, value: 1 }], rows: [{ label: 'moreItems', vars: { count: 3 }, status: 'warn' }] }));
+  assert.throws(() => checkData({ blocks: [{ label: 'x', value: 1, vars: ['a'] }] }), /vars must be a map/);
+  assert.throws(() => checkData({ rows: [{ label: 'x', vars: { a: {} } }] }), /vars\.a must be text or a number/);
+  assert.throws(() => checkData({ rows: [{ label: 'x', status: 'sideways' }] }), /unknown status/);
+});
+
+test('manifest: defaultFields is a list of block keys', () => {
+  const dir = writeWidget(tmpDir(), { ...base, id: 'df', defaultFields: 'cpu' });
+  assert.throws(() => readManifest(dir), /defaultFields: a list of block keys/);
+});

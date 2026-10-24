@@ -20,7 +20,6 @@ hideErrors, status labels, container stats on click, search widget, bookmarks.
 
 Generic ones built in, service-specific ones in the widgets collection.
 
-- [ ] Logo (built in)
 - [ ] Open-Meteo weather (built in, no key)
 - [ ] OpenWeatherMap (built in, key through `providers`)
 - [ ] Stocks (Finnhub, key through `providers`)

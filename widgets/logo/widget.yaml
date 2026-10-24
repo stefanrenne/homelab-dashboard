@@ -1,0 +1,7 @@
+id: logo
+name: Logo
+version: 1.0.0
+apiVersion: 1
+description: "A logo in the header: the dashboard's own mark, or an icon of your choice, as in homepage."
+options:
+  icon: { type: icon }   # an icon name (proxmox.svg, mdi-home, si-ubuntu, sh-plex), /icons/..., or a URL

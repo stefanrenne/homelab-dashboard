@@ -77,6 +77,19 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     const { own, options: widgetOptions } = splitInstanceKeys(widget.manifest.options, rawOptions);
     if (own.provider !== undefined) applyProvider(widget.manifest.options, String(own.provider), widgetOptions, where, type);
     const { options, publicOptions, errors: optionErrors } = validateOptions(widget.manifest.options, widgetOptions, secrets);
+    // `type: icon` options arrive as URLs, resolved like service icons (mdi-/si- with #hd-mask)
+    for (const [name, def] of Object.entries(widget.manifest.options)) {
+      if (def.type !== 'icon' || options[name] === undefined) continue;
+      const url = resolveIcon(options[name]);
+      if (!url) {
+        optionErrors.push(`${name}: "${options[name]}" is not an icon name or URL`);
+        delete options[name];
+        delete publicOptions[name];
+      } else {
+        options[name] = url;
+        if (name in publicOptions) publicOptions[name] = url;
+      }
+    }
     let refreshMs = widget.manifest.refreshMs;
     try {
       if (own.refreshInterval !== undefined) refreshMs = Number(own.refreshInterval);

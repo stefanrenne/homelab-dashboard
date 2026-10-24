@@ -33,3 +33,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 1: search suggestions (search widget and quick launch).
 - 2026-10-24: homepage parity, phase 1: resources widget (cputemp, uptime, network, expanded, diskUnits). Phase 1 done.
 - 2026-10-24: homepage parity, phase 2: greeting widget.
+- 2026-10-24: homepage parity, phase 2: logo widget and the `icon` option type.

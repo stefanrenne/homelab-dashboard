@@ -669,3 +669,15 @@ test('refresh: a bare number of 1000 or more is milliseconds (homepage), smaller
     await t.close();
   }
 });
+
+test('type: icon options reach the widget as URLs, resolved like service icons', async () => {
+  const t = await startApp({ 'widgets.yaml': '- logo:\n    icon: mdi-home-#38bdf8\n- logo:\n    icon: Not An Icon!\n' });
+  try {
+    const layout = await (await t.get('/api/layout')).json();
+    assert.equal(layout.header[0].options.icon, 'https://cdn.jsdelivr.net/npm/@mdi/svg@7.4.47/svg/home.svg#hd-mask=38bdf8');
+    assert.equal(layout.header[1].options.icon, undefined);
+    assert.ok(layout.messages.errors.some((e) => /icon: "Not An Icon!" is not an icon name or URL/.test(e.message)));
+  } finally {
+    await t.close();
+  }
+});

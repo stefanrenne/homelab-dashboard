@@ -55,6 +55,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   `expanded` and `diskUnits`, as in homepage. A bare `refresh` of 1000 or more is milliseconds,
   homepage's form; a smaller number stays seconds.
 - Greeting widget: a line of text in the header (`text`, `text_size`), as in homepage.
+- Logo widget: the dashboard's own mark or any icon, as in homepage. Widgets can declare
+  `type: icon` options, resolved like service icons.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

@@ -2,7 +2,7 @@
 
 import { isPlainObject } from '../util.js';
 
-export const OPTION_TYPES = ['string', 'url', 'number', 'boolean', 'list', 'object', 'enum'];
+export const OPTION_TYPES = ['string', 'url', 'number', 'boolean', 'list', 'object', 'enum', 'icon'];
 
 /** Checks the schema itself; returns a list of problems. */
 export function checkSchema(schema) {
@@ -21,6 +21,8 @@ export function checkSchema(schema) {
 
 function coerce(def, value) {
   switch (def.type) {
+    case 'icon': // resolved to a URL by the dashboard (layout.js), like a service's icon
+      return typeof value === 'string' && value.trim() ? { value: value.trim() } : { error: 'expected an icon name or URL' };
     case 'string':
       // booleans too, for options such as homepage's `network: true` (or an interface name)
       return ['string', 'number', 'boolean'].includes(typeof value) ? { value: String(value) } : { error: 'expected text' };

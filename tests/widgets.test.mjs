@@ -316,3 +316,14 @@ test('greeting: the text, in homepage\'s sizes', async () => {
   const plain = await renderClient('greeting', { text: 'Hi' });
   assert.equal(plain.el.shadowRoot.querySelector('.text').style.fontSize, '1.25rem');
 });
+
+test('logo: its own mark, an image, or a single-colour icon as a mask', async () => {
+  const mark = await renderClient('logo', {});
+  assert.ok(mark.el.shadowRoot.querySelector('svg.logo'));
+  const img = await renderClient('logo', { icon: '/icons/logo.png' });
+  assert.equal(img.el.shadowRoot.querySelector('img.logo').getAttribute('src'), 'icons/logo.png');
+  const mask = await renderClient('logo', { icon: 'https://cdn.example.com/home.svg#hd-mask=38bdf8' });
+  const span = mask.el.shadowRoot.querySelector('.logo.mask');
+  assert.equal(span.style.getPropertyValue('--mask'), 'url("https://cdn.example.com/home.svg")');
+  assert.equal(span.style.getPropertyValue('--fill'), '#38bdf8');
+});

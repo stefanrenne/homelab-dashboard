@@ -39,11 +39,16 @@ without `client.js` is rendered by the dashboard from `blocks`.
 
 | Key | Meaning |
 |---|---|
-| `type` | `string`, `url` (http/https only), `number`, `boolean`, `list` (a comma string is split), `object`, `enum` |
+| `type` | `string` (a number or boolean becomes text), `url` (http/https only), `number`, `boolean`, `list` (a comma string is split), `object`, `enum`, `icon` (see below) |
 | `values` | For `enum`: the allowed values. |
 | `required` | `true` makes a missing option an error on the card and in the config messages. |
 | `default` | Used when the option is missing. |
 | `secret` | `true` keeps the option on the server. |
+
+An `icon` option takes what a service's `icon:` takes (`plex.svg`, `mdi-home`, `si-ubuntu`,
+`sh-plex`, `/icons/x.png`, a URL) and reaches the widget as a URL. A single-colour icon (`mdi-`,
+`si-`) ends in `#hd-mask`, or `#hd-mask=<hex>` with its colour: draw it as a CSS mask over the
+URL before the `#`, filled with that colour or a theme colour. An unknown name is an error.
 
 **What reaches the browser:** only options that are declared, not `secret`, and not filled in
 from a variable or file. Undeclared options are passed to `server.js` but never to the browser.
@@ -177,3 +182,4 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 | 1 | next | Blocks can carry `highlight: { level, valueOnly }`, added by the dashboard from the entry's `highlight:` rules. Widgets need no change. |
 | 1 | next | `provider: <name>` in an entry fills options from `settings.yaml` `providers`. Widgets need no change. |
 | 1 | next | `client.js` gets `instanceId`; `GET api/suggest` for search suggestions. |
+| 1 | next | Option type `icon`; `string` options accept numbers and booleans. |

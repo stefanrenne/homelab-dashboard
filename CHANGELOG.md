@@ -4,9 +4,14 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-24
+
 ### Added
 - `#latest` for git plugin sources: installs the newest release tag and locks it, so the
   widgets collection no longer needs an explicit version in `settings.yaml`.
+
+### Changed
+- The image runs on Node.js 24 (LTS) instead of 22.
 
 ## [0.1.0] - 2026-10-24
 

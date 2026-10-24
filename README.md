@@ -31,7 +31,7 @@ get a pull request merged here first.
 docker run -d -p 3000:3000 -v ./config:/config ghcr.io/stefanrenne/homelab-dashboard:latest
 ```
 
-Images are built for amd64 and arm64: `latest` follows `main`, `0.1.0` / `0.1` are releases.
+Images are built for amd64 and arm64: `latest` follows `main`, `0.2.0` / `0.2` are releases.
 
 On first start an empty `config` folder is filled with the example config. Edit the YAML files
 and the open page updates by itself. See [docker-compose.example.yml](docker-compose.example.yml)

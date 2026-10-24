@@ -35,6 +35,7 @@ without `client.js` is rendered by the dashboard from `blocks`.
 | `options` | no | Map of option name to schema (below). |
 | `aliases` | no | Other names the widget answers to in `type:`, e.g. homepage's (`[customapi]`). Added after every real id, only where still free; the widget's `id` stays the one the page uses. |
 | `defaultFields` | no | Block keys shown when the entry has no `fields`, e.g. `[cpu, memoryPercent]`. Without it every block shows. |
+| `params` | no | Names a `client.js` may send its `server.js` through the `hd-widget-params` page event, e.g. `[latitude, longitude]`. They reach `ctx.params`; anything else is dropped. |
 
 ### Option schema
 
@@ -74,6 +75,7 @@ export default {
 | `ctx.instanceId` | Stable id of this instance (group + service + position). |
 | `ctx.options` | Validated options, secrets included. A copy: changing it has no effect. |
 | `ctx.fetch(url, init)` | The standard `fetch`, plus: relative URLs resolve against `options.url`; the call is aborted with the widget; `init.socketPath` sends the request over a unix socket (used for Docker); `init.insecure: true` accepts a self-signed certificate for that request (only behind an option the user sets, off by default). `res.headers.getSetCookie()` lists every cookie. |
+| `ctx.params` | What the page sent through `hd-widget-params`: only names in widget.yaml `params`, each a non-empty string of at most 100 characters; `{}` when nothing was sent. Comes from the browser, so treat it as untrusted input (validate, never put it in a URL path unchecked). Each set of params has its own cached result. |
 | `ctx.signal` | `AbortSignal`, aborted when the call times out (10 s). |
 | `ctx.cache` | A `Map` that survives between calls of this instance (e.g. the previous value for a delta). Cleared when the instance disappears from the config. |
 | `ctx.log` | `info`, `warn`, `error`; prefixed with the widget type. |
@@ -157,7 +159,11 @@ A `client.js` may talk to the dashboard through DOM events that bubble out of it
 | `hd-search-input` | `{ query }` | Shows only the services and bookmarks that match every word; empty shows all. |
 | `hd-search-submit` | `{ query }` | Send it `cancelable: true`. With exactly one match the dashboard opens it and cancels the event; otherwise the widget may search elsewhere. |
 
-The built-in `search` widget uses both.
+| `hd-widget-params` | `{ name: value, ... }` | Fetches the widget again with these values (text) for `server.js`, and keeps sending them on every refresh. Only the names in widget.yaml `params` arrive. |
+
+The built-in `search` widget uses the first two. The weather widgets send `hd-widget-params`
+with the viewer's location (`navigator.geolocation`, HTTPS only, rounded to two decimals) when
+their options have no coordinates.
 
 ## Dashboard endpoints for client.js
 
@@ -186,3 +192,4 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 | 1 | next | Option type `icon`; `string` options accept numbers and booleans. |
 | 1 | next | `aliases` in widget.yaml. |
 | 1 | next | `ctx.fetch(url, { insecure: true })` for self-signed certificates. |
+| 1 | next | `params` in widget.yaml, the `hd-widget-params` page event and `ctx.params`. |

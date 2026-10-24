@@ -101,6 +101,15 @@ headerStyle: boxed  # boxed, clean, underlined (a line under the header) or boxe
 cardStyle: hairline # a thin border instead of the shadow
 blockStyle: refined # heavier, larger values in widget blocks
 font: plexData      # IBM Plex Mono for values, the clock and status labels; plex: for everything
+quicklaunch:        # start typing anywhere on the page to find a service, bookmark or web search
+  searchDescriptions: true    # also match descriptions (name matches come first)
+  provider: duckduckgo        # google, duckduckgo, bing, baidu, brave, startpage or custom (+ url);
+                              # default: the search widget's provider; none: no web search
+  # url: https://search.lan/?q=   # for custom: the query is appended, or put where {q} is
+  target: _blank              # where the web search opens
+  hideInternetSearch: false   # true: no web search entry
+  hideVisitURL: false         # true: no "open <url>" entry for typed addresses
+  mobileButtonPosition: bottom-right   # a search button on phones: top-left, top-right, bottom-left, bottom-right
 statusStyle: dot    # status labels: dot (a coloured dot) or basic (Online/Offline for siteMonitor and ping);
                     # default: the response time and container state. A service can set its own.
 target: _blank      # default link target of services
@@ -310,7 +319,7 @@ Icons, as in homepage:
     memory: true
     disk: ["/", "/mnt/data"]
 - search:
-    provider: duckduckgo   # duckduckgo, google, bing, startpage, custom (+ url: https://x/?q={q})
+    provider: duckduckgo   # duckduckgo, google, bing, startpage, baidu, brave, custom (+ url: https://x/?q={q})
 ```
 
 ## bookmarks.yaml

@@ -155,6 +155,7 @@ export function normalizeSettings(raw, ctx) {
       else ctx.warn(file, `blockHighlights.levels.${level}`, 'expected good, warn or danger with Tailwind classes, ignored');
     }
   }
+  settings.quicklaunch = normalizeQuicklaunch(settings.quicklaunch, file, ctx);
   if (settings.statusStyle !== undefined && !STATUS_STYLES.includes(settings.statusStyle)) {
     ctx.warn(file, 'statusStyle', 'expected dot or basic (or leave it out), ignored');
     delete settings.statusStyle;
@@ -196,6 +197,39 @@ export function normalizeSettings(raw, ctx) {
     return false;
   });
   return settings;
+}
+
+export const SEARCH_PROVIDERS = ['google', 'duckduckgo', 'bing', 'baidu', 'brave', 'startpage', 'custom'];
+const BUTTON_POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+
+/** homepage's `quicklaunch:` (the launcher that opens when typing on the page). */
+function normalizeQuicklaunch(raw, file, ctx) {
+  if (raw === undefined || raw === null) return {};
+  if (!isPlainObject(raw)) {
+    ctx.warn(file, 'quicklaunch', 'expected a map, ignored');
+    return {};
+  }
+  const out = {};
+  for (const key of ['searchDescriptions', 'hideInternetSearch', 'hideVisitURL', 'showSearchSuggestions']) {
+    if (raw[key] === undefined) continue;
+    if (typeof raw[key] === 'boolean') out[key] = raw[key];
+    else ctx.warn(file, `quicklaunch.${key}`, 'expected true or false, ignored');
+  }
+  if (raw.provider !== undefined) {
+    if (SEARCH_PROVIDERS.includes(raw.provider)) out.provider = raw.provider;
+    else ctx.warn(file, 'quicklaunch.provider', `expected ${SEARCH_PROVIDERS.join(', ')}, ignored`);
+  }
+  for (const key of ['url', 'suggestionUrl']) if (typeof raw[key] === 'string') out[key] = raw[key];
+  if (['_blank', '_self', '_top'].includes(raw.target)) out.target = raw.target;
+  if (raw.mobileButtonPosition !== undefined) {
+    if (BUTTON_POSITIONS.includes(raw.mobileButtonPosition)) out.mobileButtonPosition = raw.mobileButtonPosition;
+    else ctx.warn(file, 'quicklaunch.mobileButtonPosition', `expected ${BUTTON_POSITIONS.join(', ')}, ignored`);
+  }
+  if (out.provider === 'custom' && !out.url) {
+    ctx.warn(file, 'quicklaunch.url', 'provider custom needs a url, internet search is off');
+    delete out.provider;
+  }
+  return out;
 }
 
 // homepage's blur sizes (Tailwind's scale) in pixels; '' is Tailwind's plain `blur`.

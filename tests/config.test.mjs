@@ -250,3 +250,12 @@ test('headerStyle, cardStyle, blockStyle and font take homepage\'s values', () =
   assert.deepEqual(bad.warnings.map((w) => w.path).sort(), ['cardStyle', 'font', 'headerStyle']);
   assert.equal(bad.settings.headerStyle, 'boxed');
 });
+
+test('quicklaunch settings are checked; provider custom needs a url', () => {
+  const cfg = loadConfig(configDir({ 'settings.yaml': 'quicklaunch:\n  searchDescriptions: true\n  provider: brave\n  mobileButtonPosition: top-left\n' }));
+  assert.deepEqual(cfg.warnings, []);
+  assert.deepEqual(cfg.settings.quicklaunch, { searchDescriptions: true, provider: 'brave', mobileButtonPosition: 'top-left' });
+  const bad = loadConfig(configDir({ 'settings.yaml': 'quicklaunch:\n  provider: custom\n  hideVisitURL: maybe\n  mobileButtonPosition: middle\n' }));
+  assert.deepEqual(bad.warnings.map((w) => w.path).sort(), ['quicklaunch.hideVisitURL', 'quicklaunch.mobileButtonPosition', 'quicklaunch.url']);
+  assert.deepEqual(bad.settings.quicklaunch, {});
+});

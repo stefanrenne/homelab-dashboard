@@ -219,6 +219,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       bookmarksStyle: config.settings.bookmarksStyle ?? null,
       iconStyle: config.settings.iconStyle ?? 'gradient',
       cardStyle: config.settings.cardStyle ?? null,
+      quicklaunch: config.settings.quicklaunch ?? {},
       highlightLevels: { ...DEFAULT_LEVELS, ...(config.settings.blockHighlights?.levels ?? {}) },
       blockStyle: config.settings.blockStyle ?? null,
       font: config.settings.font ?? null,

@@ -214,6 +214,26 @@
   .tabs a:hover { background: var(--hd-card-hover); }
   .tabs a[aria-current="page"] { background: var(--hd-tab); font-weight: 700; }
   [data-tab][hidden] { display: none !important; }
+  /* quicklaunch: start typing anywhere on the page */
+  .ql { position: fixed; inset: 0; z-index: 30; display: flex; justify-content: center; align-items: flex-start; padding: 12vh 16px 16px;
+    background: color-mix(in srgb, var(--hd-bg) 60%, transparent); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+  .ql[hidden] { display: none; }
+  .ql-box { width: min(640px, 100%); border-radius: 8px; background: var(--hd-bg); border: 1px solid var(--hd-border); box-shadow: 0 10px 30px var(--hd-shadow); overflow: hidden; }
+  .ql-box input { width: 100%; box-sizing: border-box; padding: 14px 16px; border: 0; border-bottom: 1px solid var(--hd-border); font: inherit; font-size: 1rem;
+    color: var(--hd-text); background: transparent; outline: none; }
+  .ql-box ul { list-style: none; margin: 0; padding: 6px; max-height: 50vh; overflow-y: auto; }
+  .ql-box li { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: .875rem; }
+  .ql-box li[aria-selected="true"] { background: var(--hd-card-hover); }
+  .ql-box li .ql-icon { width: 24px; height: 24px; flex: none; display: grid; place-items: center; }
+  .ql-box li .ql-icon img, .ql-box li .ql-icon .mask-icon { width: 24px; height: 24px; object-fit: contain; }
+  .ql-box li .ql-name { font-weight: 600; }
+  .ql-box li .ql-desc { color: var(--hd-muted); font-size: .75rem; }
+  .ql-box li .ql-kind { margin-left: auto; color: var(--hd-muted); font-size: .75rem; }
+  .ql-box .ql-empty { cursor: default; color: var(--hd-muted); }
+  .ql-button { position: fixed; z-index: 20; width: 44px; height: 44px; border-radius: 50%; background: var(--hd-card); border: 1px solid var(--hd-border); display: none; }
+  @media (max-width: 767px) { .ql-button.on:not([hidden]) { display: grid; place-items: center; } }
+  .ql-button.top-left { top: 12px; left: 12px; } .ql-button.top-right { top: 12px; right: 12px; }
+  .ql-button.bottom-left { bottom: 12px; left: 12px; } .ql-button.bottom-right { bottom: 12px; right: 12px; }
   .bookmarks { display: flex; flex-wrap: wrap; margin: 8px -4px 0; }
   .bookmark-group { flex: 1 1 100%; }
   @media (min-width: 768px) { .bookmark-group { flex-basis: 50%; } }
@@ -307,12 +327,20 @@
   <button class="icon-btn" id="toast-close" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
 </div>
 <div class="sr-only" id="search-status" role="status" aria-live="polite"></div>
+<div class="ql" id="quicklaunch" role="dialog" aria-modal="true" hidden>
+  <div class="ql-box">
+    <input id="ql-input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-controls="ql-list" aria-expanded="true">
+    <ul id="ql-list" role="listbox"></ul>
+  </div>
+</div>
+<button class="ql-button icon-btn" id="ql-button" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
 <script>
 'use strict';
 
 // ---------------------------------------------------------------- texts
 const I18N = {
   en: {
+    qlLabel: "Quick launch", qlPlaceholder: "Search services, bookmarks or the web", qlSearch: "Search {name} for “{q}”", qlVisit: "Open {url}", qlService: "Service", qlBookmark: "Bookmark", qlLink: "Link", qlWeb: "Web",
     tabs: 'Tabs', loading: 'Loading…', errors: 'Configuration errors', warnings: 'Warnings', empty: 'No services yet.',
     emptyHint: 'Add them to services.yaml in your config folder, or label your containers with homelab.name.',
     up: 'Online', down: 'Offline', warn: 'Degraded', unknown: 'Unknown', tagUp: 'Up', tagDown: 'Down',
@@ -334,6 +362,7 @@ const I18N = {
     noMatches: "No services found",
   },
   nl: {
+    qlLabel: "Snel starten", qlPlaceholder: "Zoek services, bladwijzers of op het web", qlSearch: "Zoek “{q}” met {name}", qlVisit: "{url} openen", qlService: "Service", qlBookmark: "Bladwijzer", qlLink: "Link", qlWeb: "Web",
     tabs: 'Tabbladen', loading: 'Laden…', errors: 'Fouten in de configuratie', warnings: 'Waarschuwingen', empty: 'Nog geen services.',
     emptyHint: 'Zet ze in services.yaml in je configmap, of geef je containers het label homelab.name.',
     up: 'Online', down: 'Offline', warn: 'Verstoord', unknown: 'Onbekend', tagUp: 'Online', tagDown: 'Offline',
@@ -355,6 +384,7 @@ const I18N = {
     noMatches: "Geen services gevonden",
   },
   fr: {
+    qlLabel: "Lancement rapide", qlPlaceholder: "Chercher des services, des favoris ou sur le web", qlSearch: "Chercher « {q} » sur {name}", qlVisit: "Ouvrir {url}", qlService: "Service", qlBookmark: "Favori", qlLink: "Lien", qlWeb: "Web",
     tabs: 'Onglets', loading: 'Chargement…', errors: 'Erreurs de configuration', warnings: 'Avertissements', empty: 'Aucun service pour l’instant.',
     emptyHint: 'Ajoutez-les dans services.yaml de votre dossier de configuration, ou étiquetez vos conteneurs avec homelab.name.',
     up: 'En ligne', down: 'Hors ligne', warn: 'Dégradé', unknown: 'Inconnu', tagUp: 'En ligne', tagDown: 'Hors ligne',
@@ -376,6 +406,7 @@ const I18N = {
     noMatches: "Aucun service trouvé",
   },
   de: {
+    qlLabel: "Schnellstart", qlPlaceholder: "Dienste, Lesezeichen oder das Web durchsuchen", qlSearch: "„{q}“ mit {name} suchen", qlVisit: "{url} öffnen", qlService: "Dienst", qlBookmark: "Lesezeichen", qlLink: "Link", qlWeb: "Web",
     tabs: 'Tabs', loading: 'Lädt…', errors: 'Konfigurationsfehler', warnings: 'Warnungen', empty: 'Noch keine Dienste.',
     emptyHint: 'Trage sie in services.yaml im Konfigurationsordner ein oder versieh deine Container mit dem Label homelab.name.',
     up: 'Online', down: 'Offline', warn: 'Beeinträchtigt', unknown: 'Unbekannt', tagUp: 'Online', tagDown: 'Offline',
@@ -397,6 +428,7 @@ const I18N = {
     noMatches: "Keine Dienste gefunden",
   },
   es: {
+    qlLabel: "Inicio rápido", qlPlaceholder: "Buscar servicios, marcadores o en la web", qlSearch: "Buscar «{q}» en {name}", qlVisit: "Abrir {url}", qlService: "Servicio", qlBookmark: "Marcador", qlLink: "Enlace", qlWeb: "Web",
     tabs: 'Pestañas', loading: 'Cargando…', errors: 'Errores de configuración', warnings: 'Advertencias', empty: 'Todavía no hay servicios.',
     emptyHint: 'Añádelos en services.yaml de tu carpeta de configuración, o etiqueta tus contenedores con homelab.name.',
     up: 'En línea', down: 'Sin conexión', warn: 'Degradado', unknown: 'Desconocido', tagUp: 'Activo', tagDown: 'Caído',
@@ -980,6 +1012,143 @@ function placeBookmarkGroups() {
   }
 }
 
+// ---------------------------------------------------------------- quicklaunch
+const QL_PROVIDERS = {
+  google: 'https://www.google.com/search?q=', duckduckgo: 'https://duckduckgo.com/?q=', bing: 'https://www.bing.com/search?q=',
+  baidu: 'https://www.baidu.com/s?wd=', brave: 'https://search.brave.com/search?q=', startpage: 'https://www.startpage.com/do/search?q=',
+};
+const QL_NAMES = { google: 'Google', duckduckgo: 'DuckDuckGo', bing: 'Bing', baidu: 'Baidu', brave: 'Brave', startpage: 'Startpage' };
+let qlSettings = {};
+let qlItems = [];
+let qlIndex = 0;
+
+/** The web search: quicklaunch.provider, else the search widget's, else none. */
+function qlProvider() {
+  const widget = (layout?.header ?? []).find((w) => w.type === 'search')?.options ?? {};
+  const name = qlSettings.provider ?? widget.provider ?? null;
+  if (!name) return null;
+  const url = name === 'custom' ? (qlSettings.provider ? qlSettings.url : widget.url) : QL_PROVIDERS[name];
+  if (!url) return null;
+  return { name: QL_NAMES[name] || translate('qlWeb'), url, target: qlSettings.target ?? widget.target ?? '_blank' };
+}
+
+/** Every service (nested groups too) and bookmark, for matching. */
+function qlEntries() {
+  const out = [];
+  const walk = (groups) => {
+    for (const g of groups ?? []) {
+      for (const s of g.services) out.push({ kind: 'service', id: s.id, name: s.name, description: s.description, href: s.href, target: s.target, icon: s.icon });
+      walk(g.groups);
+    }
+  };
+  walk(layout?.groups);
+  for (const g of layout?.bookmarks ?? []) for (const b of g.bookmarks) out.push({ kind: 'bookmark', name: b.name, description: b.description, href: b.href, target: '_blank', icon: b.icon });
+  return out.filter((e) => safeHref(e.href));
+}
+
+const URL_LIKE = /^(https?:\/\/)?[\w-]+(\.[\w-]+)+(:\d+)?(\/\S*)?$/i;
+
+function qlSearch(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const words = q.split(/\s+/);
+  const hits = (text) => words.every((w) => (text || '').toLowerCase().includes(w));
+  const all = qlEntries();
+  const byName = all.filter((e) => hits(e.name));
+  const byDesc = qlSettings.searchDescriptions ? all.filter((e) => !byName.includes(e) && hits(e.description)) : [];
+  const items = [...byName, ...byDesc].slice(0, 12);
+  if (!qlSettings.hideVisitURL && URL_LIKE.test(query.trim())) {
+    const url = /^https?:\/\//i.test(query.trim()) ? query.trim() : `https://${query.trim()}`;
+    items.push({ kind: 'url', name: translate('qlVisit', { url }), href: url, target: '_blank' });
+  }
+  const provider = qlSettings.hideInternetSearch ? null : qlProvider();
+  if (provider) {
+    const encoded = encodeURIComponent(query.trim());
+    const href = provider.url.includes('{q}') ? provider.url.replace('{q}', encoded) : provider.url + encoded;
+    items.push({ kind: 'web', name: translate('qlSearch', { name: provider.name, q: query.trim() }), href, target: provider.target });
+  }
+  return items;
+}
+
+function qlRender() {
+  const list = document.getElementById('ql-list');
+  const input = document.getElementById('ql-input');
+  qlItems = qlSearch(input.value);
+  qlIndex = Math.min(qlIndex, Math.max(0, qlItems.length - 1));
+  list.replaceChildren(...qlItems.map((item, i) => {
+    const li = el('li', { role: 'option', id: `ql-${i}`, 'aria-selected': String(i === qlIndex) },
+      el('span', { class: 'ql-icon' }, item.icon ? iconImage(item.icon) : null),
+      el('span', null, el('div', { class: 'ql-name', text: item.name }), item.description ? el('div', { class: 'ql-desc', text: item.description }) : null),
+      el('span', { class: 'ql-kind', text: translate({ service: 'qlService', bookmark: 'qlBookmark', url: 'qlLink', web: 'qlWeb' }[item.kind]) }));
+    li.addEventListener('mousedown', (e) => { e.preventDefault(); qlOpen(item); });
+    return li;
+  }));
+  if (input.value.trim() && !qlItems.length) list.append(el('li', { class: 'ql-empty', text: translate('noMatches') }));
+  if (qlItems.length) input.setAttribute('aria-activedescendant', `ql-${qlIndex}`);
+  else input.removeAttribute('aria-activedescendant');
+}
+
+function qlOpen(item) {
+  const href = safeHref(item.href);
+  qlClose();
+  if (!href) return;
+  // a service opens through its card, so its target (also hidden-iframe webhooks) applies
+  const card = item.id && document.querySelector(`[data-service="${CSS.escape(item.id)}"] a.card-head`);
+  if (card) return void card.click();
+  if (item.target === '_self' || item.target === '_top') location.assign(href);
+  else window.open(href, '_blank', 'noopener,noreferrer');
+}
+
+function qlShow(initial) {
+  const input = document.getElementById('ql-input');
+  document.getElementById('quicklaunch').hidden = false;
+  input.value = initial || '';
+  qlIndex = 0;
+  input.focus();
+  qlRender();
+}
+
+function qlClose() {
+  document.getElementById('quicklaunch').hidden = true;
+}
+
+function setupQuicklaunch(settings) {
+  qlSettings = settings;
+  document.getElementById('quicklaunch').setAttribute('aria-label', translate('qlLabel'));
+  const input = document.getElementById('ql-input');
+  input.placeholder = translate('qlPlaceholder');
+  input.setAttribute('aria-label', translate('qlLabel'));
+  const button = document.getElementById('ql-button');
+  button.className = 'ql-button icon-btn' + (settings.mobileButtonPosition ? ` on ${settings.mobileButtonPosition}` : '');
+  button.hidden = !settings.mobileButtonPosition;
+  button.setAttribute('aria-label', translate('qlLabel'));
+  button.title = translate('qlLabel');
+}
+
+document.addEventListener('keydown', (e) => {
+  if (!document.getElementById('quicklaunch').hidden) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1 || e.key === ' ') return;
+  const active = document.activeElement;
+  // typing in a field (or in a widget's own field, inside its shadow root) is not for quicklaunch
+  if (active && (active.matches('input, textarea, select, [contenteditable]') || active.shadowRoot || active.tagName.includes('-'))) return;
+  e.preventDefault();
+  qlShow(e.key);
+});
+document.getElementById('ql-input').addEventListener('input', () => { qlIndex = 0; qlRender(); });
+document.getElementById('ql-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { e.preventDefault(); qlClose(); }
+  else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (qlItems.length) qlIndex = (qlIndex + (e.key === 'ArrowDown' ? 1 : -1) + qlItems.length) % qlItems.length;
+    qlRender();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (qlItems[qlIndex]) qlOpen(qlItems[qlIndex]);
+  }
+});
+document.getElementById('quicklaunch').addEventListener('mousedown', (e) => { if (e.target.id === 'quicklaunch') qlClose(); });
+document.getElementById('ql-button').addEventListener('click', () => qlShow(''));
+
 // ---------------------------------------------------------------- tabs
 /** The tab in the URL hash (#name, lowercase and URI-encoded, as in homepage), else the first. */
 function currentTab(tabs) {
@@ -1058,6 +1227,7 @@ function render(data) {
 
   placeBookmarkGroups();
   renderTabs(data.tabs ?? []);
+  setupQuicklaunch(s.quicklaunch ?? {});
 
   for (const [id, key] of [['refresh-btn', 'refresh'], ['color-btn', 'color'], ['toast-close', 'close']]) {
     const b = document.getElementById(id);

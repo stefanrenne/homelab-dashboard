@@ -4,7 +4,7 @@ version: 1.2.0
 apiVersion: 1
 description: Filters the dashboard's services as you type; Enter opens the only match, or searches the web.
 options:
-  provider: { type: enum, values: [duckduckgo, google, bing, startpage, custom], default: duckduckgo }
+  provider: { type: enum, values: [duckduckgo, google, bing, startpage, baidu, brave, custom], default: duckduckgo }
   url: { type: string }   # for provider "custom": a URL with {q}, e.g. https://search.lan/?q={q}
   target: { type: enum, values: [_blank, _self], default: _blank }
   filter: { type: boolean, default: true }   # false: only search the web

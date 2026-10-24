@@ -28,6 +28,10 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - `statusStyle: dot|basic` for the status labels, in settings.yaml and per service, as in homepage.
 - Block highlighting: `highlight:` on a widget entry (numeric and string rules per block key) and
   `blockHighlights.levels` for the colours, as in homepage.
+- Quick launch, as in homepage: start typing anywhere to find services and bookmarks, open a typed
+  address or search the web (`quicklaunch:` with `searchDescriptions`, `provider`,
+  `hideInternetSearch`, `hideVisitURL`, `mobileButtonPosition`). The search widget gains the
+  `baidu` and `brave` providers.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

@@ -8,6 +8,8 @@ const PROVIDERS = {
   google: { url: 'https://www.google.com/search?q={q}', mark: 'G', name: 'Google' },
   bing: { url: 'https://www.bing.com/search?q={q}', mark: 'B', name: 'Bing' },
   startpage: { url: 'https://www.startpage.com/do/search?q={q}', mark: 'S', name: 'Startpage' },
+  baidu: { url: 'https://www.baidu.com/s?wd={q}', mark: 'B', name: 'Baidu' },
+  brave: { url: 'https://search.brave.com/search?q={q}', mark: 'B', name: 'Brave' },
 };
 
 class HdSearch extends HTMLElement {

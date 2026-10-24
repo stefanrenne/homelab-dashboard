@@ -493,3 +493,92 @@ test('highlighted blocks get a level class (block or value only), coloured from 
   assert.match(css, /:root\[data-theme="light"\] \.hl-warn\{color:#ffffff\}/, 'an unknown colour is dropped, the rest kept');
   assert.ok(!css.includes('hl-danger'));
 });
+
+test('quicklaunch: typing opens it; services, bookmarks, a URL and the web search; keys and descriptions', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.header = [{ instanceId: 'h-1', type: 'search', options: { provider: 'google' }, known: true, server: false }];
+  layout.widgetTypes.search = { name: 'Search', client: null, i18n: {} };
+  layout.settings.quicklaunch = {};
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const doc = w.document;
+  const opened = [];
+  w.open = (url, target) => opened.push([url, target]);
+  const press = (key, target = doc.body) => target.dispatchEvent(new w.KeyboardEvent('keydown', { key, bubbles: true }));
+  const items = () => [...doc.querySelectorAll('#ql-list li')].map((li) => li.querySelector('.ql-name')?.textContent ?? li.textContent);
+
+  press('r');
+  const box = doc.getElementById('quicklaunch');
+  const input = doc.getElementById('ql-input');
+  assert.equal(box.hidden, false);
+  assert.equal(input.value, 'r');
+  assert.equal(box.getAttribute('aria-label'), 'Snel starten');
+  assert.deepEqual(items(), ['Router', 'Script', 'Zoek “r” met Google'], 'Evil (unsafe link) and Radarr (no link) are left out');
+
+  input.value = 'git';
+  input.dispatchEvent(new w.Event('input'));
+  assert.deepEqual(items(), ['GitHub', 'Zoek “git” met Google']);
+  press('Enter', input);
+  assert.deepEqual(opened.pop(), ['https://github.com', '_blank']);
+  assert.equal(box.hidden, true);
+
+  press('e');
+  input.value = 'example.lan/admin';
+  input.dispatchEvent(new w.Event('input'));
+  assert.deepEqual(items(), ['https://example.lan/admin openen', 'Zoek “example.lan/admin” met Google']);
+  press('ArrowDown', input);
+  press('Enter', input);
+  assert.match(opened.pop()[0], /^https:\/\/www\.google\.com\/search\?q=example\.lan%2Fadmin$/);
+
+  press('g');
+  input.value = 'gateway';
+  input.dispatchEvent(new w.Event('input'));
+  assert.deepEqual(items(), ['Zoek “gateway” met Google'], 'descriptions are not searched by default');
+  press('Escape', input);
+  assert.equal(box.hidden, true);
+
+  const typing = doc.createElement('input');
+  doc.body.append(typing);
+  typing.focus();
+  press('x', typing);
+  assert.equal(box.hidden, true, 'typing in a field does not open it');
+});
+
+test('quicklaunch: searchDescriptions, its own provider, hideInternetSearch, hideVisitURL and the mobile button', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.settings.quicklaunch = { searchDescriptions: true, provider: 'custom', url: 'https://search.lan/?q=', hideVisitURL: true, mobileButtonPosition: 'bottom-right' };
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const doc = w.document;
+  const button = doc.getElementById('ql-button');
+  assert.equal(button.hidden, false);
+  assert.ok(button.classList.contains('bottom-right'));
+  button.click();
+  const input = doc.getElementById('ql-input');
+  input.value = 'gateway.lan';
+  input.dispatchEvent(new w.Event('input'));
+  const names = [...doc.querySelectorAll('#ql-list .ql-name')].map((n) => n.textContent);
+  assert.deepEqual(names, ['Zoek “gateway.lan” met Web']);
+  input.value = 'gateway';
+  input.dispatchEvent(new w.Event('input'));
+  assert.deepEqual([...doc.querySelectorAll('#ql-list .ql-name')].map((n) => n.textContent), ['Router', 'Zoek “gateway” met Web'], 'found by its description');
+
+  layout.settings.quicklaunch = { hideInternetSearch: true };
+  const quiet = await page({ ...RESULTS, '/api/layout': layout });
+  quiet.document.body.dispatchEvent(new quiet.KeyboardEvent('keydown', { key: 'z', bubbles: true }));
+  assert.deepEqual([...quiet.document.querySelectorAll('#ql-list li')].map((li) => li.textContent), ['Geen services gevonden']);
+  assert.equal(quiet.document.getElementById('ql-button').hidden, true);
+});
+
+test('quicklaunch opens a service through its card, so a hidden-iframe webhook runs through the server', async () => {
+  const w = await page({ ...RESULTS, '/api/run/svc-4': { ok: true, status: 200 } });
+  const doc = w.document;
+  const opened = [];
+  w.open = (url) => opened.push(url);
+  doc.body.dispatchEvent(new w.KeyboardEvent('keydown', { key: 's', bubbles: true }));
+  const input = doc.getElementById('ql-input');
+  input.value = 'script';
+  input.dispatchEvent(new w.Event('input'));
+  input.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(doc.getElementById('toast-text').textContent, 'Script: klaar');
+  assert.deepEqual(opened, [], 'the webhook URL is not opened in a tab');
+});

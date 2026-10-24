@@ -47,6 +47,7 @@ export function resolveIcon(icon) {
 
 export function buildState({ config, registry, groups, extraErrors = [], extraWarnings = [], secrets = config.secrets }) {
   const instances = new Map();
+  const actions = new Map(); // serviceId -> { name, href }: services the dashboard calls for the viewer
   const errors = [...config.errors, ...extraErrors];
   const warnings = [...config.warnings, ...extraWarnings];
   const usedTypes = new Set();
@@ -114,8 +115,12 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     layout: config.settings.layout[group.name] ?? {},
     services: group.services.map((service) => {
       const where = { file: service.discovered ?? 'services.yaml', path: `${group.name}.${service.name}` };
+      const id = stableId('svc', group.name, service.name);
+      // homepage's `target: hidden-iframe` (a webhook): the server calls it and reports back.
+      const target = service.target ?? config.settings.target;
+      if (target === 'hidden-iframe' && /^https?:\/\//.test(service.href ?? '')) actions.set(id, { name: service.name, href: service.href });
       return {
-        id: stableId('svc', group.name, service.name),
+        id,
         name: service.name,
         href: service.href ?? null,
         target: service.target ?? config.settings.target,
@@ -173,7 +178,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     widgetTypes,
     messages: { errors: scrubbed(errors), warnings: scrubbed(warnings) },
   };
-  return { instances, layout };
+  return { instances, layout, actions };
 }
 
 function stringsIn(value) {

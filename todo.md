@@ -9,8 +9,8 @@ Open work, roughly in order of value. Move an item to `completed.md` when it is 
 - [ ] Run widget `server.js` in a `worker_thread` with resource limits (see docs/widgets/security.md).
 - [ ] A widget catalogue: an index (YAML in a separate repo) of known widget packages, shown in the docs.
 - [ ] `hd widget new <id>` / `npm create` scaffolding from the template.
-- [ ] Collapsible groups and tabs (`layout.<group>.tab`), like homepage.
+- [ ] Tabs (`layout.<group>.tab`), like homepage.
 - [ ] Search suggestions in the search widget (homepage's `showSearchSuggestions`), through the server because of the CSP.
-- [ ] homepage's `expanded` resources and per-disk labels; `initiallyCollapsed` and `tab` in group layouts.
+- [ ] homepage's `expanded` resources and per-disk labels.
 - [ ] Custom CSS/JS files from the config folder (`custom.css`).
 - [ ] Polling fallback for the config watcher on network file systems (`HD_WATCH_POLL`).

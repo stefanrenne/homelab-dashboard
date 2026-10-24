@@ -11,6 +11,9 @@ import { syncPlugins } from './plugins/installer.js';
 import { WidgetRuntime } from './plugins/runtime.js';
 import { Discovery, mergeDiscovered } from './discovery/index.js';
 import { buildState } from './layout.js';
+import { describeError, scrub } from './plugins/runtime.js';
+
+export const ACTION_TIMEOUT_MS = 30_000;
 import { safeJoin } from './util.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -39,8 +42,7 @@ const SECURITY_HEADERS = {
   'content-security-policy':
     "default-src 'self'; img-src * data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; " +
-    // frame-src: services with `target: hidden-iframe` call their URL in a hidden frame (homepage feature).
-    "frame-src http: https:; frame-ancestors 'self'",
+    "frame-src 'none'; frame-ancestors 'self'",
 };
 
 export async function createApp({
@@ -55,7 +57,7 @@ export async function createApp({
 } = {}) {
   const sseClients = new Set();
   const runtime = new WidgetRuntime({ registry: new Map(), log, timeoutMs });
-  const state = { config: null, registry: new Map(), pluginResult: { errors: [], warnings: [] }, registryErrors: [], layout: null };
+  const state = { config: null, registry: new Map(), pluginResult: { errors: [], warnings: [] }, registryErrors: [], layout: null, actions: new Map() };
   const discovery = new Discovery({ log, env, onChange: () => state.config && rebuild(), ...discoveryOptions });
   let chain = Promise.resolve();
 
@@ -63,7 +65,7 @@ export async function createApp({
     const merged = mergeDiscovered(state.config.services, discovery.found);
     const pluginMessages = (list) =>
       list.map((e) => ({ file: 'settings.yaml', path: `plugins: ${e.source}`, message: e.message }));
-    const { instances, layout } = buildState({
+    const { instances, layout, actions } = buildState({
       config: state.config,
       registry: state.registry,
       groups: merged.groups,
@@ -72,6 +74,7 @@ export async function createApp({
       secrets: new Set([...state.config.secrets, ...discovery.secrets]),
     });
     runtime.setInstances(instances, state.registry);
+    state.actions = actions;
     state.layout = { ...layout, version: VERSION };
     broadcast('reload');
   }
@@ -145,6 +148,13 @@ export async function createApp({
         await reload({ update: url.searchParams.get('update') === '1' });
         return send(res, 200, { errors: state.pluginResult.errors, warnings: state.pluginResult.warnings });
       }
+      if (method === 'POST' && p.startsWith('/api/run/')) {
+        // A custom header cannot be sent cross-site without a CORS preflight, which we never allow.
+        if (req.headers['x-requested-with'] !== 'homelab-dashboard') return send(res, 403, { error: 'missing X-Requested-With' });
+        const action = state.actions.get(p.slice('/api/run/'.length));
+        if (!action) return send(res, 404, { error: 'no such action' });
+        return send(res, 200, await runAction(action));
+      }
       if (method === 'GET' && p.startsWith('/widgets/')) {
         const [, , type, ...rest] = p.split('/');
         const widget = state.registry.get(type);
@@ -163,6 +173,21 @@ export async function createApp({
     } catch (err) {
       log.error(`${req.method} ${p}: ${err.stack ?? err}`);
       return send(res, 500, { error: 'internal error' });
+    }
+  }
+
+  /** Calls a `target: hidden-iframe` URL (configured, never from the request) and reports the outcome. */
+  async function runAction(action) {
+    const secrets = [...(state.config?.secrets ?? [])];
+    try {
+      const res = await fetch(action.href, { signal: AbortSignal.timeout(ACTION_TIMEOUT_MS), redirect: 'follow' });
+      await res.body?.cancel();
+      log.info(`action ${action.name}: ${res.status}`);
+      return { ok: res.ok, status: res.status };
+    } catch (err) {
+      const error = scrub(describeError(err), secrets);
+      log.warn(`action ${action.name}: ${error}`);
+      return { ok: false, error };
     }
   }
 

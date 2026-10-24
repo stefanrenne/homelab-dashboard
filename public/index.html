@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1e293b" id="theme-color">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="color-scheme" content="light dark">
 <title>Homelab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -65,8 +68,9 @@
     background-position: center;
   }
   button { font: inherit; color: inherit; }
-  .wrap { max-width: 1280px; margin: 0 auto; padding: 20px 20px 24px; }
-  @media (min-width: 640px) { .wrap { padding: 36px 36px 24px; } }
+  .wrap { max-width: 1280px; margin: 0 auto;
+    padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
+  @media (min-width: 640px) { .wrap { padding: max(36px, env(safe-area-inset-top)) max(36px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(36px, env(safe-area-inset-left)); } }
   .shadow { box-shadow: 0 4px 6px -1px var(--hd-shadow), 0 2px 4px -2px var(--hd-shadow); }
 
   /* header */
@@ -94,7 +98,15 @@
   @media (min-width: 1280px) { .group.layout-column { flex-basis: 25%; } }
   .group h2 { margin: 0; font-size: 1.25rem; line-height: 1.75rem; font-weight: 500; color: var(--hd-heading); }
   .group h2 + .cards { margin-top: 12px; }
+  .group-toggle { all: unset; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 4px; }
+  .group-toggle:focus-visible { outline: 2px solid var(--hd-accent); outline-offset: 2px; }
+  .group-toggle svg { width: 16px; height: 16px; opacity: .55; transition: transform .15s; }
+  .group-toggle:hover svg { opacity: 1; }
+  .group.collapsed .group-toggle svg { transform: rotate(-90deg); }
+  .group.collapsed .cards { display: none; }
+  #groups.searching .group.collapsed .cards { display: grid; } /* search looks inside folded groups */
   .cards { display: grid; column-gap: 8px; grid-template-columns: 1fr; align-items: start; }
+  @supports (grid-template-rows: masonry) { .cards { grid-template-rows: masonry; } } /* no holes; order kept */
   @media (min-width: 768px) { .group.layout-row .cards { grid-template-columns: repeat(min(2, var(--cols)), minmax(0, 1fr)); } }
   @media (min-width: 1024px) { .group.layout-row .cards { grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); } }
 
@@ -180,9 +192,12 @@
   .palette.open { display: flex; }
   .swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
   .swatch.active { border-color: var(--hd-text); }
-  .version { font-size: .6875rem; opacity: .75; }
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--t900); color: var(--t100); padding: 8px 14px; border-radius: 6px; font-size: .8125rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
-  .toast.show { opacity: .95; }
+  .toast { position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px);
+    display: flex; align-items: center; gap: 8px; background: var(--t900); color: var(--t100); padding: 4px 4px 4px 14px; border-radius: 6px;
+    font-size: .8125rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: .97; pointer-events: auto; }
+  .toast.error { background: #881337; color: #fff1f2; }
+  .toast .icon-btn { color: inherit; }
   a:focus-visible, button:focus-visible { outline: 2px solid var(--hd-accent); outline-offset: 2px; }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   [hidden] { display: none !important; }
@@ -212,7 +227,6 @@
       <div class="palette" id="palette"></div>
     </div>
     <div class="right">
-      <span class="version" id="version"></span>
       <button class="icon-btn" id="refresh-btn" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
       </button>
@@ -230,7 +244,10 @@
     </div>
   </footer>
 </div>
-<div class="toast" id="toast" role="status"></div>
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span id="toast-text"></span>
+  <button class="icon-btn" id="toast-close" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div>
 <div class="sr-only" id="search-status" role="status" aria-live="polite"></div>
 <script>
 'use strict';
@@ -243,7 +260,7 @@ const I18N = {
     up: 'Online', down: 'Offline', warn: 'Degraded', unknown: 'Unknown', tagDown: 'Down',
     apiError: 'API Error Information', unknownWidget: 'Unknown widget type', discovered: 'discovered from',
     offline: 'Server unreachable, retrying…', clientFailed: 'Could not load the widget code',
-    containerStats: 'Show container stats', refresh: 'Refresh', color: 'Change color', started: 'Started', attention: 'Needs attention', problem: 'Problem',
+    containerStats: 'Show container stats', refresh: 'Refresh', color: 'Change color', running: '{name}: running…', runOk: '{name}: done', runFailed: '{name} failed: {reason}', close: 'Close', attention: 'Needs attention', problem: 'Problem', playing: 'Playing', paused: 'Paused',
     appearanceLight: "Light appearance",
     appearanceAuto: "Follow system appearance",
     appearanceDark: "Dark appearance",
@@ -264,7 +281,7 @@ const I18N = {
     up: 'Online', down: 'Offline', warn: 'Verstoord', unknown: 'Onbekend', tagDown: 'Offline',
     apiError: 'API-foutinformatie', unknownWidget: 'Onbekend widgettype', discovered: 'gevonden via',
     offline: 'Server onbereikbaar, opnieuw proberen…', clientFailed: 'De widgetcode kon niet geladen worden',
-    containerStats: 'Containerstatistieken tonen', refresh: 'Vernieuwen', color: 'Kleur wijzigen', started: 'Gestart', attention: 'Vraagt aandacht', problem: 'Probleem',
+    containerStats: 'Containerstatistieken tonen', refresh: 'Vernieuwen', color: 'Kleur wijzigen', running: '{name}: bezig…', runOk: '{name}: klaar', runFailed: '{name} mislukt: {reason}', close: 'Sluiten', attention: 'Vraagt aandacht', problem: 'Probleem', playing: 'Speelt af', paused: 'Gepauzeerd',
     appearanceLight: "Licht uiterlijk",
     appearanceAuto: "Uiterlijk van het systeem volgen",
     appearanceDark: "Donker uiterlijk",
@@ -285,7 +302,7 @@ const I18N = {
     up: 'En ligne', down: 'Hors ligne', warn: 'Dégradé', unknown: 'Inconnu', tagDown: 'Hors ligne',
     apiError: 'Informations sur l’erreur API', unknownWidget: 'Type de widget inconnu', discovered: 'découvert via',
     offline: 'Serveur injoignable, nouvelle tentative…', clientFailed: 'Impossible de charger le code du widget',
-    containerStats: 'Afficher les statistiques du conteneur', refresh: 'Actualiser', color: 'Changer de couleur', started: 'Lancé', attention: 'Demande de l’attention', problem: 'Problème',
+    containerStats: 'Afficher les statistiques du conteneur', refresh: 'Actualiser', color: 'Changer de couleur', running: '{name} : en cours…', runOk: '{name} : terminé', runFailed: '{name} a échoué : {reason}', close: 'Fermer', attention: 'Demande de l’attention', problem: 'Problème', playing: 'Lecture', paused: 'En pause',
     appearanceLight: "Apparence claire",
     appearanceAuto: "Suivre l’apparence du système",
     appearanceDark: "Apparence sombre",
@@ -306,7 +323,7 @@ const I18N = {
     up: 'Online', down: 'Offline', warn: 'Beeinträchtigt', unknown: 'Unbekannt', tagDown: 'Offline',
     apiError: 'API-Fehlerinformationen', unknownWidget: 'Unbekannter Widget-Typ', discovered: 'gefunden über',
     offline: 'Server nicht erreichbar, neuer Versuch…', clientFailed: 'Widget-Code konnte nicht geladen werden',
-    containerStats: 'Container-Statistiken anzeigen', refresh: 'Aktualisieren', color: 'Farbe ändern', started: 'Gestartet', attention: 'Braucht Aufmerksamkeit', problem: 'Problem',
+    containerStats: 'Container-Statistiken anzeigen', refresh: 'Aktualisieren', color: 'Farbe ändern', running: '{name}: läuft…', runOk: '{name}: fertig', runFailed: '{name} fehlgeschlagen: {reason}', close: 'Schließen', attention: 'Braucht Aufmerksamkeit', problem: 'Problem', playing: 'Läuft', paused: 'Pausiert',
     appearanceLight: "Helles Erscheinungsbild",
     appearanceAuto: "Erscheinungsbild des Systems folgen",
     appearanceDark: "Dunkles Erscheinungsbild",
@@ -327,7 +344,7 @@ const I18N = {
     up: 'En línea', down: 'Sin conexión', warn: 'Degradado', unknown: 'Desconocido', tagDown: 'Caído',
     apiError: 'Información del error de la API', unknownWidget: 'Tipo de widget desconocido', discovered: 'descubierto en',
     offline: 'Servidor inaccesible, reintentando…', clientFailed: 'No se pudo cargar el código del widget',
-    containerStats: 'Mostrar estadísticas del contenedor', refresh: 'Actualizar', color: 'Cambiar color', started: 'Iniciado', attention: 'Requiere atención', problem: 'Problema',
+    containerStats: 'Mostrar estadísticas del contenedor', refresh: 'Actualizar', color: 'Cambiar color', running: '{name}: en curso…', runOk: '{name}: hecho', runFailed: '{name} falló: {reason}', close: 'Cerrar', attention: 'Requiere atención', problem: 'Problema', playing: 'Reproduciendo', paused: 'En pausa',
     appearanceLight: "Apariencia clara",
     appearanceAuto: "Seguir la apariencia del sistema",
     appearanceDark: "Apariencia oscura",
@@ -425,12 +442,23 @@ function formatValue(value) {
   return String(value);
 }
 
-function toast(text) {
+/**
+ * A message at the bottom. Information goes away after a while; an error stays until it is
+ * closed (button or Escape), so nobody has to read it against a timer.
+ */
+function toast(text, { error = false } = {}) {
   const t = document.getElementById('toast');
-  t.textContent = text;
+  document.getElementById('toast-text').textContent = text;
+  t.classList.toggle('error', error);
+  t.setAttribute('aria-live', error ? 'assertive' : 'polite');
   t.classList.add('show');
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => t.classList.remove('show'), 1800);
+  if (!error) toast.timer = setTimeout(hideToast, 6000);
+}
+
+function hideToast() {
+  clearTimeout(toast.timer);
+  document.getElementById('toast').classList.remove('show');
 }
 
 // ---------------------------------------------------------------- theme
@@ -447,6 +475,7 @@ function applyTheme(settings) {
   const choice = ['auto', 'light', 'dark'].includes(stored('hd-theme')) ? stored('hd-theme') : settings.theme;
   const theme = choice === 'auto' ? (systemLight() ? 'light' : 'dark') : choice;
   document.documentElement.dataset.theme = theme;
+  document.getElementById('theme-color').setAttribute('content', theme === 'dark' ? shades[8] : shades[0]);
   for (const b of document.querySelectorAll('[data-appearance]')) b.setAttribute('aria-pressed', String(b.dataset.appearance === choice));
   const palette = document.getElementById('palette');
   palette.replaceChildren(...Object.keys(PALETTES).map((name) => {
@@ -481,6 +510,15 @@ function statusSymbol(status) {
   const wrap = el('span', null, el('span', { class: 'sym', 'aria-hidden': 'true', text: status === 'warn' ? '▲' : '✕' }));
   wrap.append(el('span', { class: 'sr-only', text: translate(status === 'warn' ? 'attention' : 'problem') + ': ' }));
   return wrap;
+}
+
+/** A row icon is drawn for the eye and spoken as a word ("Playing"), never as "black triangle". */
+function rowIcon(icon) {
+  const glyph = { play: '▶', pause: '❚❚' }[icon];
+  if (!glyph) return null;
+  return el('span', null,
+    el('span', { class: 'sym', 'aria-hidden': 'true', text: glyph }),
+    el('span', { class: 'sr-only', text: translate(icon === 'play' ? 'playing' : 'paused') + ': ' }));
 }
 
 /** Rows that do not fit can be opened to show their full text (click, Enter or Space). */
@@ -559,7 +597,7 @@ function renderResult(container, instance, result, name) {
         row.append(bar);
       }
       const value = r.value === null || r.value === undefined ? '' : typeof r.value === 'string' ? t(r.value) : formatValue(r.value);
-      row.append(el('span', { class: 'rl' }, statusSymbol(r.status), label), el('span', { class: 'rv', text: value }));
+      row.append(el('span', { class: 'rl' }, statusSymbol(r.status), rowIcon(r.icon), label), el('span', { class: 'rv', text: value }));
       if (!more) makeExpandable(row);
       list.append(row);
     }
@@ -682,12 +720,45 @@ function renderMessages(messages) {
   section(messages.warnings, 'warn', translate('warnings'));
 }
 
-/** `target: hidden-iframe` (homepage): call the URL without leaving the page, e.g. a webhook. */
-function hiddenFrame(href) {
-  const frame = el('iframe', { src: href, hidden: '', 'aria-hidden': 'true' });
-  document.body.append(frame);
-  setTimeout(() => frame.remove(), 60000);
-  toast(translate('started'));
+/**
+ * `target: hidden-iframe` (homepage), e.g. a webhook: the dashboard server calls the URL and
+ * says how it went, instead of a frame that can never report failure.
+ */
+async function runAction(service) {
+  toast(translate('running', { name: service.name }));
+  try {
+    const res = await fetch(`/api/run/${encodeURIComponent(service.id)}`, { method: 'POST', headers: { 'x-requested-with': 'homelab-dashboard' } });
+    const out = await res.json();
+    if (out.ok) toast(translate('runOk', { name: service.name }));
+    else toast(translate('runFailed', { name: service.name, reason: out.error || `HTTP ${out.status}` }), { error: true });
+  } catch (err) {
+    toast(translate('runFailed', { name: service.name, reason: translate('offline') }), { error: true });
+  }
+}
+
+// ---------------------------------------------------------------- groups
+/** Folded groups per viewer: { name: true|false }; settings.yaml's initiallyCollapsed is the default. */
+function collapsedState() {
+  try { return JSON.parse(stored('hd-collapsed') || '{}'); } catch { return {}; }
+}
+
+function groupToggle(g, section, cardsId) {
+  const saved = collapsedState();
+  const collapsed = g.name in saved ? saved[g.name] : g.layout.initiallyCollapsed === true;
+  const button = el('button', { class: 'group-toggle', type: 'button', 'aria-controls': cardsId },
+    el('span', { text: g.name }));
+  button.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
+  const apply = (value) => {
+    section.classList.toggle('collapsed', value);
+    button.setAttribute('aria-expanded', String(!value));
+  };
+  apply(collapsed);
+  button.addEventListener('click', () => {
+    const value = !section.classList.contains('collapsed');
+    apply(value);
+    store('hd-collapsed', JSON.stringify({ ...collapsedState(), [g.name]: value }));
+  });
+  return button;
 }
 
 function renderService(service) {
@@ -699,7 +770,7 @@ function renderService(service) {
     target: href && !hidden ? service.target : null,
     rel: href ? 'noopener noreferrer' : null,
   });
-  if (href && hidden) head.addEventListener('click', (e) => { e.preventDefault(); hiddenFrame(href); });
+  if (href && hidden) head.addEventListener('click', (e) => { e.preventDefault(); runAction(service); });
   // Discovered services look the same as configured ones; the source is in the tooltip.
   const name = el('div', { class: 'name', text: service.name, title: service.discovered ? `${service.name} (${translate('discovered')}: ${service.discovered})` : null });
   if (service.icon) head.append(iconNode(service.icon, service.name));
@@ -746,8 +817,9 @@ function render(data) {
     const cols = Number(g.layout.columns) || 0;
     const row = g.layout.style === 'row' || cols > 0;
     const section = el('section', { class: 'group ' + (row ? 'layout-row' : 'layout-column'), 'data-group': g.name });
-    section.append(el('h2', { text: g.name, class: g.layout.header === false ? 'sr-only' : null }));
-    const cards = el('div', { class: 'cards' });
+    const cards = el('div', { class: 'cards', id: `cards-${groups.children.length}` });
+    if (g.layout.header === false) section.append(el('h2', { text: g.name, class: 'sr-only' }));
+    else section.append(el('h2', null, groupToggle(g, section, cards.id)));
     cards.style.setProperty('--cols', cols || 4);
     for (const svc of g.services) cards.append(renderService(svc));
     section.append(cards);
@@ -769,8 +841,7 @@ function render(data) {
     return section;
   }));
 
-  document.getElementById('version').textContent = `homelab-dashboard ${data.version || ''}`;
-  for (const [id, key] of [['refresh-btn', 'refresh'], ['color-btn', 'color']]) {
+  for (const [id, key] of [['refresh-btn', 'refresh'], ['color-btn', 'color'], ['toast-close', 'close']]) {
     const b = document.getElementById(id);
     b.title = translate(key);
     b.setAttribute('aria-label', translate(key));
@@ -821,6 +892,7 @@ function filterServices(query) {
     }
     section.hidden = visible === 0;
   }
+  document.getElementById('groups').classList.toggle('searching', words.length > 0);
   const status = document.getElementById('search-status');
   status.textContent = words.length ? (matches.length ? translate('matches', { count: matches.length }) : translate('noMatches')) : '';
   return matches;
@@ -840,6 +912,8 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) for (const p of pollers) p.run();
 });
 document.getElementById('refresh-btn').addEventListener('click', () => load());
+document.getElementById('toast-close').addEventListener('click', hideToast);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideToast(); });
 for (const b of document.querySelectorAll('[data-appearance]')) {
   b.addEventListener('click', () => {
     store('hd-theme', b.dataset.appearance);

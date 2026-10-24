@@ -189,6 +189,7 @@ test('static files: index, client.js, assets, icons, and no path traversal', asy
     const index = await t.get('/');
     assert.equal(index.status, 200);
     assert.match(index.headers.get('content-security-policy'), /connect-src 'self'/);
+    assert.match(index.headers.get('content-security-policy'), /frame-src 'none'/);
     assert.equal((await t.get('/widgets/datetime/client.js')).headers.get('content-type'), 'text/javascript; charset=utf-8');
     assert.equal((await t.get('/widgets/example-counter/assets/README.md')).status, 200);
     assert.equal((await t.get('/widgets/example-counter/server.js')).status, 404);
@@ -198,6 +199,46 @@ test('static files: index, client.js, assets, icons, and no path traversal', asy
     assert.deepEqual(await t.json('/api/health').then((h) => h.ok), true);
   } finally {
     await t.close();
+  }
+});
+
+test('hidden-iframe services run through /api/run with the configured URL only', async () => {
+  let hits = 0;
+  const hook = await serve((req, res) => {
+    hits++;
+    res.statusCode = req.url === '/broken' ? 500 : 200;
+    res.end('ok');
+  });
+  const t = await startApp({
+    'services.yaml': `
+- Scripts:
+    - Run: { href: "${hook.url}/run", target: hidden-iframe }
+    - Broken: { href: "${hook.url}/broken", target: hidden-iframe }
+    - Link: { href: "${hook.url}/link" }
+`,
+  });
+  try {
+    const [run, broken, link] = t.app.layout.groups[0].services;
+    const post = (id, headers = { 'x-requested-with': 'homelab-dashboard' }) => t.get(`/api/run/${id}`, { method: 'POST', headers });
+    assert.equal((await post(run.id, {})).status, 403, 'needs the header');
+    assert.equal(hits, 0);
+    assert.deepEqual(await post(run.id).then((r) => r.json()), { ok: true, status: 200 });
+    assert.deepEqual(await post(broken.id).then((r) => r.json()), { ok: false, status: 500 });
+    assert.equal((await post(link.id)).status, 404, 'an ordinary link is not an action');
+    assert.equal((await post('svc-nonexistent')).status, 404);
+    assert.equal(hits, 2);
+  } finally {
+    await t.close();
+    await hook.close();
+  }
+  const t2 = await startApp({ 'services.yaml': '- S:\n    - Down: { href: "http://127.0.0.1:1/x", target: hidden-iframe }\n' });
+  try {
+    const id = t2.app.layout.groups[0].services[0].id;
+    const out = await t2.get(`/api/run/${id}`, { method: 'POST', headers: { 'x-requested-with': 'homelab-dashboard' } }).then((r) => r.json());
+    assert.equal(out.ok, false);
+    assert.match(out.error, /fetch failed/);
+  } finally {
+    await t2.close();
   }
 });
 

@@ -2,6 +2,12 @@
 
 Why things are the way they are. Newest first.
 
+## Webhooks through the server, not a hidden frame (2026-10-24)
+homepage's `target: hidden-iframe` loads a webhook in an invisible frame, which can never tell
+whether it worked, and needs a permissive `frame-src`. The dashboard server now calls the URL
+(only URLs from the config, never from the request; same header check as plugin sync) and the
+page shows "done" or the reason it failed. The CSP is back to `frame-src 'none'`.
+
 ## Accessibility over a pixel-exact homepage copy (2026-10-24)
 An audit against Apple's HIG found homepage's 8px status labels, 80%-opacity status colours
 (2.8:1) and thin weights below the minimums. The look stays homepage's; the sizes, weights and

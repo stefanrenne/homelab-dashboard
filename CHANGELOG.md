@@ -28,6 +28,11 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Warn and error values get a shape (▲, ✕) next to the colour, announced to screen readers.
 - Widget API: `vars` in labels, `status` on rows, `defaultFields` in widget.yaml, "+N more" rows.
 - docker: container states translated; memory in decimal MB. custom-api and resources: decimal units.
+- `target: hidden-iframe` services (webhooks) run through the dashboard server and report done or
+  failed; an error message stays until it is closed.
+- Groups fold and unfold by their title (`initiallyCollapsed` in the layout), remembered per viewer.
+- Row icons (play, pause) spoken as words; cards use masonry where the browser supports it; safe
+  areas for phones and home-screen use; no version text in the footer.
 - Widget errors say what to check ("the API key was refused", "unreachable"), with the raw
   message as detail; network errors include their cause (`fetch failed (ECONNREFUSED)`).
 - Plugin collections: one source installs every widget in a repository (or `only:` some).

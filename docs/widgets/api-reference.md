@@ -80,7 +80,7 @@ An object; all fields are optional.
 | `latency` | Milliseconds, shown next to the status dot. |
 | `statusText` | Text for the status label in the card corner instead of the latency (e.g. `healthy`). Translated when it is a key. |
 | `blocks` | List of `{ key?, label, vars?, value, unit?, status? }`. `label` is a string, translated through `i18n.json` when it is a key; `vars` fill `{name}` placeholders in that translation (`{ label: 'poolUsed', vars: { pool: 'Trunk' } }` with `"poolUsed": "{pool} used"`). `value` is a string, number or `null` (shown as –). A string value is translated too when it is a key. `status` is `ok`, `warn`, `error` or `unknown`: warn and error get a colour and a shape (▲, ✕) and are announced to screen readers. `key` names the block for `fields` (default: the label). |
-| `rows` | List of `{ label, vars?, value?, status?, progress? }`, shown below the blocks as label-left/value-right lines (a download queue, current streams, `display: list`). `status` marks a row like a block. `progress` (0–100) fills the row's background. A row whose text does not fit opens on click, Enter or Space. A row labelled `moreItems` with `vars: { count }` closes a shortened list ("+3 more"). |
+| `rows` | List of `{ label, vars?, value?, status?, icon?, progress? }`, shown below the blocks as label-left/value-right lines (a download queue, current streams, `display: list`). `status` marks a row like a block. `icon` (`play` or `pause`) is drawn before the label and spoken as a word. `progress` (0–100) fills the row's background. A row whose text does not fit opens on click, Enter or Space. A row labelled `moreItems` with `vars: { count }` closes a shortened list ("+3 more"). |
 
 ### Writing labels
 

@@ -143,3 +143,8 @@ test('manifest: defaultFields is a list of block keys', () => {
   const dir = writeWidget(tmpDir(), { ...base, id: 'df', defaultFields: 'cpu' });
   assert.throws(() => readManifest(dir), /defaultFields: a list of block keys/);
 });
+
+test('result: row icons are play or pause', () => {
+  assert.doesNotThrow(() => checkData({ rows: [{ label: 'x', icon: 'play' }, { label: 'y', icon: 'pause' }] }));
+  assert.throws(() => checkData({ rows: [{ label: 'x', icon: 'rocket' }] }), /icon must be one of play, pause/);
+});

@@ -6,6 +6,7 @@ import http from 'node:http';
 export const DEFAULT_TIMEOUT_MS = 10_000;
 export const BLOCK_STATUSES = ['ok', 'warn', 'error', 'unknown'];
 export const SERVICE_STATUSES = ['up', 'down', 'warn', 'unknown'];
+export const ROW_ICONS = ['play', 'pause'];
 
 export class WidgetRuntime {
   constructor({ registry, timeoutMs = DEFAULT_TIMEOUT_MS, log = console, now = Date.now }) {
@@ -141,6 +142,7 @@ export function checkData(data) {
       if (r.value !== undefined && r.value !== null && !['string', 'number'].includes(typeof r.value)) throw new Error(`rows[${i}]: value must be text, a number or null`);
       if (r.progress !== undefined && !(typeof r.progress === 'number' && r.progress >= 0 && r.progress <= 100)) throw new Error(`rows[${i}]: progress must be 0-100`);
       if (r.status !== undefined && !BLOCK_STATUSES.includes(r.status)) throw new Error(`rows[${i}]: unknown status "${r.status}"`);
+      if (r.icon !== undefined && !ROW_ICONS.includes(r.icon)) throw new Error(`rows[${i}]: icon must be one of ${ROW_ICONS.join(', ')}`);
       checkVars(r.vars, `rows[${i}]`);
     });
   }

@@ -126,13 +126,66 @@ test('clicking a container label shows the container stats', async () => {
   w.close();
 });
 
-test('hidden-iframe services call their URL without leaving the page', async () => {
+test('hidden-iframe services run through the server and report how it went', async () => {
+  const w = await page({ ...RESULTS, '/api/run/svc-4': { ok: true, status: 200 } });
+  const doc = w.document;
+  doc.querySelector('[data-service="svc-4"] a').click();
+  assert.equal(doc.querySelector('iframe'), null, 'no hidden frame any more');
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(doc.getElementById('toast-text').textContent, 'Script: klaar');
+  assert.equal(doc.getElementById('toast').classList.contains('error'), false);
+  w.close();
+
+  const failing = await page({ ...RESULTS, '/api/run/svc-4': { ok: false, status: 500 } });
+  failing.document.querySelector('[data-service="svc-4"] a').click();
+  await new Promise((r) => setTimeout(r, 20));
+  const toastEl = failing.document.getElementById('toast');
+  assert.equal(failing.document.getElementById('toast-text').textContent, 'Script mislukt: HTTP 500');
+  assert.ok(toastEl.classList.contains('error'));
+  assert.equal(toastEl.getAttribute('aria-live'), 'assertive');
+  await new Promise((r) => setTimeout(r, 50));
+  assert.ok(toastEl.classList.contains('show'), 'an error stays until it is closed');
+  failing.document.dispatchEvent(new failing.KeyboardEvent('keydown', { key: 'Escape' }));
+  assert.equal(toastEl.classList.contains('show'), false);
+  failing.close();
+});
+
+test('groups fold and unfold, remember it per viewer, and open while searching', async () => {
+  const collapsedLayout = { ...LAYOUT, groups: LAYOUT.groups.map((g) => g.name === 'Network' ? { ...g, layout: { ...g.layout, initiallyCollapsed: true } } : g) };
+  const w = await page({ ...RESULTS, '/api/layout': collapsedLayout });
+  const doc = w.document;
+  const section = doc.querySelector('[data-group="Network"]');
+  const toggle = section.querySelector('.group-toggle');
+  assert.ok(section.classList.contains('collapsed'), 'initiallyCollapsed');
+  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(toggle.getAttribute('aria-controls'), section.querySelector('.cards').id);
+  toggle.click();
+  assert.equal(section.classList.contains('collapsed'), false);
+  assert.deepEqual(JSON.parse(w.localStorage.getItem('hd-collapsed')), { Network: false });
+  toggle.click();
+  doc.dispatchEvent(new w.CustomEvent('hd-search-input', { detail: { query: 'router' } }));
+  assert.ok(doc.getElementById('groups').classList.contains('searching'), 'search looks inside folded groups');
+  assert.equal(doc.querySelector('[data-group="Hidden title"] .group-toggle'), null, 'no toggle without a visible header');
+  w.close();
+});
+
+test('row icons are drawn, and spoken as words', async () => {
+  const w = await page({ ...RESULTS, '/api/widgets/w-3': { ok: true, data: { rows: [{ label: 'Silo', icon: 'play', value: '3:54 / 58:00' }] } } });
+  const label = w.document.querySelector('[data-service="svc-3"] .row .rl');
+  assert.equal(label.querySelector('.sym').textContent, '▶');
+  assert.equal(label.querySelector('.sym').getAttribute('aria-hidden'), 'true');
+  assert.equal(label.querySelector('.sr-only').textContent, 'Speelt af: ');
+  w.close();
+});
+
+test('lows: no version in the footer, safe areas and a browser colour that follows the theme', async () => {
   const w = await page();
-  const link = w.document.querySelector('[data-service="svc-4"] a');
-  link.click();
-  const frame = w.document.querySelector('iframe[hidden]');
-  assert.equal(frame.getAttribute('src'), 'https://hook.lan/run');
-  assert.equal(w.document.getElementById('toast').textContent, 'Gestart');
+  const doc = w.document;
+  assert.equal(doc.getElementById('version'), null);
+  assert.match(doc.querySelector('meta[name="viewport"]').content, /viewport-fit=cover/);
+  assert.equal(doc.getElementById('theme-color').content, '#065f46', 'emerald-800 in dark');
+  doc.querySelector('[data-appearance="light"]').click();
+  assert.equal(doc.getElementById('theme-color').content, '#ecfdf5');
   w.close();
 });
 

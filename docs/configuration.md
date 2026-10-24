@@ -40,6 +40,7 @@ layout:
   Media:
     columns: 3      # cards per row (2 on tablets, 1 on phones); the group spans the full width
     header: false   # hide the group title
+    initiallyCollapsed: true   # start folded; viewers fold and unfold groups by clicking the title
   Tools:
     style: column   # default without columns: groups side by side, cards stacked
 discovery:
@@ -68,8 +69,8 @@ footer; that choice is remembered in their browser and overrides `theme` and `co
         href: http://app.lan          # link of the card
         icon: app.svg                 # dashboard-icons name (.svg/.png/.webp), /icons/..., or a URL
         description: One line
-        target: _self                 # overrides settings.target; hidden-iframe calls the URL
-                                      # in the background (a webhook) without leaving the page
+        target: _self                 # overrides settings.target; hidden-iframe: the dashboard
+                                      # server calls the URL (a webhook) and shows how it went
         # status check, the first one that is set:
         siteMonitor: http://app.lan   # HTTP check (http-status widget)
         ping: app.lan                 # ICMP ping (ping widget)

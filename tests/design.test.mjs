@@ -89,3 +89,8 @@ test('block labels wrap to two lines with hyphenation instead of being cut off',
   assert.match(label, /hyphens: auto/);
   assert.doesNotMatch(label, /text-overflow: ellipsis/);
 });
+
+test('cards fill gaps where the browser can (masonry), and the page respects safe areas', () => {
+  assert.match(CSS, /@supports \(grid-template-rows: masonry\)/);
+  assert.match(block('  .wrap {'), /env\(safe-area-inset-left\)/);
+});

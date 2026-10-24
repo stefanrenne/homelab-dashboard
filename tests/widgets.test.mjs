@@ -538,7 +538,7 @@ test('weather widgets: no coordinates ask for the viewer\'s location, then use i
   secure.el.addEventListener('hd-widget-params', (e) => events.push(e.detail));
   secure.el.t = (k) => k;
   secure.el.data = { blocks: [], weather: null, needsLocation: true };
-  assert.deepEqual(events[0], { latitude: '52.37', longitude: '4.90' }, 'rounded to two decimals');
+  assert.deepEqual({ ...events[0] }, { latitude: '52.37', longitude: '4.90' }, 'rounded to two decimals'); // detail comes from the page's realm
   const plain = await renderClient('openmeteo', {});
   plain.el.t = (k) => ({ noLocation: 'Set latitude and longitude' })[k] ?? k;
   plain.el.data = { blocks: [], weather: null, needsLocation: true };

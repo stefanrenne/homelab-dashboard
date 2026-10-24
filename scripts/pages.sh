@@ -20,6 +20,10 @@ sed -e "s#](\([A-Za-z][A-Za-z0-9._-]*\.[a-z]*\))#]($blob/\1)#g" \
     -e "s#](LICENSE)#]($blob/LICENSE)#g" \
     -e "s#](docs/#](#g" \
     README.md > "$out/index.md"
+# kramdown leaves Markdown inside an HTML block alone unless the block asks for it
+find "$out" -name '*.md' | while read -r f; do
+  sed -i.bak 's#<details>#<details markdown="1">#g' "$f" && rm "$f.bak"
+done
 # docs/widgets/*.md: ../../<path> leaves docs/
 for f in "$out"/widgets/*.md; do
   sed -i.bak "s#](\.\./\.\./#]($tree/#g" "$f" && rm "$f.bak"

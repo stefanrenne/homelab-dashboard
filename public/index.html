@@ -772,7 +772,7 @@ function stopPolling() {
  * A status label in the card's corner. statusStyle (settings or service): none shows the
  * response time or container state, `dot` a coloured dot, `basic` UP or DOWN for checks.
  */
-function statusTag(status, card, style) {
+function statusTag(status, card, style, showStats) {
   const isContainer = status.kind === 'container';
   const tag = el(isContainer ? 'button' : 'div', { class: 'tag', type: isContainer ? 'button' : null, text: '·' });
   if (!status.known) {
@@ -784,14 +784,21 @@ function statusTag(status, card, style) {
   let last = null;
   if (isContainer) {
     tag.title = translate('containerStats');
-    tag.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (stats) { stats.remove(); stats = null; return; }
+    tag.setAttribute('aria-expanded', 'false');
+    const open = () => {
       stats = el('div', { class: 'widget container-stats' });
       card.append(stats);
       renderResult(stats, { type: 'docker' }, last, card.dataset.name);
+      tag.setAttribute('aria-expanded', 'true');
+    };
+    tag.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (stats) { stats.remove(); stats = null; tag.setAttribute('aria-expanded', 'false'); return; }
+      open();
     });
+    // showStats (settings or service): the stats are open from the start
+    if (showStats) queueMicrotask(open);
   }
   poll(status, (result) => {
     last = result;
@@ -924,7 +931,7 @@ function renderService(service) {
   const card = el('article', { class: 'card shadow', 'data-service': service.id, 'data-name': service.name }, head);
   card.dataset.search = [service.name, service.description || ''].join(' ').toLowerCase();
   if (service.statuses.length) {
-    card.append(el('div', { class: 'tags' }, ...service.statuses.map((s) => statusTag(s, card, service.statusStyle))));
+    card.append(el('div', { class: 'tags' }, ...service.statuses.map((s) => statusTag(s, card, service.statusStyle, service.showStats))));
   }
   for (const w of service.widgets) card.append(mountWidget(w, null, service.name));
   card.style.setProperty('--tag-count', String(service.statuses.length));

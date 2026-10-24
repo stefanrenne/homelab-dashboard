@@ -21,3 +21,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 1: `statusStyle` (global and per service).
 - 2026-10-24: homepage parity, phase 1: block highlighting and `blockHighlights` levels.
 - 2026-10-24: homepage parity, phase 1: quick launch.
+- 2026-10-24: homepage parity, phase 1: `showStats` (global and per service).

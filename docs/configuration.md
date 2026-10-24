@@ -110,6 +110,7 @@ quicklaunch:        # start typing anywhere on the page to find a service, bookm
   hideInternetSearch: false   # true: no web search entry
   hideVisitURL: false         # true: no "open <url>" entry for typed addresses
   mobileButtonPosition: bottom-right   # a search button on phones: top-left, top-right, bottom-left, bottom-right
+showStats: true     # container stats open from the start instead of on a click; a service can set its own
 statusStyle: dot    # status labels: dot (a coloured dot) or basic (Online/Offline for siteMonitor and ping);
                     # default: the response time and container state. A service can set its own.
 target: _blank      # default link target of services
@@ -209,6 +210,7 @@ footer; that choice is remembered in their browser and overrides `theme` and `co
         icon: app.svg                 # dashboard-icons name (.svg/.png/.webp), /icons/..., or a URL
         description: One line
         statusStyle: dot              # overrides settings.statusStyle for this service
+        showStats: true               # overrides settings.showStats for this service
         target: _self                 # overrides settings.target; hidden-iframe: the dashboard
                                       # server calls the URL (a webhook) and shows how it went
         # status check, the first one that is set:

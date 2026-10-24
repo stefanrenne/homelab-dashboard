@@ -32,6 +32,7 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   address or search the web (`quicklaunch:` with `searchDescriptions`, `provider`,
   `hideInternetSearch`, `hideVisitURL`, `mobileButtonPosition`). The search widget gains the
   `baidu` and `brave` providers.
+- `showStats`, in settings.yaml and per service: container stats open from the start, as in homepage.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

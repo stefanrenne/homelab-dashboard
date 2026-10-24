@@ -519,3 +519,16 @@ test('highlight rules on a widget entry reach the blocks through the runtime, no
     await srv.close();
   }
 });
+
+test('showStats: the service setting wins over the global one', async () => {
+  const t = await startApp({
+    'settings.yaml': 'showStats: true\n',
+    'services.yaml': '- G:\n    - A: { href: http://a.lan, container: a }\n    - B: { href: http://b.lan, container: b, showStats: false }\n',
+  });
+  try {
+    const layout = await (await t.get('/api/layout')).json();
+    assert.deepEqual(layout.groups[0].services.map((s) => s.showStats), [true, false]);
+  } finally {
+    await t.close();
+  }
+});

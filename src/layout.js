@@ -162,6 +162,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
         description: service.description ?? null,
         discovered: service.discovered ?? null,
         statusStyle: service.statusStyle ?? config.settings.statusStyle ?? null,
+        showStats: service.showStats ?? config.settings.showStats ?? false,
         statuses: statusesFor(group, service, where),
         widgets: service.widgets.map((w, i) =>
           addInstance(stableId('w', group.name, service.name, String(i)), w.type, w.options, {

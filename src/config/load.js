@@ -27,7 +27,7 @@ export const DEFAULT_SETTINGS = {
 };
 
 const SERVICE_KEYS = new Set([
-  'href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'widget', 'widgets', 'target', 'statusStyle',
+  'href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'widget', 'widgets', 'target', 'statusStyle', 'showStats',
 ]);
 export const STATUS_STYLES = ['dot', 'basic'];
 
@@ -132,7 +132,7 @@ export function normalizeSettings(raw, ctx) {
     } else settings[key] = settings[key].trim();
   }
   settings.pwa = normalizePwa(settings.pwa, file, ctx);
-  for (const key of ['fullWidth', 'useEqualHeights', 'disableCollapse', 'groupsInitiallyCollapsed']) {
+  for (const key of ['fullWidth', 'useEqualHeights', 'disableCollapse', 'groupsInitiallyCollapsed', 'showStats']) {
     if (settings[key] !== undefined && typeof settings[key] !== 'boolean') {
       ctx.warn(file, key, 'expected true or false, ignored');
       delete settings[key];
@@ -319,6 +319,10 @@ export function normalizeService(name, def, file, p, ctx) {
     if (!SERVICE_KEYS.has(key)) ctx.warn(file, `${p}.${key}`, 'unknown key, ignored');
   }
   const service = { name: String(name) };
+  if (def.showStats !== undefined) {
+    if (typeof def.showStats === 'boolean') service.showStats = def.showStats;
+    else ctx.warn(file, `${p}.showStats`, 'expected true or false, ignored');
+  }
   if (def.statusStyle !== undefined) {
     if (STATUS_STYLES.includes(def.statusStyle)) service.statusStyle = def.statusStyle;
     else ctx.warn(file, `${p}.statusStyle`, 'expected dot or basic, ignored');

@@ -582,3 +582,17 @@ test('quicklaunch opens a service through its card, so a hidden-iframe webhook r
   assert.equal(doc.getElementById('toast-text').textContent, 'Script: klaar');
   assert.deepEqual(opened, [], 'the webhook URL is not opened in a tab');
 });
+
+test('showStats opens the container stats from the start; the label still folds them', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.groups[0].services[0].showStats = true;
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const doc = w.document;
+  const router = doc.querySelector('[data-service="svc-1"]');
+  const tag = router.querySelectorAll('.tag')[1];
+  assert.ok(router.querySelector('.container-stats'), 'open without a click');
+  assert.equal(tag.getAttribute('aria-expanded'), 'true');
+  tag.click();
+  assert.equal(router.querySelector('.container-stats'), null);
+  assert.equal(tag.getAttribute('aria-expanded'), 'false');
+});

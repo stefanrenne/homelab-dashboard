@@ -110,11 +110,18 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     return out;
   };
 
+  // A group's own layout keys (nested groups' layouts left out), with its category icon resolved.
+  const groupLayout = (own) => {
+    const layout = Object.fromEntries(Object.entries(isPlainObject(own) ? own : {}).filter(([, v]) => !isPlainObject(v)));
+    if (layout.icon !== undefined) layout.icon = resolveIcon(String(layout.icon));
+    return layout;
+  };
+
   // `key` is the group's path ("Parent/Nested") for ids; top-level ids stay as they were.
   // A nested group's layout sits inside its parent's (homepage's format) and inherits its tab.
-  const layoutGroup = (group, groupLayout, key, parentTab) => {
-    const own = isPlainObject(groupLayout) ? groupLayout : {};
-    const layout = Object.fromEntries(Object.entries(own).filter(([, v]) => !isPlainObject(v)));
+  const layoutGroup = (group, configured, key, parentTab) => {
+    const own = isPlainObject(configured) ? configured : {};
+    const layout = groupLayout(own);
     if (parentTab && !layout.tab) layout.tab = parentTab;
     return {
       name: group.name,
@@ -184,6 +191,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       color: config.settings.color,
       background: config.settings.background ?? null,
       cardBlur: config.settings.cardBlur ?? null,
+      bookmarksStyle: config.settings.bookmarksStyle ?? null,
       showTitle: config.settings.showTitle,
       headerStyle: config.settings.headerStyle,
     },
@@ -191,7 +199,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     groups: layoutGroups,
     bookmarks: config.bookmarks.map((g) => ({
       name: g.name,
-      layout: config.settings.layout[g.name] ?? {},
+      layout: groupLayout(config.settings.layout[g.name]),
       bookmarks: g.bookmarks.map((b) => ({ ...b, icon: resolveIcon(b.icon) })),
     })),
     widgetTypes,

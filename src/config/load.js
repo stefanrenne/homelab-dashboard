@@ -125,6 +125,10 @@ export function normalizeSettings(raw, ctx) {
     } else settings[key] = settings[key].trim();
   }
   settings.pwa = normalizePwa(settings.pwa, file, ctx);
+  if (settings.bookmarksStyle !== undefined && settings.bookmarksStyle !== 'icons') {
+    ctx.warn(file, 'bookmarksStyle', 'expected "icons" (or leave it out), ignored');
+    delete settings.bookmarksStyle;
+  }
   settings.background = normalizeBackground(settings.background, file, ctx);
   settings.cardBlur = blurPx(settings.cardBlur, file, 'cardBlur', ctx);
   if (!isPlainObject(settings.layout)) {

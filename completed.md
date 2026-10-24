@@ -13,3 +13,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 1: `background` with filters and `cardBlur`.
 - 2026-10-24: homepage parity, phase 1: tabs (`layout.<group>.tab`).
 - 2026-10-24: homepage parity, phase 1: nested groups.
+- 2026-10-24: homepage parity, phase 1: icons-only bookmarks and category icons.

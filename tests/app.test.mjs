@@ -447,3 +447,19 @@ test('nested groups get their layout from inside the parent layout, and the pare
     await t.close();
   }
 });
+
+test('category icons are resolved like service icons; bookmarksStyle reaches the page', async () => {
+  const t = await startApp({
+    'settings.yaml': 'bookmarksStyle: icons\nlayout:\n  Media:\n    icon: plex.svg\n  Dev:\n    icon: /icons/dev.svg\n',
+    'services.yaml': '- Media:\n    - Plex: { href: http://plex.lan }\n',
+    'bookmarks.yaml': '- Dev:\n    - GitHub:\n        - href: https://github.com\n',
+  });
+  try {
+    const layout = await (await t.get('/api/layout')).json();
+    assert.match(layout.groups[0].layout.icon, /\/svg\/plex\.svg$/);
+    assert.equal(layout.bookmarks[0].layout.icon, '/icons/dev.svg');
+    assert.equal(layout.settings.bookmarksStyle, 'icons');
+  } finally {
+    await t.close();
+  }
+});

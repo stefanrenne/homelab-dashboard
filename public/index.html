@@ -193,6 +193,15 @@
   .bm .abbr { width: 40px; align-self: stretch; display: grid; place-items: center; font-weight: 700; font-size: .75rem; background: var(--hd-block); }
   .bm .abbr img { width: 20px; height: 20px; object-fit: contain; }
   .bm .bn { padding: 8px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* bookmarks as icons only (layout.<group>.iconsOnly, bookmarksStyle: icons) */
+  .bookmarks .icons-only .cards { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bookmarks .icons-only .bm { margin: 0; }
+  .bookmarks .icons-only .bm .abbr { width: 44px; height: 44px; }
+  .bookmarks .icons-only .bm .abbr img { width: 24px; height: 24px; }
+  /* category icons (layout.<group>.icon) */
+  .group-icon { width: 24px; height: 24px; object-fit: contain; flex: none; }
+  .group h2 .group-icon, .group h3 .group-icon { margin-right: 2px; }
+  .bookmarks .group h2 { display: flex; align-items: center; gap: 6px; }
 
   .empty { text-align: center; color: var(--hd-muted); padding: 64px 16px; border-radius: 6px; background: var(--hd-card); width: 100%; margin: 4px; }
 
@@ -765,7 +774,7 @@ function groupToggle(g, section, cardsId) {
   const saved = collapsedState();
   const collapsed = g.name in saved ? saved[g.name] : g.layout.initiallyCollapsed === true;
   const button = el('button', { class: 'group-toggle', type: 'button', 'aria-controls': cardsId },
-    el('span', { text: g.name }));
+    groupIcon(g.layout), el('span', { text: g.name }));
   button.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
   const apply = (value) => {
     section.classList.toggle('collapsed', value);
@@ -784,6 +793,9 @@ const hasServices = (g) => g.services.length > 0 || (g.groups ?? []).some(hasSer
 let groupCount = 0;
 
 /** A group section: its title (h2, or h3 for a nested group), its cards and its nested groups. */
+/** The category icon of a group (layout.<group>.icon), or nothing. */
+const groupIcon = (layoutOf) => (layoutOf?.icon ? el('img', { class: 'group-icon', src: layoutOf.icon, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' }) : null);
+
 function renderGroup(g, level) {
   const cols = Number(g.layout.columns) || 0;
   const row = g.layout.style === 'row' || cols > 0;
@@ -904,14 +916,19 @@ function render(data) {
 
   const bookmarks = document.getElementById('bookmarks');
   bookmarks.replaceChildren(...data.bookmarks.map((g) => {
-    const section = el('section', { class: 'group', 'data-tab': g.layout?.tab || null }, el('h2', { text: g.name }));
+    const iconsOnly = g.layout?.iconsOnly === true || (s.bookmarksStyle === 'icons' && g.layout?.iconsOnly !== false);
+    const section = el('section', { class: 'group' + (iconsOnly ? ' icons-only' : ''), 'data-tab': g.layout?.tab || null },
+      el('h2', null, groupIcon(g.layout), el('span', { text: g.name })));
     const list = el('div', { class: 'cards' });
     for (const b of g.bookmarks) {
       const abbr = el('span', { class: 'abbr' });
       if (b.icon) abbr.append(el('img', { src: b.icon, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' }));
       else abbr.textContent = b.abbr || b.name.slice(0, 2).toUpperCase();
-      list.append(el('a', { class: 'bm shadow', href: safeHref(b.href), target: '_blank', rel: 'noopener noreferrer', title: b.description || null },
-        abbr, el('span', { class: 'bn', text: b.name })));
+      // icons only: the name stays as the link's accessible name and tooltip
+      const name = el('span', { class: iconsOnly ? 'bn sr-only' : 'bn', text: b.name });
+      list.append(el('a', { class: 'bm shadow', href: safeHref(b.href), target: '_blank', rel: 'noopener noreferrer',
+        title: iconsOnly ? [b.name, b.description].filter(Boolean).join(' – ') : b.description || null, 'data-search': `${b.name} ${b.description || ''}`.toLowerCase() },
+      abbr, name));
     }
     section.append(list);
     return section;

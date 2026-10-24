@@ -15,6 +15,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   an address per tab (`#media`). Groups without a tab show on every tab.
 - Nested groups in services.yaml (an entry whose value is a list), as in homepage, with their
   layout inside the parent's layout.
+- Bookmarks as icons only (`layout.<group>.iconsOnly`, `bookmarksStyle: icons`) and category
+  icons before group titles (`layout.<group>.icon`), as in homepage.
 
 ## [0.4.0] - 2026-10-24
 

@@ -358,3 +358,28 @@ test('nested groups render inside their parent with an h3, and search finds thei
   assert.equal(network.hidden, false);
   assert.equal(nested.hidden, false);
 });
+
+test('bookmarks as icons only (per group or bookmarksStyle) and category icons', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.groups[0].layout.icon = 'https://example.com/net.png';
+  layout.bookmarks[0].layout = { iconsOnly: true, icon: '/icons/dev.svg' };
+  layout.bookmarks[0].bookmarks[0].description = 'Code';
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const doc = w.document;
+  assert.equal(doc.querySelector('[data-group="Network"] h2 .group-icon').getAttribute('src'), 'https://example.com/net.png');
+  const dev = doc.querySelector('#bookmarks .group');
+  assert.ok(dev.classList.contains('icons-only'));
+  assert.equal(dev.querySelector('h2 .group-icon').getAttribute('src'), '/icons/dev.svg');
+  const link = dev.querySelector('.bm');
+  assert.ok(link.querySelector('.bn').classList.contains('sr-only'), 'the name stays for screen readers');
+  assert.equal(link.title, 'GitHub – Code');
+
+  const global = structuredClone(LAYOUT);
+  global.settings.bookmarksStyle = 'icons';
+  global.bookmarks[0].layout = {};
+  const g = await page({ ...RESULTS, '/api/layout': global });
+  assert.ok(g.document.querySelector('#bookmarks .group').classList.contains('icons-only'));
+  global.bookmarks[0].layout = { iconsOnly: false };
+  const off = await page({ ...RESULTS, '/api/layout': global });
+  assert.ok(!off.document.querySelector('#bookmarks .group').classList.contains('icons-only'), 'a group can opt out');
+});

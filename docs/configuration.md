@@ -107,11 +107,15 @@ background: https://example.com/wallpaper.jpg   # optional; or a map, as in home
 #   brightness: 75    # 0-200 (%)
 #   opacity: 50       # 0-100 (%)
 cardBlur: md        # frosted cards over the background: xs, sm, md, lg, xl, 2xl, 3xl
+bookmarksStyle: icons   # every bookmark group as icons only (a group can set iconsOnly: false)
 layout:
   Media:
     columns: 3      # cards per row (2 on tablets, 1 on phones); the group spans the full width
     header: false   # hide the group title
     initiallyCollapsed: true   # start folded; viewers fold and unfold groups by clicking the title
+    icon: plex.svg  # category icon before the title: an icon name, /icons/..., or a URL
+  Developer:        # a bookmark group
+    iconsOnly: true # only the icons, the name as tooltip
   Tools:
     style: column   # default without columns: groups side by side, cards stacked
 discovery:

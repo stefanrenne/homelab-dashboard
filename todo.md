@@ -15,8 +15,6 @@ Already there: title, theme, color, language (5 of homepage's ±40), target, bac
 headerStyle, showTitle, layout per group (columns, row/column style, header, initiallyCollapsed),
 hideErrors, status labels, container stats on click, search widget, bookmarks.
 
-- [ ] Bookmarks as icons only: `layout.<group>.iconsOnly`, global `bookmarksStyle: icons`
-- [ ] Category icons: `layout.<group>.icon`
 - [ ] Icons: `mdi-…`, `sh-…` (selfh.st) and a colour suffix (`mdi-flask-#f0d453`, `si-…-#hex`); `iconStyle: theme|gradient`
 - [ ] `fullWidth`, `maxGroupColumns`, `maxBookmarkGroupColumns`, `useEqualHeights` (global and per group)
 - [ ] `disableCollapse`, global `groupsInitiallyCollapsed`

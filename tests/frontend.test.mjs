@@ -383,3 +383,20 @@ test('bookmarks as icons only (per group or bookmarksStyle) and category icons',
   const off = await page({ ...RESULTS, '/api/layout': global });
   assert.ok(!off.document.querySelector('#bookmarks .group').classList.contains('icons-only'), 'a group can opt out');
 });
+
+test('single-colour icons are masks: their own colour, or iconStyle gradient/theme', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.groups[0].services[0].icon = 'https://cdn.example.com/svg/flask.svg#hd-mask=f0d453';
+  layout.groups[0].services[2].icon = 'https://cdn.example.com/svg/sonos.svg#hd-mask';
+  layout.groups[0].services[1].icon = 'https://cdn.example.com/png/plex.png';
+  layout.settings.iconStyle = 'theme';
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const doc = w.document;
+  const flask = doc.querySelector('[data-service="svc-1"] .icon .mask-icon');
+  assert.equal(flask.style.getPropertyValue('--mask'), 'url("https://cdn.example.com/svg/flask.svg")');
+  assert.equal(flask.style.getPropertyValue('--fill'), '#f0d453');
+  const sonos = doc.querySelector('[data-service="svc-3"] .icon .mask-icon');
+  assert.equal(sonos.style.getPropertyValue('--fill'), '', 'no colour: the iconStyle fill');
+  assert.ok(doc.body.classList.contains('icon-style-theme'));
+  assert.equal(doc.querySelector('[data-service="svc-2"] .icon img').getAttribute('src'), 'https://cdn.example.com/png/plex.png');
+});

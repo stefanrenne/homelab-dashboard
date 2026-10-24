@@ -125,6 +125,10 @@ export function normalizeSettings(raw, ctx) {
     } else settings[key] = settings[key].trim();
   }
   settings.pwa = normalizePwa(settings.pwa, file, ctx);
+  if (settings.iconStyle !== undefined && !['gradient', 'theme'].includes(settings.iconStyle)) {
+    ctx.warn(file, 'iconStyle', 'expected gradient or theme, using gradient');
+    delete settings.iconStyle;
+  }
   if (settings.bookmarksStyle !== undefined && settings.bookmarksStyle !== 'icons') {
     ctx.warn(file, 'bookmarksStyle', 'expected "icons" (or leave it out), ignored');
     delete settings.bookmarksStyle;

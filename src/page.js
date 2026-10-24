@@ -15,6 +15,9 @@ export const SHADE_800 = {
   purple: '#6b21a8', fuchsia: '#86198f', pink: '#9d174d', rose: '#9f1239',
 };
 
+/** An icon URL without the page's #hd-mask marker. */
+const plainIcon = (icon) => resolveIcon(icon)?.split('#')[0] ?? null;
+
 const scrub = (value, secrets) => [...secrets].reduce((s, secret) => s.split(secret).join('***'), String(value));
 
 const escapeHtml = (value) =>
@@ -25,7 +28,7 @@ export function renderIndex(html, settings, secrets = new Set()) {
   const clean = (value) => escapeHtml(scrub(value, secrets));
   const head = ['<link rel="manifest" href="site.webmanifest">'];
   if (settings.description) head.push(`<meta name="description" content="${clean(settings.description)}">`);
-  const favicon = resolveIcon(settings.favicon);
+  const favicon = plainIcon(settings.favicon);
   if (favicon) head.push(`<link rel="icon" href="${clean(favicon)}">`);
   return html
     .replace(/<title>[^<]*<\/title>/, `<title>${clean(settings.title)}</title>`)
@@ -36,9 +39,9 @@ export function renderIndex(html, settings, secrets = new Set()) {
 export function renderManifest(settings, secrets = new Set()) {
   const text = (value) => scrub(value, secrets);
   const color = SHADE_800[settings.color] ?? SHADE_800.slate;
-  const favicon = resolveIcon(settings.favicon);
+  const favicon = plainIcon(settings.favicon);
   const icons = settings.pwa?.icons?.length
-    ? settings.pwa.icons.map((i) => ({ ...i, src: text(resolveIcon(i.src) ?? i.src) }))
+    ? settings.pwa.icons.map((i) => ({ ...i, src: text(plainIcon(i.src) ?? i.src) }))
     : favicon ? [{ src: text(favicon), sizes: 'any' }] : [];
   return {
     name: text(settings.title),

@@ -17,6 +17,11 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   layout inside the parent's layout.
 - Bookmarks as icons only (`layout.<group>.iconsOnly`, `bookmarksStyle: icons`) and category
   icons before group titles (`layout.<group>.icon`), as in homepage.
+- Icons: `mdi-…` (Material Design Icons) and `sh-…` (selfh.st), a colour suffix for `mdi-`
+  and `si-` icons (`mdi-flask-#f0d453`), and `iconStyle: gradient|theme`, as in homepage.
+
+### Changed
+- `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).
 
 ## [0.4.0] - 2026-10-24
 

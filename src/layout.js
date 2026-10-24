@@ -28,17 +28,27 @@ function splitInstanceKeys(schema, raw) {
 export const DASHBOARD_ICONS = 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons';
 
 export const SIMPLE_ICONS = 'https://cdn.jsdelivr.net/npm/simple-icons@v13/icons';
+export const MDI_ICONS = 'https://cdn.jsdelivr.net/npm/@mdi/svg@7.4.47/svg';
+export const SELFHST_ICONS = 'https://cdn.jsdelivr.net/gh/selfhst/icons';
 
 /**
  * `plex.svg` / `plex.png` / `plex.webp` -> dashboard-icons CDN, a bare `plex` -> its png
- * (as in homepage), `si-plex` -> Simple Icons, `/icons/x.svg` -> the config's icons folder,
- * `http(s)://...` as is. Anything else has no image.
+ * (as in homepage), `si-plex` -> Simple Icons, `mdi-flask` -> Material Design Icons (both with
+ * an optional colour, `mdi-flask-#f0d453`), `sh-plex` / `sh-plex.svg` -> selfh.st icons,
+ * `/icons/x.svg` -> the config's icons folder, `http(s)://...` as is. Anything else has no image.
  */
 export function resolveIcon(icon) {
   if (!icon) return null;
   if (/^https?:\/\//.test(icon) || icon.startsWith('/icons/')) return icon;
-  const simple = /^si-([a-z0-9]+)$/.exec(icon);
-  if (simple) return `${SIMPLE_ICONS}/${simple[1]}.svg`;
+  // Single-colour icons (Material Design, Simple Icons) are drawn as a mask in the page; the
+  // #hd-mask fragment says so, with an optional colour (homepage's mdi-name-#f0d453).
+  const mono = /^(mdi|si)-([a-z0-9][a-z0-9-]*?)(?:-#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8}))?$/i.exec(icon);
+  if (mono) {
+    const base = mono[1] === 'mdi' ? MDI_ICONS : SIMPLE_ICONS;
+    return `${base}/${mono[2].toLowerCase()}.svg#hd-mask${mono[3] ? `=${mono[3].toLowerCase()}` : ''}`;
+  }
+  const selfhst = /^sh-([a-z0-9][a-z0-9-]*)(?:\.(svg|png|webp))?$/.exec(icon);
+  if (selfhst) return `${SELFHST_ICONS}/${selfhst[2] ?? 'png'}/${selfhst[1]}.${selfhst[2] ?? 'png'}`;
   const match = /^([a-z0-9][a-z0-9-]*)(?:\.(svg|png|webp))?$/.exec(icon);
   if (!match) return null;
   const ext = match[2] ?? 'png';
@@ -192,6 +202,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       background: config.settings.background ?? null,
       cardBlur: config.settings.cardBlur ?? null,
       bookmarksStyle: config.settings.bookmarksStyle ?? null,
+      iconStyle: config.settings.iconStyle ?? 'gradient',
       showTitle: config.settings.showTitle,
       headerStyle: config.settings.headerStyle,
     },

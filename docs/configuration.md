@@ -108,6 +108,7 @@ background: https://example.com/wallpaper.jpg   # optional; or a map, as in home
 #   opacity: 50       # 0-100 (%)
 cardBlur: md        # frosted cards over the background: xs, sm, md, lg, xl, 2xl, 3xl
 bookmarksStyle: icons   # every bookmark group as icons only (a group can set iconsOnly: false)
+iconStyle: gradient # mdi- and si- icons: gradient (default) or theme (flat, in the theme colour)
 layout:
   Media:
     columns: 3      # cards per row (2 on tablets, 1 on phones); the group spans the full width
@@ -222,8 +223,19 @@ the response time (or "down") for `siteMonitor` and `ping`, the container state 
 Click a container label to see the container's CPU and memory. `ping` also accepts a URL
 (`ping: http://192.168.1.2`).
 
-Icons: a dashboard-icons name with or without extension (`plex`, `plex.svg`), `si-<name>`
-for Simple Icons, `/icons/<file>` from the config folder, or any URL.
+Icons, as in homepage:
+
+| Form | Source |
+|---|---|
+| `plex`, `plex.svg`, `plex.webp` | [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) (png without an extension) |
+| `mdi-flask-outline` | [Material Design Icons](https://pictogrammers.com/library/mdi/) |
+| `si-plex` | [Simple Icons](https://simpleicons.org) |
+| `sh-plex`, `sh-plex.svg` | [selfh.st icons](https://selfh.st/icons/) (png without an extension) |
+| `/icons/<file>` | the `icons` folder in your config |
+| `https://...` | any URL |
+
+`mdi-` and `si-` icons are single-coloured: they follow `iconStyle` (`gradient`, the default, or
+`theme` in settings.yaml), or take their own colour as a suffix: `mdi-flask-outline-#f0d453`.
 
 ## widgets.yaml
 

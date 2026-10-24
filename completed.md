@@ -14,3 +14,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 1: tabs (`layout.<group>.tab`).
 - 2026-10-24: homepage parity, phase 1: nested groups.
 - 2026-10-24: homepage parity, phase 1: icons-only bookmarks and category icons.
+- 2026-10-24: homepage parity, phase 1: `mdi-`/`sh-` icons, icon colours and `iconStyle`.

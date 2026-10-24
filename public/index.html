@@ -18,6 +18,7 @@
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
+    --hd-icon-from: var(--t300); --hd-icon-to: var(--t500);
     --hd-bg: var(--t800);
     --hd-text: var(--t200);
     --hd-muted: var(--t300);
@@ -36,6 +37,7 @@
     --hd-error-bg: rgb(136 19 55 / .8);
   }
   :root[data-theme="light"] {
+    --hd-icon-from: var(--t500); --hd-icon-to: var(--t700);
     color-scheme: light;
     --hd-bg: var(--t50);
     --hd-text: var(--t700);
@@ -128,7 +130,13 @@
   .card-head { display: flex; align-items: center; color: inherit; text-decoration: none; min-width: 0; cursor: default; }
   a.card-head { cursor: pointer; }
   .icon { width: 48px; height: 52px; flex: none; display: grid; place-items: center; }
-  .icon img { width: 32px; height: 32px; object-fit: contain; }
+  .icon img, .icon .mask-icon { width: 32px; height: 32px; object-fit: contain; }
+  /* single-colour icons (mdi-…, si-…): settings.iconStyle gradient (default) or theme, or their own colour */
+  .mask-icon { display: inline-block; -webkit-mask: var(--mask) center / contain no-repeat; mask: var(--mask) center / contain no-repeat;
+    background: var(--fill, linear-gradient(180deg, var(--hd-icon-from), var(--hd-icon-to))); }
+  .icon-style-theme .mask-icon { background: var(--fill, var(--hd-heading)); }
+  .bm .abbr .mask-icon { width: 20px; height: 20px; }
+  .bookmarks .icons-only .bm .abbr .mask-icon { width: 24px; height: 24px; }
   .icon.letter span { width: 32px; height: 32px; border-radius: 6px; display: grid; place-items: center; font-weight: 700; font-size: .875rem;
     background: color-mix(in srgb, var(--hd-text) 12%, transparent); }
   .names { flex: 1; min-width: 0; padding: 8px; font-size: .875rem; line-height: 1.25rem; }
@@ -449,6 +457,19 @@ function safeHref(href) {
   return /^\s*(javascript|data|vbscript):/i.test(href) ? null : href;
 }
 
+/**
+ * An icon as an <img>, or, for single-colour icons (mdi-…, si-…: the server marks their URL with
+ * #hd-mask or #hd-mask=<hex>), a mask filled with that colour or with settings.iconStyle.
+ */
+function iconImage(src, cls) {
+  const mask = /#hd-mask(?:=([0-9a-f]+))?$/.exec(src);
+  if (!mask) return el('img', { class: cls || null, src, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
+  const span = el('span', { class: 'mask-icon' + (cls ? ' ' + cls : ''), 'aria-hidden': 'true' });
+  span.style.setProperty('--mask', `url("${src.slice(0, mask.index)}")`);
+  if (mask[1]) span.style.setProperty('--fill', '#' + mask[1]);
+  return span;
+}
+
 function iconNode(icon, name) {
   const box = el('span', { class: 'icon' });
   const letter = () => {
@@ -457,7 +478,7 @@ function iconNode(icon, name) {
   };
   if (!icon) letter();
   else {
-    const img = el('img', { src: icon, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
+    const img = iconImage(icon);
     img.addEventListener('error', letter);
     box.append(img);
   }
@@ -794,7 +815,7 @@ let groupCount = 0;
 
 /** A group section: its title (h2, or h3 for a nested group), its cards and its nested groups. */
 /** The category icon of a group (layout.<group>.icon), or nothing. */
-const groupIcon = (layoutOf) => (layoutOf?.icon ? el('img', { class: 'group-icon', src: layoutOf.icon, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' }) : null);
+const groupIcon = (layoutOf) => (layoutOf?.icon ? iconImage(layoutOf.icon, 'group-icon') : null);
 
 function renderGroup(g, level) {
   const cols = Number(g.layout.columns) || 0;
@@ -857,6 +878,7 @@ function applyBackground(s) {
   bg.style.filter = filters.join(' ');
   bg.style.opacity = b?.opacity !== undefined ? String(b.opacity / 100) : '';
   document.body.classList.toggle('card-blur', Boolean(s.cardBlur));
+  document.body.classList.toggle('icon-style-theme', s.iconStyle === 'theme');
   document.body.style.setProperty('--hd-card-blur', s.cardBlur ? `${s.cardBlur}px` : '');
 }
 
@@ -922,7 +944,7 @@ function render(data) {
     const list = el('div', { class: 'cards' });
     for (const b of g.bookmarks) {
       const abbr = el('span', { class: 'abbr' });
-      if (b.icon) abbr.append(el('img', { src: b.icon, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' }));
+      if (b.icon) abbr.append(iconImage(b.icon));
       else abbr.textContent = b.abbr || b.name.slice(0, 2).toUpperCase();
       // icons only: the name stays as the link's accessible name and tooltip
       const name = el('span', { class: iconsOnly ? 'bn sr-only' : 'bn', text: b.name });

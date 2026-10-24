@@ -9,6 +9,12 @@ services:
     environment:
       HD_VAR_PIHOLE_KEY: change-me     # used as {{HD_VAR_PIHOLE_KEY}} in services.yaml
     restart: unless-stopped
+    healthcheck:                       # the image has the same one built in; here to tune it
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     # docker.yaml:  local: { host: docker-proxy, port: 2375 }
 
   docker-proxy:

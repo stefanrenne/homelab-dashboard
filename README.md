@@ -31,6 +31,28 @@ get a pull request merged here first.
 docker run -d -p 3000:3000 -v ./config:/config ghcr.io/stefanrenne/homelab-dashboard:latest
 ```
 
+Or with Docker Compose:
+
+```yaml
+# compose.yaml
+services:
+  dashboard:
+    image: ghcr.io/stefanrenne/homelab-dashboard:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config:/config
+    restart: unless-stopped
+    healthcheck:                 # the image has the same one built in; here to tune it
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+```
+
+`docker compose up -d`, then `docker compose ps` shows `(healthy)` once `/api/health` answers.
+
 Images are built for amd64 and arm64: `latest` follows `main`, `0.2.0` / `0.2` are releases.
 
 On first start an empty `config` folder is filled with the example config. Edit the YAML files

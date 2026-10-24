@@ -132,7 +132,7 @@ export function normalizeSettings(raw, ctx) {
     } else settings[key] = settings[key].trim();
   }
   settings.pwa = normalizePwa(settings.pwa, file, ctx);
-  for (const key of ['fullWidth', 'useEqualHeights', 'disableCollapse', 'groupsInitiallyCollapsed', 'showStats']) {
+  for (const key of ['fullWidth', 'useEqualHeights', 'disableCollapse', 'groupsInitiallyCollapsed', 'showStats', 'hideVersion', 'disableUpdateCheck']) {
     if (settings[key] !== undefined && typeof settings[key] !== 'boolean') {
       ctx.warn(file, key, 'expected true or false, ignored');
       delete settings[key];

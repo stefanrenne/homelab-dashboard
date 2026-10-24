@@ -117,6 +117,8 @@ providers:          # shared keys and logins; a widget entry uses one with provi
     username: admin
     password: "{{HD_VAR_LONGHORN_PASSWORD}}"
 instanceName: internal   # for discovery labels meant for one dashboard (homelab.instance.internal.href)
+hideVersion: false  # show the version in the footer (hidden by default, unlike homepage)
+disableUpdateCheck: true   # with the version shown: do not ask GitHub once a day for a newer release
 showStats: true     # container stats open from the start instead of on a click; a service can set its own
 statusStyle: dot    # status labels: dot (a coloured dot) or basic (Online/Offline for siteMonitor and ping);
                     # default: the response time and container state. A service can set its own.

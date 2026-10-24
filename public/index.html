@@ -258,6 +258,8 @@
   /* footer */
   footer { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; color: var(--hd-muted); }
   footer .right { display: flex; align-items: center; gap: 12px; }
+  footer .version { font-size: .75rem; }
+  footer .version a { color: var(--hd-accent); }
   .icon-btn { background: none; border: 0; padding: 7px; min-width: 32px; min-height: 32px; cursor: pointer; color: var(--hd-text); opacity: .8;
     display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; }
   .icon-btn:hover { opacity: 1; }
@@ -305,6 +307,7 @@
       <div class="palette" id="palette"></div>
     </div>
     <div class="right">
+      <span class="version" id="version-box" hidden></span>
       <button class="icon-btn" id="refresh-btn" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
       </button>
@@ -340,6 +343,7 @@
 // ---------------------------------------------------------------- texts
 const I18N = {
   en: {
+    updateAvailable: "{version} available",
     qlLabel: "Quick launch", qlPlaceholder: "Search services, bookmarks or the web", qlSearch: "Search {name} for “{q}”", qlVisit: "Open {url}", qlService: "Service", qlBookmark: "Bookmark", qlLink: "Link", qlWeb: "Web",
     tabs: 'Tabs', loading: 'Loading…', errors: 'Configuration errors', warnings: 'Warnings', empty: 'No services yet.',
     emptyHint: 'Add them to services.yaml in your config folder, or label your containers with homelab.name.',
@@ -362,6 +366,7 @@ const I18N = {
     noMatches: "No services found",
   },
   nl: {
+    updateAvailable: "{version} beschikbaar",
     qlLabel: "Snel starten", qlPlaceholder: "Zoek services, bladwijzers of op het web", qlSearch: "Zoek “{q}” met {name}", qlVisit: "{url} openen", qlService: "Service", qlBookmark: "Bladwijzer", qlLink: "Link", qlWeb: "Web",
     tabs: 'Tabbladen', loading: 'Laden…', errors: 'Fouten in de configuratie', warnings: 'Waarschuwingen', empty: 'Nog geen services.',
     emptyHint: 'Zet ze in services.yaml in je configmap, of geef je containers het label homelab.name.',
@@ -384,6 +389,7 @@ const I18N = {
     noMatches: "Geen services gevonden",
   },
   fr: {
+    updateAvailable: "{version} disponible",
     qlLabel: "Lancement rapide", qlPlaceholder: "Chercher des services, des favoris ou sur le web", qlSearch: "Chercher « {q} » sur {name}", qlVisit: "Ouvrir {url}", qlService: "Service", qlBookmark: "Favori", qlLink: "Lien", qlWeb: "Web",
     tabs: 'Onglets', loading: 'Chargement…', errors: 'Erreurs de configuration', warnings: 'Avertissements', empty: 'Aucun service pour l’instant.',
     emptyHint: 'Ajoutez-les dans services.yaml de votre dossier de configuration, ou étiquetez vos conteneurs avec homelab.name.',
@@ -406,6 +412,7 @@ const I18N = {
     noMatches: "Aucun service trouvé",
   },
   de: {
+    updateAvailable: "{version} verfügbar",
     qlLabel: "Schnellstart", qlPlaceholder: "Dienste, Lesezeichen oder das Web durchsuchen", qlSearch: "„{q}“ mit {name} suchen", qlVisit: "{url} öffnen", qlService: "Dienst", qlBookmark: "Lesezeichen", qlLink: "Link", qlWeb: "Web",
     tabs: 'Tabs', loading: 'Lädt…', errors: 'Konfigurationsfehler', warnings: 'Warnungen', empty: 'Noch keine Dienste.',
     emptyHint: 'Trage sie in services.yaml im Konfigurationsordner ein oder versieh deine Container mit dem Label homelab.name.',
@@ -428,6 +435,7 @@ const I18N = {
     noMatches: "Keine Dienste gefunden",
   },
   es: {
+    updateAvailable: "{version} disponible",
     qlLabel: "Inicio rápido", qlPlaceholder: "Buscar servicios, marcadores o en la web", qlSearch: "Buscar «{q}» en {name}", qlVisit: "Abrir {url}", qlService: "Servicio", qlBookmark: "Marcador", qlLink: "Enlace", qlWeb: "Web",
     tabs: 'Pestañas', loading: 'Cargando…', errors: 'Errores de configuración', warnings: 'Advertencias', empty: 'Todavía no hay servicios.',
     emptyHint: 'Añádelos en services.yaml de tu carpeta de configuración, o etiqueta tus contenedores con homelab.name.',
@@ -1019,6 +1027,20 @@ function placeBookmarkGroups() {
   }
 }
 
+/** hideVersion: false shows the version in the footer, with a link when a newer release is out. */
+function renderVersion(data) {
+  const box = document.getElementById('version-box');
+  box.hidden = !data.showVersion;
+  box.replaceChildren();
+  if (!data.showVersion) return;
+  box.append(document.createTextNode(/^\d/.test(data.version) ? `v${data.version}` : data.version));
+  const href = data.update && safeHref(data.update.url);
+  if (href) {
+    box.append(document.createTextNode(' · '));
+    box.append(el('a', { href, target: '_blank', rel: 'noopener noreferrer', text: translate('updateAvailable', { version: `v${data.update.version}` }) }));
+  }
+}
+
 // ---------------------------------------------------------------- quicklaunch
 const QL_PROVIDERS = {
   google: 'https://www.google.com/search?q=', duckduckgo: 'https://duckduckgo.com/?q=', bing: 'https://www.bing.com/search?q=',
@@ -1234,6 +1256,7 @@ function render(data) {
 
   placeBookmarkGroups();
   renderTabs(data.tabs ?? []);
+  renderVersion(data);
   setupQuicklaunch(s.quicklaunch ?? {});
 
   for (const [id, key] of [['refresh-btn', 'refresh'], ['color-btn', 'color'], ['toast-close', 'close']]) {

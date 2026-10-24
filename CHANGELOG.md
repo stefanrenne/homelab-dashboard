@@ -38,6 +38,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Discovery labels: homepage's index notation (`homelab.widgets[0].type`,
   `homelab.widget.mappings[0].label`), `target`, `statusStyle` and `showStats`, and labels per
   dashboard with `instanceName` (`homelab.instance.<name>.href`), as in homepage.
+- `hideVersion: false` shows the version in the footer, with a daily check for a newer release
+  (`disableUpdateCheck` turns that off). Hidden by default, unlike homepage.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

@@ -44,6 +44,12 @@ and every call has a timeout. Workers are on the to-do list for resource isolati
 The status dot and widgets then share one runtime, cache and error handling, and a third-party
 widget can serve as a status check by returning `status`.
 
+## The version is hidden unless asked for (2026-10-24)
+homepage shows its version and checks GitHub for updates by default. The HIG audit took the
+version out of the footer (it is noise for the people using the page), so here `hideVersion:
+false` turns both on. The check runs once a day only while the version is shown, and never with
+`disableUpdateCheck`, so a default install makes no calls to GitHub.
+
 ## A mounted Docker socket works without a proxy (2026-10-24)
 Mounting `/var/run/docker.sock` is what people try first, and it used to fail with EACCES
 because the image ran as `node`. The entrypoint now starts as root, adds `node` to the socket's

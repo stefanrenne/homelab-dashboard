@@ -13,6 +13,7 @@ import { Discovery, mergeDiscovered } from './discovery/index.js';
 import { withMountedSocket, DEFAULT_SOCKET } from './discovery/docker.js';
 import { buildState } from './layout.js';
 import { renderIndex, renderManifest } from './page.js';
+import { UpdateCheck, RELEASES_URL, isNewer } from './update.js';
 import { describeError, scrub } from './plugins/runtime.js';
 
 export const ACTION_TIMEOUT_MS = 30_000;
@@ -59,10 +60,12 @@ export async function createApp({
   timeoutMs,
   defaultPlugins = DEFAULT_PLUGINS,
   dockerSocket = DEFAULT_SOCKET,
+  releasesUrl = RELEASES_URL,
 } = {}) {
   const sseClients = new Set();
   const runtime = new WidgetRuntime({ registry: new Map(), log, timeoutMs });
   const state = { config: null, registry: new Map(), pluginResult: { errors: [], warnings: [] }, registryErrors: [], layout: null, actions: new Map() };
+  const updates = new UpdateCheck({ url: releasesUrl, log, onChange: () => state.config && rebuild() });
   const discovery = new Discovery({ log, env, onChange: () => state.config && rebuild(), ...discoveryOptions });
   let chain = Promise.resolve();
 
@@ -80,7 +83,13 @@ export async function createApp({
     });
     runtime.setInstances(instances, state.registry);
     state.actions = actions;
-    state.layout = { ...layout, version: VERSION };
+    // hideVersion: false shows the version (homepage shows it by default; this dashboard does not)
+    const showVersion = state.config.settings.hideVersion === false;
+    if (showVersion && !state.config.settings.disableUpdateCheck) updates.start();
+    else updates.stop();
+    const latest = showVersion && !state.config.settings.disableUpdateCheck ? updates.latest : null;
+    const update = latest && isNewer(latest.version, VERSION) ? latest : null;
+    state.layout = { ...layout, version: VERSION, showVersion, update };
     broadcast('reload');
   }
 
@@ -212,6 +221,7 @@ export async function createApp({
     },
     runtime,
     close() {
+      updates.stop();
       watcher?.close();
       discovery.stop();
       clearInterval(heartbeat);

@@ -567,3 +567,31 @@ test('providers: shared keys and options fill widget entries, and stay secret', 
     await srv.close();
   }
 });
+
+test('hideVersion: false shows the version and checks for updates; nothing is fetched otherwise', async () => {
+  let calls = 0;
+  const gh = await serve((req, res) => { calls++; res.end(JSON.stringify({ tag_name: 'v99.0.0', html_url: 'https://github.com/example/releases/tag/v99.0.0' })); });
+  const make = async (settings) => {
+    const configDir = tmpDir('hd-app-');
+    fs.writeFileSync(path.join(configDir, 'settings.yaml'), settings);
+    return createApp({ configDir, log: silentLog, defaultPlugins: [], dockerSocket: null, releasesUrl: `${gh.url}/latest` });
+  };
+  try {
+    const quiet = await make('title: x\n');
+    assert.equal(quiet.layout.showVersion, false);
+    quiet.close();
+    const off = await make('hideVersion: false\ndisableUpdateCheck: true\n');
+    assert.equal(off.layout.showVersion, true);
+    assert.equal(off.layout.update, null);
+    off.close();
+    assert.equal(calls, 0, 'no request without the version shown, or with disableUpdateCheck');
+
+    const on = await make('hideVersion: false\n');
+    for (let i = 0; i < 50 && !on.layout.update; i++) await new Promise((r) => setTimeout(r, 20));
+    assert.equal(calls, 1);
+    assert.deepEqual(on.layout.update, { version: '99.0.0', url: 'https://github.com/example/releases/tag/v99.0.0' });
+    on.close();
+  } finally {
+    await gh.close();
+  }
+});

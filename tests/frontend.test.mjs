@@ -596,3 +596,16 @@ test('showStats opens the container stats from the start; the label still folds 
   assert.equal(router.querySelector('.container-stats'), null);
   assert.equal(tag.getAttribute('aria-expanded'), 'false');
 });
+
+test('the footer shows the version only with showVersion, and links a newer release', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.showVersion = true;
+  layout.update = { version: '0.9.0', url: 'https://github.com/example/releases/tag/v0.9.0' };
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const box = w.document.getElementById('version-box');
+  assert.equal(box.hidden, false);
+  assert.equal(box.textContent, 'v0.1.0 · v0.9.0 beschikbaar');
+  assert.equal(box.querySelector('a').getAttribute('href'), 'https://github.com/example/releases/tag/v0.9.0');
+  const plain = await page();
+  assert.equal(plain.document.getElementById('version-box').hidden, true);
+});

@@ -15,7 +15,6 @@ Already there: title, theme, color, language (5 of homepage's ±40), target, bac
 headerStyle, showTitle, layout per group (columns, row/column style, header, initiallyCollapsed),
 hideErrors, status labels, container stats on click, search widget, bookmarks.
 
-- [ ] `hideVersion`, update check against GitHub releases (`disableUpdateCheck`)
 - [ ] `disableIndexing` (robots meta and robots.txt)
 - [ ] `base` path for running behind a reverse proxy under a sub path
 - [ ] Custom CSS/JS from the config folder (`custom.css`, `custom.js`)

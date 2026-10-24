@@ -101,6 +101,8 @@ headerStyle: boxed  # boxed, clean, underlined (a line under the header) or boxe
 cardStyle: hairline # a thin border instead of the shadow
 blockStyle: refined # heavier, larger values in widget blocks
 font: plexData      # IBM Plex Mono for values, the clock and status labels; plex: for everything
+statusStyle: dot    # status labels: dot (a coloured dot) or basic (Online/Offline for siteMonitor and ping);
+                    # default: the response time and container state. A service can set its own.
 target: _blank      # default link target of services
 background: https://example.com/wallpaper.jpg   # optional; or a map, as in homepage:
 # background:
@@ -197,6 +199,7 @@ footer; that choice is remembered in their browser and overrides `theme` and `co
         href: http://app.lan          # link of the card
         icon: app.svg                 # dashboard-icons name (.svg/.png/.webp), /icons/..., or a URL
         description: One line
+        statusStyle: dot              # overrides settings.statusStyle for this service
         target: _self                 # overrides settings.target; hidden-iframe: the dashboard
                                       # server calls the URL (a webhook) and shows how it went
         # status check, the first one that is set:

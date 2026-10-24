@@ -25,6 +25,7 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   groups placed between service groups where the block lists them, as in homepage.
 - `headerStyle: underlined` and `boxedWidgets`, `cardStyle: hairline`, `blockStyle: refined` and
   `font: plex` / `plexData` (IBM Plex Mono), as in homepage.
+- `statusStyle: dot|basic` for the status labels, in settings.yaml and per service, as in homepage.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

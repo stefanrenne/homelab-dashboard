@@ -455,3 +455,23 @@ test('headerStyle underlined/boxedWidgets, cardStyle hairline, blockStyle refine
   assert.equal(b.document.getElementById('header-widgets').className, 'info boxed-widgets');
   assert.equal(b.document.getElementById('font-plex'), null, 'the font is only loaded when asked for');
 });
+
+test('statusStyle dot shows a dot (with an accessible name), basic shows Online/Offline for checks', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.groups[0].services[0].statusStyle = 'dot';    // Router: siteMonitor up + container
+  layout.groups[0].services[2].statusStyle = 'basic';  // Radarr: ping down
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const doc = w.document;
+  const tags = [...doc.querySelectorAll('[data-service="svc-1"] .tag')];
+  assert.ok(tags.every((t) => t.classList.contains('dot') && t.querySelector('.status-dot')));
+  assert.equal(tags[0].textContent, '');
+  assert.equal(tags[0].getAttribute('aria-label'), 'Online: 78 ms');
+  const radarr = doc.querySelector('[data-service="svc-3"] .tag');
+  assert.equal(radarr.textContent, 'Offline');
+
+  layout.groups[0].services[0].statusStyle = 'basic';
+  const basic = await page({ ...RESULTS, '/api/layout': layout });
+  const [site, container] = basic.document.querySelectorAll('[data-service="svc-1"] .tag');
+  assert.equal(site.textContent, 'Online', 'a check shows up/down');
+  assert.equal(container.textContent, 'healthy', 'a container keeps its state');
+});

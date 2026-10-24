@@ -480,3 +480,17 @@ test('groups follow the order of the layout block, also as a list; bookmark grou
     await t.close();
   }
 });
+
+test('statusStyle: the service setting wins over the global one', async () => {
+  const t = await startApp({
+    'settings.yaml': 'statusStyle: dot\n',
+    'services.yaml': '- G:\n    - A: { href: http://a.lan }\n    - B: { href: http://b.lan, statusStyle: basic }\n    - C: { href: http://c.lan, statusStyle: fancy }\n',
+  });
+  try {
+    const layout = await (await t.get('/api/layout')).json();
+    assert.deepEqual(layout.groups[0].services.map((s) => s.statusStyle), ['dot', 'basic', 'dot']);
+    assert.ok(layout.messages.warnings.some((w) => w.path.endsWith('C.statusStyle')));
+  } finally {
+    await t.close();
+  }
+});

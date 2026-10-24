@@ -27,8 +27,9 @@ export const DEFAULT_SETTINGS = {
 };
 
 const SERVICE_KEYS = new Set([
-  'href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'widget', 'widgets', 'target',
+  'href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'widget', 'widgets', 'target', 'statusStyle',
 ]);
+export const STATUS_STYLES = ['dot', 'basic'];
 
 export function loadConfig(dir, opts = {}) {
   const errors = [];
@@ -144,6 +145,10 @@ export function normalizeSettings(raw, ctx) {
       ctx.warn(file, key, 'expected a whole number up to 8, ignored');
       delete settings[key];
     } else settings[key] = n;
+  }
+  if (settings.statusStyle !== undefined && !STATUS_STYLES.includes(settings.statusStyle)) {
+    ctx.warn(file, 'statusStyle', 'expected dot or basic (or leave it out), ignored');
+    delete settings.statusStyle;
   }
   if (settings.iconStyle !== undefined && !['gradient', 'theme'].includes(settings.iconStyle)) {
     ctx.warn(file, 'iconStyle', 'expected gradient or theme, using gradient');
@@ -271,6 +276,10 @@ export function normalizeService(name, def, file, p, ctx) {
     if (!SERVICE_KEYS.has(key)) ctx.warn(file, `${p}.${key}`, 'unknown key, ignored');
   }
   const service = { name: String(name) };
+  if (def.statusStyle !== undefined) {
+    if (STATUS_STYLES.includes(def.statusStyle)) service.statusStyle = def.statusStyle;
+    else ctx.warn(file, `${p}.statusStyle`, 'expected dot or basic, ignored');
+  }
   for (const key of ['href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'target']) {
     if (def[key] !== undefined && def[key] !== null) service[key] = String(def[key]);
   }

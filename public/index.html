@@ -167,6 +167,8 @@
     color: var(--hd-muted); border: 0; cursor: default; min-width: 24px; text-align: center; }
   button.tag { cursor: pointer; }
   button.tag::before { content: ""; position: absolute; inset: -4px -4px -12px; } /* hit area ≥ 28 px high */
+  .tag.dot { padding: 6px 8px; }
+  .tag .status-dot { display: block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
   .tag.up { color: var(--hd-ok); }
   .tag.down { color: var(--hd-error); }
   .tag.warn { color: var(--hd-warn); }
@@ -312,7 +314,7 @@ const I18N = {
   en: {
     tabs: 'Tabs', loading: 'Loading…', errors: 'Configuration errors', warnings: 'Warnings', empty: 'No services yet.',
     emptyHint: 'Add them to services.yaml in your config folder, or label your containers with homelab.name.',
-    up: 'Online', down: 'Offline', warn: 'Degraded', unknown: 'Unknown', tagDown: 'Down',
+    up: 'Online', down: 'Offline', warn: 'Degraded', unknown: 'Unknown', tagUp: 'Up', tagDown: 'Down',
     apiError: 'API Error Information', unknownWidget: 'Unknown widget type', discovered: 'discovered from',
     offline: 'Server unreachable, retrying…', clientFailed: 'Could not load the widget code',
     containerStats: 'Show container stats', refresh: 'Refresh', color: 'Change color', running: '{name}: running…', runOk: '{name}: done', runFailed: '{name} failed: {reason}', close: 'Close', attention: 'Needs attention', problem: 'Problem', playing: 'Playing', paused: 'Paused',
@@ -333,7 +335,7 @@ const I18N = {
   nl: {
     tabs: 'Tabbladen', loading: 'Laden…', errors: 'Fouten in de configuratie', warnings: 'Waarschuwingen', empty: 'Nog geen services.',
     emptyHint: 'Zet ze in services.yaml in je configmap, of geef je containers het label homelab.name.',
-    up: 'Online', down: 'Offline', warn: 'Verstoord', unknown: 'Onbekend', tagDown: 'Offline',
+    up: 'Online', down: 'Offline', warn: 'Verstoord', unknown: 'Onbekend', tagUp: 'Online', tagDown: 'Offline',
     apiError: 'API-foutinformatie', unknownWidget: 'Onbekend widgettype', discovered: 'gevonden via',
     offline: 'Server onbereikbaar, opnieuw proberen…', clientFailed: 'De widgetcode kon niet geladen worden',
     containerStats: 'Containerstatistieken tonen', refresh: 'Vernieuwen', color: 'Kleur wijzigen', running: '{name}: bezig…', runOk: '{name}: klaar', runFailed: '{name} mislukt: {reason}', close: 'Sluiten', attention: 'Vraagt aandacht', problem: 'Probleem', playing: 'Speelt af', paused: 'Gepauzeerd',
@@ -354,7 +356,7 @@ const I18N = {
   fr: {
     tabs: 'Onglets', loading: 'Chargement…', errors: 'Erreurs de configuration', warnings: 'Avertissements', empty: 'Aucun service pour l’instant.',
     emptyHint: 'Ajoutez-les dans services.yaml de votre dossier de configuration, ou étiquetez vos conteneurs avec homelab.name.',
-    up: 'En ligne', down: 'Hors ligne', warn: 'Dégradé', unknown: 'Inconnu', tagDown: 'Hors ligne',
+    up: 'En ligne', down: 'Hors ligne', warn: 'Dégradé', unknown: 'Inconnu', tagUp: 'En ligne', tagDown: 'Hors ligne',
     apiError: 'Informations sur l’erreur API', unknownWidget: 'Type de widget inconnu', discovered: 'découvert via',
     offline: 'Serveur injoignable, nouvelle tentative…', clientFailed: 'Impossible de charger le code du widget',
     containerStats: 'Afficher les statistiques du conteneur', refresh: 'Actualiser', color: 'Changer de couleur', running: '{name} : en cours…', runOk: '{name} : terminé', runFailed: '{name} a échoué : {reason}', close: 'Fermer', attention: 'Demande de l’attention', problem: 'Problème', playing: 'Lecture', paused: 'En pause',
@@ -375,7 +377,7 @@ const I18N = {
   de: {
     tabs: 'Tabs', loading: 'Lädt…', errors: 'Konfigurationsfehler', warnings: 'Warnungen', empty: 'Noch keine Dienste.',
     emptyHint: 'Trage sie in services.yaml im Konfigurationsordner ein oder versieh deine Container mit dem Label homelab.name.',
-    up: 'Online', down: 'Offline', warn: 'Beeinträchtigt', unknown: 'Unbekannt', tagDown: 'Offline',
+    up: 'Online', down: 'Offline', warn: 'Beeinträchtigt', unknown: 'Unbekannt', tagUp: 'Online', tagDown: 'Offline',
     apiError: 'API-Fehlerinformationen', unknownWidget: 'Unbekannter Widget-Typ', discovered: 'gefunden über',
     offline: 'Server nicht erreichbar, neuer Versuch…', clientFailed: 'Widget-Code konnte nicht geladen werden',
     containerStats: 'Container-Statistiken anzeigen', refresh: 'Aktualisieren', color: 'Farbe ändern', running: '{name}: läuft…', runOk: '{name}: fertig', runFailed: '{name} fehlgeschlagen: {reason}', close: 'Schließen', attention: 'Braucht Aufmerksamkeit', problem: 'Problem', playing: 'Läuft', paused: 'Pausiert',
@@ -396,7 +398,7 @@ const I18N = {
   es: {
     tabs: 'Pestañas', loading: 'Cargando…', errors: 'Errores de configuración', warnings: 'Advertencias', empty: 'Todavía no hay servicios.',
     emptyHint: 'Añádelos en services.yaml de tu carpeta de configuración, o etiqueta tus contenedores con homelab.name.',
-    up: 'En línea', down: 'Sin conexión', warn: 'Degradado', unknown: 'Desconocido', tagDown: 'Caído',
+    up: 'En línea', down: 'Sin conexión', warn: 'Degradado', unknown: 'Desconocido', tagUp: 'Activo', tagDown: 'Caído',
     apiError: 'Información del error de la API', unknownWidget: 'Tipo de widget desconocido', discovered: 'descubierto en',
     offline: 'Servidor inaccesible, reintentando…', clientFailed: 'No se pudo cargar el código del widget',
     containerStats: 'Mostrar estadísticas del contenedor', refresh: 'Actualizar', color: 'Cambiar color', running: '{name}: en curso…', runOk: '{name}: hecho', runFailed: '{name} falló: {reason}', close: 'Cerrar', attention: 'Requiere atención', problem: 'Problema', playing: 'Reproduciendo', paused: 'En pausa',
@@ -732,7 +734,11 @@ function stopPolling() {
  * HTTP and ping checks, the container state ("healthy", "running") for Docker. Clicking a
  * container label shows the container's CPU and memory below the card.
  */
-function statusTag(status, card) {
+/**
+ * A status label in the card's corner. statusStyle (settings or service): none shows the
+ * response time or container state, `dot` a coloured dot, `basic` UP or DOWN for checks.
+ */
+function statusTag(status, card, style) {
   const isContainer = status.kind === 'container';
   const tag = el(isContainer ? 'button' : 'div', { class: 'tag', type: isContainer ? 'button' : null, text: '·' });
   if (!status.known) {
@@ -757,13 +763,15 @@ function statusTag(status, card) {
     last = result;
     const t = widgetT(status.type);
     const s = result.ok ? (result.data && result.data.status) || 'unknown' : 'down';
-    tag.className = 'tag ' + s;
+    tag.className = 'tag ' + s + (style === 'dot' ? ' dot' : '');
     let text;
     if (!result.ok) text = translate('tagDown');
+    else if (style === 'basic' && !isContainer) text = translate(s === 'up' ? 'tagUp' : s === 'down' ? 'tagDown' : s);
     else if (result.data.statusText) text = t(result.data.statusText);
     else if (s === 'up' && typeof result.data.latency === 'number') text = `${Math.round(result.data.latency)} ms`;
     else text = s === 'down' ? translate('tagDown') : translate(s);
-    tag.textContent = text;
+    if (style === 'dot') tag.replaceChildren(el('span', { class: 'status-dot', 'aria-hidden': 'true' }));
+    else tag.textContent = text;
     tag.setAttribute('aria-label', `${translate(s)}: ${text}`);
     if (!isContainer) tag.title = result.ok ? translate(s) : result.error;
     if (stats) renderResult(stats, { type: 'docker' }, result, card.dataset.name);
@@ -882,7 +890,7 @@ function renderService(service) {
   const card = el('article', { class: 'card shadow', 'data-service': service.id, 'data-name': service.name }, head);
   card.dataset.search = [service.name, service.description || ''].join(' ').toLowerCase();
   if (service.statuses.length) {
-    card.append(el('div', { class: 'tags' }, ...service.statuses.map((s) => statusTag(s, card))));
+    card.append(el('div', { class: 'tags' }, ...service.statuses.map((s) => statusTag(s, card, service.statusStyle))));
   }
   for (const w of service.widgets) card.append(mountWidget(w, null, service.name));
   card.style.setProperty('--tag-count', String(service.statuses.length));

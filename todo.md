@@ -16,7 +16,6 @@ headerStyle, showTitle, layout per group (columns, row/column style, header, ini
 hideErrors, status labels, container stats on click, search widget, bookmarks.
 
 - [ ] Block highlighting: `highlight:` per widget (numeric gt/gte/lt/lte/eq/ne/between/outside, string equals/includes/startsWith/endsWith/regex, `negate`, `valueOnly`) and the `blockHighlights` level colours in settings
-- [ ] `statusStyle: dot|basic` for siteMonitor/ping labels
 - [ ] `quicklaunch`: keyboard launcher over services, bookmarks and search, with `searchDescriptions`, `hideInternetSearch`, `showSearchSuggestions`, `provider`
 - [ ] `showStats` (container stats shown instead of on click), per service `showStats`
 - [ ] `providers`: shared credentials (e.g. `openweathermap`, `finnhub`) that widgets reference

@@ -87,6 +87,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   it too. Built-in `kubernetes-pods` widget.
 
 ### Changed
+- A group with `header: false` follows the previous group at card spacing, as in homepage, and
+  groups have no padding below their cards (homepage's `pb-0`).
 - Services in a group are ordered by weight, as in homepage: a services.yaml service weighs
   (its position + 1) × 100 unless it sets `weight`, a discovered one its `weight` label or 0,
   ties by name. Discovered services without a weight now come before the YAML ones; give them

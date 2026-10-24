@@ -99,6 +99,7 @@ test('renders groups, cards, status labels, blocks, rows and bookmarks in the co
   assert.equal(doc.documentElement.style.getPropertyValue('--t800'), '#065f46', 'emerald palette');
   assert.deepEqual([...doc.querySelectorAll('#groups .group h2:not(.sr-only)')].map((h) => h.textContent), ['Network']);
   assert.deepEqual([...doc.querySelectorAll('#groups .group h2.sr-only')].map((h) => h.textContent), ['Hidden title']);
+  assert.ok(doc.querySelector('[data-group="Hidden title"]').classList.contains('no-header'), 'no room for a hidden title, as in homepage');
   assert.equal(doc.querySelector('[data-group="Network"]').className, 'group layout-row');
   const router = doc.querySelector('[data-service="svc-1"]');
   assert.equal(router.querySelector('a').getAttribute('href'), 'http://router.lan');

@@ -94,3 +94,8 @@ test('cards fill gaps where the browser can (masonry), and the page respects saf
   assert.match(CSS, /@supports \(grid-template-rows: masonry\)/);
   assert.match(block('  .wrap {'), /env\(safe-area-inset-left\)/);
 });
+
+test('a group without a header takes no room for it, as in homepage', () => {
+  assert.match(block('.group.no-header'), /padding-block:\s*0/);
+  assert.match(block('.group.no-header > .sr-only + .cards'), /margin-top:\s*0/);
+});

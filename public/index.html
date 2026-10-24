@@ -97,13 +97,16 @@
 
   /* groups */
   .groups { display: flex; flex-wrap: wrap; margin: 16px -4px 0; }
-  .group { flex: 1 1 100%; padding: 4px; min-width: 0; }
+  .group { flex: 1 1 100%; padding: 4px 4px 0; min-width: 0; } /* homepage: p-1 pb-0; the cards' own margin separates groups */
   .group.layout-column { flex-basis: 100%; }
   @media (min-width: 768px) { .group.layout-column { flex-basis: 50%; } }
   @media (min-width: 1024px) { .group.layout-column { flex-basis: 33.333%; } }
   @media (min-width: 1280px) { .group.layout-column { flex-basis: 25%; } }
   .group h2 { margin: 0; font-size: 1.25rem; line-height: 1.75rem; font-weight: 500; color: var(--hd-heading); }
   .group h2 + .cards { margin-top: 12px; }
+  /* header: false, as in homepage: no room for the hidden title, the cards follow the previous group at card spacing */
+  .group.no-header { padding-block: 0; }
+  .group.no-header > .sr-only + .cards { margin-top: 0; }
   /* nested groups (homepage's format) */
   .subgroups { display: flex; flex-wrap: wrap; margin: 4px -4px 0; }
   .group.nested h3 { margin: 0; font-size: 1rem; line-height: 1.5rem; font-weight: 500; color: var(--hd-heading); }
@@ -952,7 +955,7 @@ function renderGroup(g, level) {
   const s = layout?.settings ?? {};
   const equal = typeof g.layout.useEqualHeights === 'boolean' ? g.layout.useEqualHeights : s.useEqualHeights === true;
   const section = el('section', {
-    class: 'group ' + (row ? 'layout-row' : 'layout-column') + (level > 2 ? ' nested' : '') + (equal ? ' equal-heights' : ''),
+    class: 'group ' + (row ? 'layout-row' : 'layout-column') + (level > 2 ? ' nested' : '') + (equal ? ' equal-heights' : '') + (g.layout.header === false ? ' no-header' : ''),
     'data-group': g.name,
     'data-tab': level === 2 ? g.layout.tab || null : null,
     'data-order': level === 2 ? g.order ?? null : null,

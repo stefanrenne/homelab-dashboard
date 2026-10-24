@@ -10,6 +10,7 @@ import { loadRegistry } from '../src/plugins/loader.js';
 import httpStatus from '../widgets/http-status/server.js';
 import customApi, { pick } from '../widgets/custom-api/server.js';
 import docker, { cpuPercent } from '../widgets/docker/server.js';
+import proxmoxvm, { memoryBlock } from '../widgets/proxmoxvm/server.js';
 import kubernetes, { PATHS as K8S, cores, bytes as k8sBytes } from '../widgets/kubernetes/server.js';
 import stocks, { API as FINNHUB } from '../widgets/stocks/server.js';
 import openweathermap, { API as OWM, condition as owmCondition } from '../widgets/openweathermap/server.js';
@@ -174,6 +175,44 @@ test('docker: a Swarm service by name, running tasks against its replicas, as in
   } finally {
     await srv.close();
   }
+});
+
+test('proxmoxvm: state, CPU and memory of a VM or container, with homepage\'s API token header', async () => {
+  const vms = {
+    '/api2/json/nodes/pve/qemu/101/status/current': { data: { status: 'running', cpu: 0.0451, mem: 2.15e9 } },
+    '/api2/json/nodes/pve/lxc/200/status/current': { data: { status: 'running', cpu: 0.2, mem: 300e6 } },
+    '/api2/json/nodes/pve/qemu/102/status/current': { data: { status: 'running', qmpstatus: 'paused', cpu: 0, mem: 1e9 } },
+    '/api2/json/nodes/pve/qemu/103/status/current': { data: { status: 'stopped', cpu: 0, mem: 0 } },
+  };
+  const auth = [];
+  const srv = await serve((req, res) => {
+    auth.push(req.headers.authorization);
+    if (req.url === '/api2/json/nodes/pve/qemu/401/status/current') { res.statusCode = 401; return res.end(); }
+    const body = vms[req.url];
+    res.statusCode = body ? 200 : 500;
+    res.end(JSON.stringify(body ?? { data: null, message: 'Configuration file does not exist' }));
+  });
+  const run = (vmid, type = 'qemu') => {
+    const signal = new AbortController().signal;
+    return proxmoxvm.fetch(fakeCtx({ url: `${srv.url}/`, token: 'api@pam!dash', secret: 's3cret', node: 'pve', vmid, type, insecure: true }, { signal, fetch: (i, init) => widgetFetch(i, init, undefined, signal) }));
+  };
+  try {
+    const vm = await run('101');
+    assert.deepEqual([vm.status, vm.statusText], ['up', 'running']);
+    assert.deepEqual(vm.blocks.map((b) => [b.key, b.value, b.unit]), [['status', 'running', undefined], ['cpu', 4.5, '%'], ['mem', 2.2, 'GB']]);
+    assert.equal(auth[0], 'PVEAPIToken=api@pam!dash=s3cret');
+    assert.deepEqual((await run('200', 'lxc')).blocks.map((b) => b.value), ['running', 20, 300]);
+    const paused = await run('102');
+    assert.deepEqual([paused.status, paused.blocks[0].status], ['warn', 'warn']);
+    const stopped = await run('103');
+    assert.deepEqual([stopped.status, stopped.statusText, stopped.blocks.length], ['down', 'stopped', 1]);
+    assert.equal((await run('999')).statusText, 'not found');
+    await assert.rejects(run('401'), /Proxmox status answered 401/);
+    await assert.rejects(run('1/../2'), /vmid/);
+  } finally {
+    await srv.close();
+  }
+  assert.deepEqual(memoryBlock(undefined).value, null);
 });
 
 test('resources: memory and disk now, CPU from the second call on', async () => {

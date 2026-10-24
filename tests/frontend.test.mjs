@@ -119,6 +119,21 @@ test('renders groups, cards, status labels, blocks, rows and bookmarks in the co
   w.close();
 });
 
+test('a proxmoxNode label opens the VM\'s CPU and memory too, with its own widget\'s labels', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.groups[0].services[2].statuses.push({ kind: 'proxmox', instanceId: 's-9', type: 'proxmoxvm', options: {}, known: true, server: true, refreshMs: 15000 });
+  layout.widgetTypes.proxmoxvm = { name: 'Proxmox VM', client: null, i18n: { status: 'Status', cpu: 'CPU', memory: 'Geheugen', running: 'actief' } };
+  const w = await page({ ...RESULTS, '/api/layout': layout, '/api/widgets/s-9': { ok: true, data: { status: 'up', statusText: 'running', blocks: [{ key: 'cpu', label: 'cpu', value: 4.5, unit: '%' }, { key: 'mem', label: 'memory', value: 2.1, unit: 'GB' }] } } });
+  const radarr = w.document.querySelector('[data-service="svc-3"]');
+  const tag = radarr.querySelectorAll('.tag')[1];
+  assert.equal(tag.textContent, 'actief');
+  assert.equal(tag.title, 'VM-statistieken tonen');
+  tag.click();
+  assert.deepEqual([...radarr.querySelectorAll('.container-stats .block .l')].map((n) => n.textContent), ['CPU', 'Geheugen']);
+  assert.equal(tag.getAttribute('aria-expanded'), 'true');
+  w.close();
+});
+
 test('clicking a container label shows the container stats', async () => {
   const w = await page();
   const router = w.document.querySelector('[data-service="svc-1"]');

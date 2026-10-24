@@ -1,0 +1,14 @@
+id: proxmoxvm
+name: Proxmox VM
+version: 1.0.0
+apiVersion: 1
+description: State, CPU and memory of one Proxmox VM or LXC container. Used for services with "proxmoxNode:" and "proxmoxVMID:".
+refresh: 15s
+options:
+  url: { type: url, required: true }        # e.g. https://pve.lan:8006; filled in from proxmox.yaml
+  token: { type: string, required: true, secret: true }    # an API token id: user@pam!dashboard
+  secret: { type: string, required: true, secret: true }   # the token's secret
+  node: { type: string, required: true }   # the Proxmox node name, as proxmoxNode
+  vmid: { type: string, required: true }   # the VM or container id, as proxmoxVMID
+  type: { type: enum, values: [qemu, lxc], default: qemu }   # qemu for a VM, lxc for a container
+  insecure: { type: boolean, default: true }   # accept Proxmox's self-signed certificate (as homepage does)

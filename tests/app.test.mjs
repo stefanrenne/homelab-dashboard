@@ -121,6 +121,33 @@ test('container: over Docker TLS, the certificates reach the docker widget but n
   }
 });
 
+test('proxmoxNode and proxmoxVMID: a status from proxmox.yaml per node, its secret never in /api/layout', async () => {
+  const t = await startApp({
+    'proxmox.yaml': 'pve:\n  url: https://pve.lan:8006\n  token: api@pam!dash\n  secret: pve-secret-value\n',
+    'services.yaml': `
+- G:
+    - VM: { proxmoxNode: pve, proxmoxVMID: 101 }
+    - CT: { proxmoxNode: pve, proxmoxVMID: 200, proxmoxType: lxc }
+    - Other: { proxmoxNode: pve2, proxmoxVMID: 1 }
+    - Widget:
+        widget: { type: proxmoxvm, node: pve, vmid: 102 }
+`,
+  });
+  try {
+    const [vm, ct, other, widget] = t.app.layout.groups[0].services;
+    assert.deepEqual(vm.statuses.map((s) => [s.kind, s.type]), [['proxmox', 'proxmoxvm']]);
+    assert.deepEqual(vm.statuses[0].options, { url: 'https://pve.lan:8006', node: 'pve', vmid: '101', type: 'qemu', insecure: true });
+    assert.equal(ct.statuses[0].options.type, 'lxc');
+    assert.equal(widget.widgets[0].options.url, 'https://pve.lan:8006', 'homepage\'s proxmoxvm widget: the connection from proxmox.yaml');
+    assert.equal(other.statuses[0].type, 'proxmoxvm');
+    const layout = await (await t.get('/api/layout')).text();
+    assert.ok(!layout.includes('pve-secret-value') && !layout.includes('api@pam'), 'token and secret stay on the server');
+    assert.ok(t.app.layout.messages.errors.some((e) => /proxmoxNode "pve2" is not in proxmox.yaml/.test(e.message)));
+  } finally {
+    await t.close();
+  }
+});
+
 test('refreshInterval, fields and hide_errors belong to the dashboard, not the widget', async () => {
   const upstream = await serve((req, res) => res.end(JSON.stringify({ a: 1, b: 2, c: 3 })));
   const t = await startApp({

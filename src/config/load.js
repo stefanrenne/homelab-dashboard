@@ -11,7 +11,7 @@ import { substitute } from './vars.js';
 import { parseConfigYaml, resolveIncludes } from './include.js';
 import { isPlainObject } from '../util.js';
 
-export const CONFIG_FILES = ['settings', 'services', 'widgets', 'bookmarks', 'docker', 'kubernetes'];
+export const CONFIG_FILES = ['settings', 'services', 'widgets', 'bookmarks', 'docker', 'kubernetes', 'proxmox'];
 
 export const DEFAULT_SETTINGS = {
   title: 'Homelab',
@@ -28,6 +28,7 @@ export const DEFAULT_SETTINGS = {
 
 const SERVICE_KEYS = new Set([
   'href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'widget', 'widgets', 'target', 'statusStyle', 'showStats', 'weight',
+  'proxmoxNode', 'proxmoxVMID', 'proxmoxType',
 ]);
 export const STATUS_STYLES = ['dot', 'basic'];
 
@@ -75,6 +76,7 @@ export function loadConfig(dir, opts = {}) {
     bookmarks: normalizeBookmarks(raw.bookmarks, ctx),
     docker: normalizeDocker(raw.docker, ctx, dir),
     kubernetes: normalizeKubernetes(raw.kubernetes, ctx),
+    proxmox: normalizeProxmox(raw.proxmox, ctx),
     errors,
     warnings,
     secrets,
@@ -341,9 +343,13 @@ export function normalizeService(name, def, file, p, ctx) {
     if (Number.isFinite(weight)) service.weight = weight;
     else ctx.warn(file, `${p}.weight`, 'expected a number, ignored');
   }
-  for (const key of ['href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'target']) {
+  if (def.proxmoxType !== undefined && !['qemu', 'lxc'].includes(def.proxmoxType)) {
+    ctx.warn(file, `${p}.proxmoxType`, 'expected qemu or lxc, ignored');
+  }
+  for (const key of ['href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'target', 'proxmoxNode', 'proxmoxVMID']) {
     if (def[key] !== undefined && def[key] !== null) service[key] = String(def[key]);
   }
+  if (['qemu', 'lxc'].includes(def.proxmoxType)) service.proxmoxType = def.proxmoxType;
   const widgets = [];
   if (def.widget !== undefined) widgets.push([def.widget, `${p}.widget`]);
   if (def.widgets !== undefined) {
@@ -447,6 +453,30 @@ function dockerTls(raw, p, ctx, configDir) {
   if (!!out.cert !== !!out.key) {
     ctx.error(file, p, 'certFile and keyFile go together');
     return null;
+  }
+  return out;
+}
+
+/**
+ * homepage's proxmox.yaml: a map of node name to { url, token, secret }, or one flat
+ * { url, token, secret } for every node (its older form, kept under the name "").
+ */
+export function normalizeProxmox(raw, ctx) {
+  const file = 'proxmox.yaml';
+  if (raw === undefined || raw === null) return {};
+  if (!isPlainObject(raw)) {
+    ctx.error(file, '', 'expected a map of node name to { url, token, secret }');
+    return {};
+  }
+  const entries = raw.url !== undefined ? [['', raw]] : Object.entries(raw);
+  const out = {};
+  for (const [node, def] of entries) {
+    const p = node || '';
+    if (!isPlainObject(def) || !def.url || !def.token || !def.secret) {
+      ctx.error(file, p, 'needs url, token and secret');
+      continue;
+    }
+    out[node] = { url: String(def.url), token: String(def.token), secret: String(def.secret), ...(typeof def.insecure === 'boolean' ? { insecure: def.insecure } : {}) };
   }
   return out;
 }

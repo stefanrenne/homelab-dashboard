@@ -160,7 +160,26 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       if (server?.swarm) conn.swarm = true;
       out.push({ kind: 'container', ...addInstance(id('container'), 'docker', { container: service.container, ...conn }, where) });
     }
+    if (service.proxmoxNode && service.proxmoxVMID) {
+      const node = proxmoxNode(service.proxmoxNode, where);
+      const options = { ...node, node: service.proxmoxNode, vmid: service.proxmoxVMID, ...(service.proxmoxType ? { type: service.proxmoxType } : {}) };
+      out.push({ kind: 'proxmox', ...addInstance(id('proxmox'), 'proxmoxvm', options, where) });
+    }
     return out;
+  };
+
+  /** homepage's proxmoxvm widget takes node and vmid only: the rest comes from proxmox.yaml. */
+  const withProxmox = (w) => {
+    if (registry.get(w.type)?.id !== 'proxmoxvm' || w.options.url || !w.options.node) return w.options;
+    const found = config.proxmox?.[String(w.options.node)] ?? config.proxmox?.[''];
+    return found ? { ...found, ...w.options } : w.options;
+  };
+
+  /** proxmox.yaml's connection for a node: its own entry, else the flat one for every node. */
+  const proxmoxNode = (node, where) => {
+    const found = config.proxmox?.[node] ?? config.proxmox?.[''];
+    if (!found) errors.push({ ...where, message: `proxmoxNode "${node}" is not in proxmox.yaml` });
+    return found ?? {};
   };
 
   // A group's own layout keys (nested groups' layouts left out), with its category icon resolved.
@@ -203,7 +222,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
         showStats: service.showStats ?? config.settings.showStats ?? false,
         statuses: statusesFor(group, service, where),
         widgets: service.widgets.map((w, i) =>
-          addInstance(stableId('w', group.name, service.name, String(i)), w.type, w.options, {
+          addInstance(stableId('w', group.name, service.name, String(i)), w.type, withProxmox(w), {
             file: where.file,
             path: w.path ?? where.path,
           }),

@@ -74,6 +74,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Docker Swarm: `swarm: true` for a server in docker.yaml, as in homepage. Discovery lists the
   services (labels from `deploy.labels`), and `container:` shows a service's running tasks
   against its replicas.
+- Proxmox: `proxmoxNode`, `proxmoxVMID` and `proxmoxType` on a service with `proxmox.yaml`, as in
+  homepage: the VM's or container's state, CPU and memory. Also as homepage's `proxmoxvm` widget.
 
 ### Changed
 - Services in a group are ordered by weight, as in homepage: a services.yaml service weighs

@@ -43,3 +43,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 3: Docker over TLS (`tls` in docker.yaml; tested against a local TLS server with client certificates, not a real dockerd).
 - 2026-10-24: homepage parity, phase 3: services ordered by weight within a group, as in homepage (`weight` in services.yaml too).
 - 2026-10-24: homepage parity, phase 3: Docker Swarm services and stacks (`swarm: true`; tested against a fake API, not a live swarm).
+- 2026-10-24: homepage parity, phase 3: Proxmox VM/LXC status and stats per service (`proxmox.yaml`, built-in `proxmoxvm`; tested against a fake API, not a live Proxmox).

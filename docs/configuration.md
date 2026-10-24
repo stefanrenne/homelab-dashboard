@@ -13,6 +13,7 @@ skipped and the rest keeps working.
 | `bookmarks.yaml` | Groups of links |
 | `docker.yaml` | Docker servers (status and discovery) |
 | `kubernetes.yaml` | Kubernetes discovery |
+| `proxmox.yaml` | Proxmox nodes (VM and container status) |
 | other `.yaml` files | Pulled in with `!include` (see [Including other files](#including-other-files)) |
 | `icons/` | Your own icons, used as `icon: /icons/name.svg` |
 | `custom.css`, `custom.js` | Your own style and script, loaded after the page's own (as in homepage). Refresh the browser after a change |
@@ -235,6 +236,9 @@ footer; that choice is remembered in their browser and overrides `theme` and `co
         ping: app.lan                 # ICMP ping (ping widget)
         container: app                # Docker container state (docker widget)
         server: local                 # which docker.yaml server; optional with one server
+        proxmoxNode: pve              # Proxmox VM or container state (proxmoxvm widget, proxmox.yaml)
+        proxmoxVMID: 101
+        proxmoxType: qemu             # qemu (a VM, default) or lxc (a container)
         # widgets:
         widget:
           type: custom-api
@@ -398,6 +402,24 @@ The name is what `server:` refers to in `services.yaml`, and what config message
   **Several servers**: give such services `server: <name>`. Discovered containers always
   carry the server they were found on.
 
+## proxmox.yaml
+
+The Proxmox nodes, for `proxmoxNode:` and `proxmoxVMID:` on a service (as in homepage): the
+VM's or container's state as a label in the card's corner, with CPU and memory on a click.
+
+```yaml
+pve:                                   # the node name, as in proxmoxNode
+  url: https://pve.lan:8006
+  token: api@pam!dashboard             # an API token id
+  secret: "{{HD_VAR_PROXMOX_SECRET}}"  # its secret
+  insecure: true                       # default: accept Proxmox's self-signed certificate
+```
+
+homepage's older form, one `url`, `token` and `secret` at the top for every node, works too.
+Make the token under **Datacenter > Permissions > API Tokens** and give it the role
+**PVEAuditor** on `/`; see the [Proxmox VM](https://stefanrenne.github.io/homelab-dashboard/widgets/built-in/proxmoxvm.html) widget page.
+`token` and `secret` stay on the server.
+
 ## kubernetes.yaml
 
 ```yaml
@@ -423,7 +445,8 @@ collection's widgets under [Widget collection](https://stefanrenne.github.io/hom
 | `resources` | `cpu`, `memory` (both off by default), `disk` (list of mount points), `label` |
 | `http-status` | `url` (required), `method` (`HEAD`/`GET`) |
 | `ping` | `host` (required; a name, IP or URL) |
-| `docker` | `container` (required), `socket` or `url` |
+| `docker` | `container` (required), `socket` or `url`, `swarm`, `tlsCa`/`tlsCert`/`tlsKey` (secret) |
+| `proxmoxvm` | `node`, `vmid` (required), `type` (`qemu`/`lxc`), and `url`, `token`, `secret` (secret), `insecure` from proxmox.yaml when left out |
 | `custom-api` | `url` (required), `method`, `headers` (secret), `body`, `display` (`block`/`list`), `mappings` (required: `field`, `label`, `format` (`number`/`percent`/`bytes`/`text`), `scale`, `prefix`, `suffix`, `remap: [{ value, to }, { any: true, to }]`) |
 
 Widgets for radarr, sonarr, bazarr, prowlarr, sabnzbd, seerr, stash, tautulli, tdarr, What's

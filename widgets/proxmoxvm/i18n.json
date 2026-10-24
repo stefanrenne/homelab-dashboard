@@ -1,0 +1,155 @@
+{
+  "en": {
+    "status": "Status",
+    "cpu": "CPU",
+    "memory": "Memory",
+    "running": "running",
+    "paused": "paused",
+    "stopped": "stopped",
+    "not found": "not found"
+  },
+  "nl": {
+    "status": "Status",
+    "cpu": "CPU",
+    "memory": "Geheugen",
+    "running": "actief",
+    "paused": "gepauzeerd",
+    "stopped": "gestopt",
+    "not found": "niet gevonden"
+  },
+  "fr": {
+    "status": "Statut",
+    "cpu": "CPU",
+    "memory": "Mémoire",
+    "running": "actif",
+    "paused": "en pause",
+    "stopped": "arrêté",
+    "not found": "introuvable"
+  },
+  "de": {
+    "status": "Status",
+    "cpu": "CPU",
+    "memory": "Speicher",
+    "running": "läuft",
+    "paused": "pausiert",
+    "stopped": "gestoppt",
+    "not found": "nicht gefunden"
+  },
+  "es": {
+    "status": "Estado",
+    "cpu": "CPU",
+    "memory": "Memoria",
+    "running": "en marcha",
+    "paused": "en pausa",
+    "stopped": "detenido",
+    "not found": "no encontrado"
+  },
+  "ca": {
+    "status": "Estat",
+    "cpu": "CPU",
+    "memory": "Memòria",
+    "running": "en marxa",
+    "paused": "en pausa",
+    "stopped": "aturat",
+    "not found": "no trobat"
+  },
+  "he": {
+    "status": "מצב",
+    "cpu": "מעבד",
+    "memory": "זיכרון",
+    "running": "פועל",
+    "paused": "מושהה",
+    "stopped": "נעצר",
+    "not found": "לא נמצא"
+  },
+  "hr": {
+    "status": "Stanje",
+    "cpu": "CPU",
+    "memory": "Memorija",
+    "running": "radi",
+    "paused": "pauzirano",
+    "stopped": "zaustavljeno",
+    "not found": "nije pronađeno"
+  },
+  "hu": {
+    "status": "Állapot",
+    "cpu": "CPU",
+    "memory": "Memória",
+    "running": "fut",
+    "paused": "szünetel",
+    "stopped": "leállítva",
+    "not found": "nem található"
+  },
+  "it": {
+    "status": "Stato",
+    "cpu": "CPU",
+    "memory": "Memoria",
+    "running": "in esecuzione",
+    "paused": "in pausa",
+    "stopped": "fermato",
+    "not found": "non trovato"
+  },
+  "nb-NO": {
+    "status": "Status",
+    "cpu": "CPU",
+    "memory": "Minne",
+    "running": "kjører",
+    "paused": "pauset",
+    "stopped": "stoppet",
+    "not found": "ikke funnet"
+  },
+  "pt": {
+    "status": "Estado",
+    "cpu": "CPU",
+    "memory": "Memória",
+    "running": "em execução",
+    "paused": "em pausa",
+    "stopped": "parado",
+    "not found": "não encontrado"
+  },
+  "ru": {
+    "status": "Состояние",
+    "cpu": "ЦП",
+    "memory": "Память",
+    "running": "работает",
+    "paused": "приостановлен",
+    "stopped": "остановлен",
+    "not found": "не найден"
+  },
+  "sv": {
+    "status": "Status",
+    "cpu": "CPU",
+    "memory": "Minne",
+    "running": "körs",
+    "paused": "pausad",
+    "stopped": "stoppad",
+    "not found": "hittades inte"
+  },
+  "vi": {
+    "status": "Trạng thái",
+    "cpu": "CPU",
+    "memory": "Bộ nhớ",
+    "running": "đang chạy",
+    "paused": "tạm dừng",
+    "stopped": "đã dừng",
+    "not found": "không tìm thấy"
+  },
+  "zh-Hans": {
+    "status": "状态",
+    "cpu": "CPU",
+    "memory": "内存",
+    "running": "运行中",
+    "paused": "已暂停",
+    "stopped": "已停止",
+    "not found": "未找到"
+  },
+  "zh-Hant": {
+    "status": "狀態",
+    "cpu": "CPU",
+    "memory": "記憶體",
+    "running": "執行中",
+    "paused": "已暫停",
+    "stopped": "已停止",
+    "not found": "找不到"
+  }
+}

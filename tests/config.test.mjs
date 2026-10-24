@@ -164,6 +164,17 @@ test('services: weight is a number, as in homepage', () => {
   assert.deepEqual(cfg.warnings.map((w) => w.path), ['[0].G[2].C.weight']);
 });
 
+test('proxmox.yaml: per node, or homepage\'s older flat form for every node', () => {
+  const perNode = loadConfig(configDir({ 'proxmox.yaml': 'pve:\n  url: https://pve.lan:8006\n  token: a@pam!t\n  secret: s\n  insecure: false\nbad: { url: x }\n' }));
+  assert.deepEqual(perNode.proxmox, { pve: { url: 'https://pve.lan:8006', token: 'a@pam!t', secret: 's', insecure: false } });
+  assert.deepEqual(perNode.errors.map((e) => [e.file, e.path]), [['proxmox.yaml', 'bad']]);
+  const flat = loadConfig(configDir({ 'proxmox.yaml': 'url: https://pve.lan:8006\ntoken: a@pam!t\nsecret: s\n' }));
+  assert.deepEqual(Object.keys(flat.proxmox), ['']);
+  const svc = loadConfig(configDir({ 'services.yaml': '- G:\n    - A: { proxmoxNode: pve, proxmoxVMID: 101, proxmoxType: docker }\n' }));
+  assert.deepEqual([svc.services[0].services[0].proxmoxVMID, svc.services[0].services[0].proxmoxType], ['101', undefined]);
+  assert.deepEqual(svc.warnings.map((w) => w.path), ['[0].G[0].A.proxmoxType']);
+});
+
 test('parseDuration and safeJoin', () => {
   assert.equal(parseDuration('10s'), 10_000);
   assert.equal(parseDuration('500ms'), 500);

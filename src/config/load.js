@@ -411,13 +411,14 @@ export function normalizeDocker(raw, ctx, configDir = '.') {
       ctx.error(file, name, 'expected { socket } or { host, port }');
       continue;
     }
-    if (def.socket) servers.push({ name, socket: String(def.socket), discover: def.discover !== false });
+    const swarm = def.swarm === true ? { swarm: true } : {};
+    if (def.socket) servers.push({ name, socket: String(def.socket), discover: def.discover !== false, ...swarm });
     else if (def.host) {
       const tls = def.tls === undefined ? undefined : dockerTls(def.tls, `${name}.tls`, ctx, configDir);
       if (tls === null) continue;
       // tls means https, as in homepage
       const protocol = tls || def.protocol === 'https' ? 'https' : 'http';
-      servers.push({ name, url: `${protocol}://${def.host}:${def.port ?? 2375}`, discover: def.discover !== false, ...(tls ? { tls } : {}) });
+      servers.push({ name, url: `${protocol}://${def.host}:${def.port ?? 2375}`, discover: def.discover !== false, ...swarm, ...(tls ? { tls } : {}) });
     } else ctx.error(file, name, 'needs "socket" or "host"');
   }
   return servers;

@@ -73,7 +73,7 @@ test('secrets from variables and secret options never reach /api/layout', async 
 
 test('status checks come from siteMonitor, ping and container', async () => {
   const t = await startApp({
-    'docker.yaml': 'local:\n  socket: /tmp/none.sock\n  discover: false\n',
+    'docker.yaml': 'local:\n  socket: /tmp/none.sock\n  discover: false\n  swarm: true\n',
     'services.yaml': `
 - G:
     - A: { siteMonitor: "http://a.lan" }
@@ -88,7 +88,7 @@ test('status checks come from siteMonitor, ping and container', async () => {
     assert.deepEqual(services.map((s) => s.statuses.map((x) => `${x.kind}:${x.type}`)), [
       ['siteMonitor:http-status'], ['ping:ping'], ['container:docker'], [], ['siteMonitor:http-status', 'container:docker'],
     ]);
-    assert.deepEqual(services[2].statuses[0].options, { container: 'c', socket: '/tmp/none.sock' });
+    assert.deepEqual(services[2].statuses[0].options, { container: 'c', socket: '/tmp/none.sock', swarm: true });
   } finally {
     await t.close();
   }

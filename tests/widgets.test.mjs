@@ -122,6 +122,60 @@ test('docker: running container over a unix socket', async () => {
   assert.equal(cpuPercent({}), null);
 });
 
+test('docker: a Swarm service by name, running tasks against its replicas, as in homepage', async () => {
+  const socketPath = path.join(tmpDir('hd-sock-'), 'd.sock');
+  const services = {
+    web: { ID: 'svc-web', Spec: { Name: 'web', Mode: { Replicated: { Replicas: 3 } } } },
+    api: { ID: 'svc-api', Spec: { Name: 'api', Mode: { Replicated: { Replicas: 2 } } } },
+    agent: { ID: 'svc-agent', Spec: { Name: 'agent', Mode: { Global: {} } } },
+    off: { ID: 'svc-off', Spec: { Name: 'off', Mode: { Replicated: { Replicas: 0 } } } },
+  };
+  const task = (id, state = 'running') => ({ Status: { State: state, ContainerStatus: { ContainerID: id } } });
+  const tasks = { 'svc-web': [task('c1'), task('c2')], 'svc-api': [task('remote1'), task('remote2')], 'svc-agent': [task('remote3')], 'svc-off': [] };
+  const asked = [];
+  const srv = await serve((req, res) => {
+    const url = new URL(req.url, 'http://x');
+    asked.push(url.pathname);
+    res.setHeader('content-type', 'application/json');
+    const service = url.pathname.match(/^\/services\/(\w+)$/)?.[1];
+    if (service && services[service]) return res.end(JSON.stringify(services[service]));
+    if (url.pathname === '/tasks') {
+      const f = JSON.parse(url.searchParams.get('filters'));
+      assert.deepEqual(f['desired-state'], ['running']);
+      return res.end(JSON.stringify([...tasks[f.service[0]], task('x', 'shutdown')]));
+    }
+    if (url.pathname === '/containers/c1/stats') {
+      return res.end(JSON.stringify({
+        cpu_stats: { cpu_usage: { total_usage: 300 }, system_cpu_usage: 2000, online_cpus: 2 },
+        precpu_stats: { cpu_usage: { total_usage: 100 }, system_cpu_usage: 1000 },
+        memory_stats: { usage: 200e6, stats: {} },
+      }));
+    }
+    res.statusCode = 404;
+    res.end('{}');
+  }, { socketPath });
+  const run = (container, swarm = true) => {
+    const signal = new AbortController().signal;
+    return docker.fetch(fakeCtx({ container, socket: socketPath, swarm }, { signal, fetch: (i, init) => widgetFetch(i, init, undefined, signal) }));
+  };
+  try {
+    const web = await run('web');
+    assert.equal(web.status, 'warn');
+    assert.equal(web.statusText, 'partial');
+    assert.deepEqual(web.blocks.map((b) => [b.label, b.value, b.status]), [['status', 'partial', 'warn'], ['replicas', '2/3', 'warn'], ['cpu', 40, undefined], ['memory', 200, undefined]]);
+    const api = await run('api');
+    assert.deepEqual([api.status, api.statusText, api.blocks.map((b) => b.value)], ['up', 'running', ['running', '2/2']], 'no stats from tasks on other nodes');
+    assert.deepEqual([(await run('agent')).status, (await run('agent')).blocks[1].value], ['up', 1], 'a global service counts its tasks');
+    assert.equal((await run('off')).status, 'down');
+    assert.equal((await run('nope')).statusText, 'not found');
+    asked.length = 0;
+    assert.equal((await run('web', false)).statusText, 'not found', 'without swarm only containers');
+    assert.deepEqual(asked, ['/containers/web/json']);
+  } finally {
+    await srv.close();
+  }
+});
+
 test('resources: memory and disk now, CPU from the second call on', async () => {
   const ctx = fakeCtx({ cpu: true, memory: true, disk: ['/'] });
   const first = await resources.fetch(ctx);

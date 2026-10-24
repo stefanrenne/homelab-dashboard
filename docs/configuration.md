@@ -385,6 +385,7 @@ remote:
 | `protocol` | `http` | `http` or `https` (`https` when `tls` is set) |
 | `tls` | | `caFile` (the CA that signed the daemon's certificate), `certFile` and `keyFile` (the client certificate, together). Read when the config loads; their contents stay on the server |
 | `discover` | `true` | `false`: use the server for `container:` status only, without adding its containers |
+| `swarm` | `false` | `true`: a Docker Swarm manager; discovery lists its services, and `container:` also finds a service by name (see [Discovery](discovery.md#docker-swarm)) |
 
 The name is what `server:` refers to in `services.yaml`, and what config messages show.
 

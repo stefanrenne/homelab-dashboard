@@ -115,12 +115,13 @@ test('bookmarks accept homepage list form and plain maps', () => {
 
 test('docker servers and header widgets are normalized', () => {
   const cfg = loadConfig(configDir({
-    'docker.yaml': 'local:\n  socket: /var/run/docker.sock\nremote:\n  host: 10.0.0.2\n  port: 2376\nbad: {}\n',
+    'docker.yaml': 'local:\n  socket: /var/run/docker.sock\nremote:\n  host: 10.0.0.2\n  port: 2376\nbad: {}\nswarm:\n  socket: /var/run/docker.sock\n  swarm: true\n',
     'widgets.yaml': '- datetime:\n    locale: nl\n- search:\n',
   }));
   assert.deepEqual(cfg.docker, [
     { name: 'local', socket: '/var/run/docker.sock', discover: true },
     { name: 'remote', url: 'http://10.0.0.2:2376', discover: true },
+    { name: 'swarm', socket: '/var/run/docker.sock', discover: true, swarm: true },
   ]);
   assert.equal(cfg.errors.length, 1);
   assert.deepEqual(cfg.widgets.map((w) => [w.type, w.options]), [['datetime', { locale: 'nl' }], ['search', {}]]);

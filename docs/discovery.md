@@ -72,7 +72,8 @@ or `ping` when those are set.
 `homepage.widget.*`, ...) are discovered as they are, and `{{HOMEPAGE_VAR_*}}` in their
 labels is filled in from the environment. `homelab.*` labels win when a container has both.
 
-**Access.** The dashboard only calls `GET /containers/json` and `GET /containers/<name>/json|stats`.
+**Access.** The dashboard only calls `GET /containers/json` and `GET /containers/<name>/json|stats`
+(with `swarm: true` also `GET /services` and `/tasks`).
 But `:ro` on a socket does not make the Docker API read-only: whoever can reach the socket can
 start and remove containers, which amounts to root on the host. Third-party widgets run inside
 the dashboard process, so they could reach it too. The safer setup is a
@@ -81,6 +82,30 @@ the dashboard process, so they could reach it too. The safer setup is a
 
 A container started with `--user` (or Kubernetes `runAsUser`) skips the group step; give it the
 socket's group yourself then: `--group-add $(stat -c %g /var/run/docker.sock)`.
+
+### Docker Swarm
+
+Give the server `swarm: true` in docker.yaml, as in homepage. Discovery then lists the Swarm's
+services instead of containers, so put the labels on the service (`deploy.labels` in a stack
+file), not on the container. Run the dashboard on a manager node (`node.role == manager`):
+only managers can list services.
+
+```yaml
+# stack.yaml, deployed with docker stack deploy -c stack.yaml media
+services:
+  jellyfin:
+    image: jellyfin/jellyfin
+    deploy:
+      labels:
+        homelab.name: Jellyfin
+        homelab.group: Media
+        homelab.href: http://jellyfin.lan
+```
+
+A service of a stack is named `<stack>_<service>` (`media_jellyfin`); that is its `container:`
+in services.yaml too. Its status label shows the running tasks against the replicas: `running`,
+`partial` (marked) or down, and CPU and memory when a running task is on the dashboard's node.
+A container of that name still wins. With a socket proxy, also allow `SERVICES=1` and `TASKS=1`.
 
 ## Kubernetes
 

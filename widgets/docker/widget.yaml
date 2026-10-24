@@ -8,6 +8,7 @@ options:
   container: { type: string, required: true }
   socket: { type: string }   # default /var/run/docker.sock
   url: { type: url }         # a Docker API or docker-socket-proxy, instead of a socket
+  swarm: { type: boolean, default: false }   # also look for a Swarm service of that name (docker.yaml swarm: true)
   tlsCa: { type: string, secret: true }     # PEM text; filled in from docker.yaml tls.caFile
   tlsCert: { type: string, secret: true }   # PEM text; filled in from docker.yaml tls.certFile
   tlsKey: { type: string, secret: true }    # PEM text; filled in from docker.yaml tls.keyFile

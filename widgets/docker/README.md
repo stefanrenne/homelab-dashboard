@@ -11,9 +11,13 @@ A Docker daemon over TLS (port 2376) is set up in `docker.yaml` with `tls: { caF
 keyFile }` (see [Configuration](../../configuration.html#dockeryaml)); the dashboard fills in
 `tlsCa`, `tlsCert` and `tlsKey` for `container:` from those files.
 
+With `swarm: true` (set from docker.yaml's `swarm: true` for `container:`), a name that is no
+container is looked up as a Swarm service: its running tasks against the replicas (`replicas`),
+marked when only some run.
+
 ## Fields
 
-`status`, `cpu`, `memory`
+`status`, `replicas`, `cpu`, `memory`
 
 ## Example
 

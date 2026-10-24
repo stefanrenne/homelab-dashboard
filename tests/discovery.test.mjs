@@ -80,6 +80,27 @@ test('docker: discovery over TLS with a client certificate (dockerd --tlsverify)
   }
 });
 
+test('docker: a Swarm lists its services, with their (deploy) labels, as in homepage', async () => {
+  const socketPath = path.join(tmpDir('hd-sock-'), 'd.sock');
+  const srv = await serve((req, res) => {
+    assert.equal(req.url, '/services');
+    res.end(JSON.stringify([
+      { ID: 'a', Spec: { Name: 'media_jellyfin', Labels: { 'homepage.group': 'Media', 'homepage.name': 'Jellyfin', 'homepage.href': 'http://jellyfin.lan', 'com.docker.stack.namespace': 'media' } } },
+      { ID: 'b', Spec: { Name: 'media_worker', Labels: { 'com.docker.stack.namespace': 'media' } } },
+      { ID: 'c', Spec: { Name: 'tools_grafana', Labels: { 'homelab.name': 'Grafana' } } },
+    ]));
+  }, { socketPath });
+  try {
+    const services = await discoverDocker({ name: 'swarm', socket: socketPath, swarm: true });
+    assert.deepEqual(services.map((s) => [s.group, s.name, s.def.container, s.def.server]), [
+      ['Media', 'Jellyfin', 'media_jellyfin', 'swarm'],
+      ['Docker', 'Grafana', 'tools_grafana', 'swarm'],
+    ]);
+  } finally {
+    await srv.close();
+  }
+});
+
 test('docker: a mounted socket is the server "local" only when docker.yaml has none', () => {
   const yes = () => true;
   const no = () => false;

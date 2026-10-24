@@ -71,6 +71,9 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   homepage, for discovery and `container:` status. Widget API: `ctx.fetch(url, { tls: { ca,
   cert, key } })`.
 - `weight` for services in services.yaml, as in homepage.
+- Docker Swarm: `swarm: true` for a server in docker.yaml, as in homepage. Discovery lists the
+  services (labels from `deploy.labels`), and `container:` shows a service's running tasks
+  against its replicas.
 
 ### Changed
 - Services in a group are ordered by weight, as in homepage: a services.yaml service weighs

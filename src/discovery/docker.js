@@ -67,8 +67,17 @@ export function servicesFromContainers(containers, server) {
   return out;
 }
 
+/**
+ * A Swarm's services (`docker service ls`) in the shape of containers: the service labels
+ * (compose `deploy.labels`) and the service name, as in homepage.
+ */
+export function containersFromSwarmServices(services) {
+  return services.map((s) => ({ Labels: s.Spec?.Labels ?? {}, Names: [s.Spec?.Name ?? ''] }));
+}
+
 export async function discoverDocker(server) {
   // Docker's label filter is AND-only, so both prefixes are matched here instead.
+  if (server.swarm) return servicesFromContainers(containersFromSwarmServices(await dockerGet(server, '/services')), server);
   const containers = await dockerGet(server, '/containers/json?all=1');
   return servicesFromContainers(containers, server);
 }

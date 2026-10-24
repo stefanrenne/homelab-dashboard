@@ -423,8 +423,13 @@ Make the token under **Datacenter > Permissions > API Tokens** and give it the r
 ## kubernetes.yaml
 
 ```yaml
-mode: cluster   # or disabled (default)
+mode: cluster              # in the cluster (its service account); default: a kubeconfig; disabled (when unset)
+kubeconfig: kube/config    # mode: default only; relative to the config folder. Else $KUBECONFIG or ~/.kube/config
+context: home              # mode: default only; else the kubeconfig's current context
 ```
+
+See [Discovery](discovery.md#kubernetes). The built-in `kubernetes` widget uses the same
+connection.
 
 ## Built-in widgets
 

@@ -1,11 +1,14 @@
 # Kubernetes
 
-CPU and memory of the Kubernetes cluster the dashboard runs in: the cluster as a whole, and a line
+CPU and memory of a Kubernetes cluster (the one the dashboard runs in, or with `mode: default` in
+kubernetes.yaml the one in its kubeconfig): the cluster as a whole, and a line
 per node (a node that is not Ready is marked). Capacity is the nodes' allocatable CPU and memory;
 usage comes from [metrics-server](https://github.com/kubernetes-sigs/metrics-server), so install
 that first (without it the usage shows as –).
 
-The dashboard uses its pod's service account. Give it read access to nodes and their metrics:
+The dashboard uses its pod's service account, or with `mode: default` the kubeconfig's user
+(see [Discovery](../../discovery.html#kubernetes)); the dashboard then fills in `url`, `token`
+and the certificates itself. Give that account read access to nodes and their metrics:
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1

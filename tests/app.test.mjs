@@ -148,6 +148,35 @@ test('proxmoxNode and proxmoxVMID: a status from proxmox.yaml per node, its secr
   }
 });
 
+test('kubernetes.yaml mode: default: the kubernetes widget reads the cluster through the kubeconfig', async () => {
+  const pem = (f) => fs.readFileSync(path.resolve('tests/fixtures/tls', f), 'utf8');
+  const b64 = (f) => Buffer.from(pem(f)).toString('base64');
+  const api = await serve((req, res) => {
+    assert.equal(req.headers.authorization, 'Bearer kube-token-value');
+    if (req.url === '/api/v1/nodes') return res.end(JSON.stringify({ items: [{ metadata: { name: 'n1' }, status: { allocatable: { cpu: '4', memory: '8Gi' }, conditions: [{ type: 'Ready', status: 'True' }] } }] }));
+    res.end(JSON.stringify({ items: [{ metadata: { name: 'n1' }, usage: { cpu: '1', memory: '2Gi' } }] }));
+  });
+  const t = await startApp({
+    'kube/config': `current-context: c
+clusters: [{ name: c, cluster: { server: "${api.url}", certificate-authority-data: ${b64('ca.crt')} } }]
+users: [{ name: u, user: { token: kube-token-value } }]
+contexts: [{ name: c, context: { cluster: c, user: u } }]
+`,
+    'kubernetes.yaml': 'mode: default\nkubeconfig: kube/config\n',
+    'widgets.yaml': '- kubernetes:\n    nodes: { show: false }\n',
+  });
+  try {
+    const layout = await (await t.get('/api/layout')).text();
+    assert.ok(!layout.includes('kube-token-value') && !layout.includes('CERTIFICATE'), 'the token and CA stay on the server');
+    const data = await t.json(`/api/widgets/${t.app.layout.header[0].instanceId}`);
+    assert.equal(data.ok, true, data.error);
+    assert.deepEqual(data.data.blocks.map((b) => b.value), [25, 25, 1, 1]);
+  } finally {
+    await t.close();
+    await api.close();
+  }
+});
+
 test('refreshInterval, fields and hide_errors belong to the dashboard, not the widget', async () => {
   const upstream = await serve((req, res) => res.end(JSON.stringify({ a: 1, b: 2, c: 3 })));
   const t = await startApp({

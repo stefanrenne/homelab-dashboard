@@ -175,6 +175,14 @@ test('proxmox.yaml: per node, or homepage\'s older flat form for every node', ()
   assert.deepEqual(svc.warnings.map((w) => w.path), ['[0].G[0].A.proxmoxType']);
 });
 
+test('kubernetes.yaml: mode default (a kubeconfig, as in homepage) with kubeconfig and context', () => {
+  const cfg = loadConfig(configDir({ 'kubernetes.yaml': 'mode: default\nkubeconfig: kube/config\ncontext: lab\n' }));
+  assert.equal(cfg.kubernetes.mode, 'default');
+  assert.ok(path.isAbsolute(cfg.kubernetes.kubeconfig) && cfg.kubernetes.kubeconfig.endsWith(path.join('kube', 'config')));
+  assert.equal(cfg.kubernetes.context, 'lab');
+  assert.match(loadConfig(configDir({ 'kubernetes.yaml': 'mode: kubeconfig\n' })).errors[0].message, /mode: default/);
+});
+
 test('parseDuration and safeJoin', () => {
   assert.equal(parseDuration('10s'), 10_000);
   assert.equal(parseDuration('500ms'), 500);

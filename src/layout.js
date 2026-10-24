@@ -7,6 +7,7 @@ import { validateOptions } from './plugins/options.js';
 import { DEFAULT_REFRESH_MS } from './plugins/loader.js';
 import { stableId, parseDuration, isPlainObject } from './util.js';
 import { DEFAULT_LEVELS } from './highlight.js';
+import { k8sConnection } from './discovery/kubeconfig.js';
 
 /**
  * Keys of a widget entry that belong to the dashboard, not to the widget (unless the
@@ -66,6 +67,29 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
   const warnings = [...config.warnings, ...extraWarnings];
   const usedTypes = new Set();
 
+  /**
+   * Widgets that take their connection from a config file, as in homepage: proxmoxvm from
+   * proxmox.yaml (by node), kubernetes from the kubeconfig of kubernetes.yaml `mode: default`.
+   * Options in the entry win; every filled-in value is a secret option or the url.
+   */
+  function withConnection(type, options, where) {
+    if (options.url) return options;
+    if (type === 'proxmoxvm' && options.node) {
+      const found = config.proxmox?.[String(options.node)] ?? config.proxmox?.[''];
+      return found ? { ...found, ...options } : options;
+    }
+    if (type === 'kubernetes' && config.kubernetes?.mode === 'default') {
+      try {
+        const c = k8sConnection(config.kubernetes);
+        const filled = { url: c.url, token: c.token, username: c.username, password: c.password, tlsCa: c.ca, tlsCert: c.cert, tlsKey: c.key, insecure: c.insecure };
+        return { ...Object.fromEntries(Object.entries(filled).filter(([, v]) => v !== undefined)), ...options };
+      } catch (err) {
+        errors.push({ file: 'kubernetes.yaml', path: 'mode', message: err.message });
+      }
+    }
+    return options;
+  }
+
   const addInstance = (id, requested, rawOptions, where) => {
     const widget = registry.get(requested);
     const type = widget?.id ?? requested; // an alias (homepage's customapi) becomes the widget's id
@@ -75,7 +99,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       instances.set(id, { type, options: {}, secretValues: [], refreshMs: DEFAULT_REFRESH_MS, errors: [`unknown widget type "${type}"`] });
       return { instanceId: id, type, options: {}, known: false };
     }
-    const { own, options: widgetOptions } = splitInstanceKeys(widget.manifest.options, rawOptions);
+    const { own, options: widgetOptions } = splitInstanceKeys(widget.manifest.options, withConnection(widget.id, rawOptions, where));
     if (own.provider !== undefined) applyProvider(widget.manifest.options, String(own.provider), widgetOptions, where, type);
     const { options, publicOptions, errors: optionErrors } = validateOptions(widget.manifest.options, widgetOptions, secrets);
     // `type: icon` options arrive as URLs, resolved like service icons (mdi-/si- with #hd-mask)
@@ -168,13 +192,6 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     return out;
   };
 
-  /** homepage's proxmoxvm widget takes node and vmid only: the rest comes from proxmox.yaml. */
-  const withProxmox = (w) => {
-    if (registry.get(w.type)?.id !== 'proxmoxvm' || w.options.url || !w.options.node) return w.options;
-    const found = config.proxmox?.[String(w.options.node)] ?? config.proxmox?.[''];
-    return found ? { ...found, ...w.options } : w.options;
-  };
-
   /** proxmox.yaml's connection for a node: its own entry, else the flat one for every node. */
   const proxmoxNode = (node, where) => {
     const found = config.proxmox?.[node] ?? config.proxmox?.[''];
@@ -222,7 +239,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
         showStats: service.showStats ?? config.settings.showStats ?? false,
         statuses: statusesFor(group, service, where),
         widgets: service.widgets.map((w, i) =>
-          addInstance(stableId('w', group.name, service.name, String(i)), w.type, withProxmox(w), {
+          addInstance(stableId('w', group.name, service.name, String(i)), w.type, w.options, {
             file: where.file,
             path: w.path ?? where.path,
           }),

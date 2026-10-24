@@ -44,3 +44,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 3: services ordered by weight within a group, as in homepage (`weight` in services.yaml too).
 - 2026-10-24: homepage parity, phase 3: Docker Swarm services and stacks (`swarm: true`; tested against a fake API, not a live swarm).
 - 2026-10-24: homepage parity, phase 3: Proxmox VM/LXC status and stats per service (`proxmox.yaml`, built-in `proxmoxvm`; tested against a fake API, not a live Proxmox).
+- 2026-10-24: homepage parity, phase 3: Kubernetes outside the cluster (`mode: default`, a kubeconfig without dependencies; tested against local API servers, not a live cluster).

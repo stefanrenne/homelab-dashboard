@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs';
 import { servicesFromContainers, discoverDocker, withMountedSocket } from '../src/discovery/docker.js';
-import { servicesFromIngresses, k8sApiUrl } from '../src/discovery/kubernetes.js';
+import { servicesFromIngresses, k8sApiUrl, discoverKubernetes } from '../src/discovery/kubernetes.js';
+import { readKubeconfig, kubeconfigPath, k8sConnection } from '../src/discovery/kubeconfig.js';
 import { Discovery, mergeDiscovered } from '../src/discovery/index.js';
 import { serviceFromLabels } from '../src/discovery/labels.js';
 import { serve, tmpDir, silentLog } from './helpers.mjs';
@@ -119,6 +120,78 @@ test('kubernetes: enabled ingresses with href derived from rules and TLS', () =>
   ]);
   assert.throws(() => k8sApiUrl({}), /not running in a Kubernetes cluster/);
   assert.equal(k8sApiUrl({ KUBERNETES_SERVICE_HOST: '10.0.0.1', KUBERNETES_SERVICE_PORT: '6443' }), 'https://10.0.0.1:6443');
+});
+
+const pemOf = (f) => fs.readFileSync(path.resolve('tests/fixtures/tls', f), 'utf8');
+const b64 = (f) => Buffer.from(pemOf(f)).toString('base64');
+
+test('kubeconfig: the current context or a named one, data and file fields, token, refusing plugins', () => {
+  const dir = tmpDir('hd-kube-');
+  fs.writeFileSync(path.join(dir, 'ca.crt'), pemOf('ca.crt'));
+  fs.writeFileSync(path.join(dir, 'token'), 'file-token\n');
+  const file = path.join(dir, 'config');
+  fs.writeFileSync(file, `
+apiVersion: v1
+kind: Config
+current-context: home
+clusters:
+  - name: home
+    cluster: { server: "https://k8s.lan:6443", certificate-authority-data: ${b64('ca.crt')} }
+  - name: lab
+    cluster: { server: "https://lab.lan:6443", certificate-authority: ca.crt }
+  - name: test
+    cluster: { server: "https://test.lan:6443", insecure-skip-tls-verify: true }
+users:
+  - name: admin
+    user: { client-certificate-data: ${b64('client.crt')}, client-key-data: ${b64('client.key')} }
+  - name: reader
+    user: { tokenFile: token }
+  - name: basic
+    user: { username: u, password: p }
+  - name: cloud
+    user: { exec: { command: aws } }
+contexts:
+  - { name: home, context: { cluster: home, user: admin } }
+  - { name: lab, context: { cluster: lab, user: reader } }
+  - { name: test, context: { cluster: test, user: basic } }
+  - { name: eks, context: { cluster: home, user: cloud } }
+`);
+  const home = readKubeconfig(file);
+  assert.deepEqual([home.url, home.ca, home.cert, home.key, home.token], ['https://k8s.lan:6443', pemOf('ca.crt'), pemOf('client.crt'), pemOf('client.key'), undefined]);
+  assert.deepEqual(readKubeconfig(file, { context: 'lab' }), { url: 'https://lab.lan:6443', ca: pemOf('ca.crt'), token: 'file-token' });
+  assert.deepEqual(readKubeconfig(file, { context: 'test' }), { url: 'https://test.lan:6443', insecure: true, username: 'u', password: 'p' });
+  assert.throws(() => readKubeconfig(file, { context: 'eks' }), /credential plugin/);
+  assert.throws(() => readKubeconfig(file, { context: 'nope' }), /context "nope" not found/);
+  assert.throws(() => readKubeconfig(path.join(dir, 'missing')), /ENOENT/);
+  assert.equal(kubeconfigPath({ env: { KUBECONFIG: `/a/one${path.delimiter}/a/two` } }), '/a/one');
+  assert.equal(kubeconfigPath({ env: {}, home: '/home/x' }), path.join('/home/x', '.kube', 'config'));
+  assert.equal(kubeconfigPath({ file: 'kube/config', configDir: '/config' }), path.resolve('/config/kube/config'));
+  assert.equal(k8sConnection({ mode: 'default', kubeconfig: file, context: 'lab' }).token, 'file-token');
+  const sa = tmpDir('hd-sa-');
+  fs.writeFileSync(path.join(sa, 'token'), 'sa-token\n');
+  assert.deepEqual(k8sConnection({ mode: 'cluster' }, { env: { KUBERNETES_SERVICE_HOST: '10.0.0.1' }, saDir: sa }), { url: 'https://10.0.0.1:443', token: 'sa-token' });
+});
+
+test('kubernetes: discovery through a kubeconfig, with a client certificate and a path prefix', async () => {
+  const https = await import('node:https');
+  const api = https.createServer({ key: pemOf('server.key'), cert: pemOf('server.crt'), ca: pemOf('ca.crt'), requestCert: true, rejectUnauthorized: true }, (req, res) => {
+    assert.equal(req.url, '/k8s/clusters/c-1/apis/networking.k8s.io/v1/ingresses');
+    res.end(JSON.stringify(ingresses));
+  });
+  await new Promise((r) => api.listen(0, '127.0.0.1', r));
+  const dir = tmpDir('hd-kube-');
+  const file = path.join(dir, 'config');
+  fs.writeFileSync(file, `current-context: c
+clusters: [{ name: c, cluster: { server: "https://localhost:${api.address().port}/k8s/clusters/c-1/", certificate-authority-data: ${b64('ca.crt')} } }]
+users: [{ name: u, user: { client-certificate-data: ${b64('client.crt')}, client-key-data: ${b64('client.key')} } }]
+contexts: [{ name: c, context: { cluster: c, user: u } }]
+`);
+  try {
+    const out = await discoverKubernetes({ config: { mode: 'default', kubeconfig: file } });
+    assert.deepEqual(out.map((s) => s.name), ['Grafana', 'wiki']);
+  } finally {
+    api.close();
+  }
 });
 
 test('kubernetes: gethomepage.dev annotations work too', () => {

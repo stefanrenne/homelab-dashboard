@@ -23,7 +23,6 @@ Generic ones built in, service-specific ones in the widgets collection.
 
 ### Phase 3: integrations (core)
 
-- [ ] Kubernetes: `kubeconfig` mode for running outside the cluster
 - [ ] Kubernetes: Traefik IngressRoute and Gateway API HTTPRoute discovery
 - [ ] Kubernetes: pod status and stats per service (`app`, `namespace`, `podSelector`)
 

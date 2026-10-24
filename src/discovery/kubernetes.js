@@ -1,25 +1,24 @@
-// Kubernetes discovery (in-cluster): Ingresses with `homelab.dev/enabled: "true"`
+// Kubernetes discovery (in the cluster or through a kubeconfig): Ingresses with `homelab.dev/enabled: "true"`
 // become services. Needs RBAC to list ingresses; see docs/discovery.md.
 
-import fs from 'node:fs';
+import http from 'node:http';
 import https from 'node:https';
 import { serviceFromLabels } from './labels.js';
+import { k8sConnection, k8sHeaders, k8sApiUrl, K8S_SA_DIR } from './kubeconfig.js';
 
-export const K8S_SA_DIR = '/var/run/secrets/kubernetes.io/serviceaccount';
+export { k8sApiUrl, K8S_SA_DIR };
 export const ANNOTATION_PREFIX = 'homelab.dev/';
 export const HOMEPAGE_PREFIX = 'gethomepage.dev/';
 
-export function k8sApiUrl(env = process.env) {
-  const host = env.KUBERNETES_SERVICE_HOST;
-  if (!host) throw new Error('not running in a Kubernetes cluster (KUBERNETES_SERVICE_HOST is not set)');
-  return `https://${host.includes(':') ? `[${host}]` : host}:${env.KUBERNETES_SERVICE_PORT ?? 443}`;
-}
-
-export function k8sGet(path, { apiUrl = k8sApiUrl(), saDir = K8S_SA_DIR, timeoutMs = 5000 } = {}) {
-  const token = fs.readFileSync(`${saDir}/token`, 'utf8').trim();
-  const ca = fs.readFileSync(`${saDir}/ca.crt`);
+/** GET on the Kubernetes API with a connection from k8sConnection(). */
+export function k8sGet(path, { connection, timeoutMs = 5000 } = {}) {
+  const conn = connection ?? k8sConnection();
+  // joined, not resolved: an API server can sit under a path (Rancher's /k8s/clusters/<id>)
+  const url = new URL(`${conn.url.replace(/\/+$/, '')}${path}`);
+  const secure = url.protocol === 'https:';
+  const tls = secure ? { ca: conn.ca, cert: conn.cert, key: conn.key, ...(conn.insecure ? { rejectUnauthorized: false } : {}) } : {};
   return new Promise((resolve, reject) => {
-    const req = https.request(new URL(path, apiUrl), { headers: { authorization: `Bearer ${token}` }, ca, timeout: timeoutMs }, (res) => {
+    const req = (secure ? https : http).request(url, { headers: { ...k8sHeaders(conn), accept: 'application/json' }, timeout: timeoutMs, ...tls }, (res) => {
       const chunks = [];
       res.on('data', (c) => chunks.push(c));
       res.on('end', () => {
@@ -60,6 +59,8 @@ export function servicesFromIngresses(list, instanceName = null) {
   return out;
 }
 
+/** opts: { config (kubernetes.yaml), instanceName, connection (tests) }. */
 export async function discoverKubernetes(opts = {}) {
-  return servicesFromIngresses(await k8sGet('/apis/networking.k8s.io/v1/ingresses', opts), opts.instanceName);
+  const connection = opts.connection ?? k8sConnection(opts.config);
+  return servicesFromIngresses(await k8sGet('/apis/networking.k8s.io/v1/ingresses', { connection }), opts.instanceName);
 }

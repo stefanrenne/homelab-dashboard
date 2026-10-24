@@ -75,7 +75,7 @@ export function loadConfig(dir, opts = {}) {
     widgets: normalizeHeaderWidgets(raw.widgets, ctx),
     bookmarks: normalizeBookmarks(raw.bookmarks, ctx),
     docker: normalizeDocker(raw.docker, ctx, dir),
-    kubernetes: normalizeKubernetes(raw.kubernetes, ctx),
+    kubernetes: normalizeKubernetes(raw.kubernetes, ctx, dir),
     proxmox: normalizeProxmox(raw.proxmox, ctx),
     errors,
     warnings,
@@ -481,12 +481,16 @@ export function normalizeProxmox(raw, ctx) {
   return out;
 }
 
-export function normalizeKubernetes(raw, ctx) {
+export function normalizeKubernetes(raw, ctx, configDir = '.') {
   const file = 'kubernetes.yaml';
   if (raw === undefined || raw === null) return { mode: 'disabled' };
-  if (!isPlainObject(raw) || !['disabled', 'cluster'].includes(raw.mode ?? 'disabled')) {
-    ctx.error(file, 'mode', 'expected "mode: cluster" or "mode: disabled"');
+  // default: a kubeconfig, as in homepage ($KUBECONFIG, ~/.kube/config, or `kubeconfig:`)
+  if (!isPlainObject(raw) || !['disabled', 'cluster', 'default'].includes(raw.mode ?? 'disabled')) {
+    ctx.error(file, 'mode', 'expected "mode: cluster" (in the cluster), "mode: default" (a kubeconfig) or "mode: disabled"');
     return { mode: 'disabled' };
   }
-  return { mode: raw.mode ?? 'disabled' };
+  const out = { mode: raw.mode ?? 'disabled' };
+  if (raw.kubeconfig) out.kubeconfig = path.resolve(configDir, String(raw.kubeconfig));
+  if (raw.context) out.context = String(raw.context);
+  return out;
 }

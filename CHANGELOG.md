@@ -76,6 +76,9 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   against its replicas.
 - Proxmox: `proxmoxNode`, `proxmoxVMID` and `proxmoxType` on a service with `proxmox.yaml`, as in
   homepage: the VM's or container's state, CPU and memory. Also as homepage's `proxmoxvm` widget.
+- Kubernetes outside the cluster: `mode: default` in kubernetes.yaml reads a kubeconfig, as in
+  homepage (`kubeconfig:`, `$KUBECONFIG` or `~/.kube/config`; a token, client certificate or
+  password, no credential plugins), for discovery and the kubernetes widget.
 
 ### Changed
 - Services in a group are ordered by weight, as in homepage: a services.yaml service weighs

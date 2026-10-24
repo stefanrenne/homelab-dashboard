@@ -1,6 +1,7 @@
-// CPU and memory of the cluster the dashboard runs in: capacity from /api/v1/nodes (allocatable),
-// usage from the metrics API (metrics.k8s.io, from metrics-server). Uses the pod's service
-// account, like discovery; RBAC needs get/list on nodes and nodes.metrics.k8s.io.
+// CPU and memory of a cluster: capacity from /api/v1/nodes (allocatable), usage from the
+// metrics API (metrics.k8s.io, from metrics-server). Uses the pod's service account, like
+// discovery, or the connection in the options (kubernetes.yaml mode: default fills them in from
+// a kubeconfig); RBAC needs get/list on nodes and nodes.metrics.k8s.io.
 import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
@@ -53,15 +54,30 @@ export function bytes(q) {
   return Number(m[1]) * (m[2]?.endsWith('i') ? 1024 : 1000) ** exp;
 }
 
+/** GET through ctx.fetch with a connection in the options (a kubeconfig, filled in by the dashboard). */
+async function getWith(ctx, path) {
+  const { token, username, password, tlsCa, tlsCert, tlsKey, insecure } = ctx.options;
+  const authorization = token ? `Bearer ${token}` : username ? `Basic ${Buffer.from(`${username}:${password ?? ''}`).toString('base64')}` : null;
+  // joined, not resolved: an API server can sit under a path (Rancher's /k8s/clusters/<id>)
+  const res = await ctx.fetch(`${ctx.options.url.replace(/\/+$/, '')}${path}`, {
+    headers: { accept: 'application/json', ...(authorization ? { authorization } : {}) },
+    ...(tlsCa || tlsCert ? { tls: { ca: tlsCa, cert: tlsCert, key: tlsKey } } : {}),
+    insecure,
+  });
+  if (!res.ok) throw new Error(`Kubernetes API ${path} answered ${res.status}`);
+  return res.json();
+}
+
 const pct = (used, total) => (total > 0 ? Math.round((1000 * used) / total) / 10 : null);
 
 export default {
   async fetch(ctx) {
     const cluster = { show: true, cpu: true, memory: true, showLabel: true, label: 'cluster', ...(ctx.options.cluster ?? {}) };
     const nodeOpts = { show: true, cpu: true, memory: true, showLabel: true, ...(ctx.options.nodes ?? {}) };
+    const load = (path) => (ctx.options.url ? getWith(ctx, path) : get(path, ctx.signal));
     const [nodeList, metricList] = await Promise.all([
-      get('/api/v1/nodes', ctx.signal),
-      get('/apis/metrics.k8s.io/v1beta1/nodes', ctx.signal).catch((err) => {
+      load('/api/v1/nodes'),
+      load('/apis/metrics.k8s.io/v1beta1/nodes').catch((err) => {
         ctx.log.warn(`kubernetes metrics: ${err.message} (is metrics-server installed?)`);
         return { items: [] };
       }),

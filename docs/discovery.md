@@ -109,8 +109,25 @@ A container of that name still wins. With a socket proxy, also allow `SERVICES=1
 
 ## Kubernetes
 
-`kubernetes.yaml`: `mode: cluster`. The dashboard then uses its service account to list Ingresses
-in all namespaces. The image starts as root and drops to `node` itself; with
+`kubernetes.yaml`: `mode: cluster` in the cluster, or `mode: default` outside it (as in homepage).
+With `mode: cluster` the dashboard uses its service account to list Ingresses in all namespaces;
+with `mode: default` it reads a kubeconfig instead: `kubeconfig:` (a path relative to the config
+folder), else `$KUBECONFIG`, else `~/.kube/config`, with its current context or `context:`.
+
+```yaml
+# kubernetes.yaml, the dashboard in Docker next to a cluster
+mode: default
+kubeconfig: kube/config   # /config/kube/config in the container
+context: home             # optional: another context than the current one
+```
+
+A kubeconfig may hold a token (`token`, `tokenFile`), a client certificate (`client-certificate`
+/ `client-key`, or their `-data` forms) or a user name and password. Credential plugins (`exec`,
+as for EKS, GKE and AKS) are not run: make a service account token for the dashboard instead
+(`kubectl create token homelab-dashboard --duration=8760h`) and put it in the kubeconfig. Give
+that account the RBAC below.
+
+In the cluster: The image starts as root and drops to `node` itself; with
 `runAsNonRoot: true` in the pod's security context, also set `runAsUser: 1000`. RBAC:
 
 ```yaml

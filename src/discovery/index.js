@@ -29,7 +29,7 @@ export class Discovery {
   }
 
   #enabled() {
-    return this.config.docker.some((s) => s.discover) || this.config.kubernetes.mode === 'cluster';
+    return this.config.docker.some((s) => s.discover) || ['cluster', 'default'].includes(this.config.kubernetes.mode);
   }
 
   async poll() {
@@ -43,9 +43,9 @@ export class Discovery {
         errors.push({ file: 'docker.yaml', path: server.implicit ? `${server.name} (the mounted ${server.socket})` : server.name, message: `discovery: ${err.message}` });
       }
     }
-    if (this.config.kubernetes.mode === 'cluster') {
+    if (['cluster', 'default'].includes(this.config.kubernetes.mode)) {
       try {
-        found.push(...(await this.sources.kubernetes({ instanceName: this.config.settings?.instanceName ?? null })).map((s) => ({ ...s, origin: 'kubernetes' })));
+        found.push(...(await this.sources.kubernetes({ config: this.config.kubernetes, instanceName: this.config.settings?.instanceName ?? null })).map((s) => ({ ...s, origin: 'kubernetes' })));
       } catch (err) {
         errors.push({ file: 'kubernetes.yaml', path: 'mode', message: `discovery: ${err.message}` });
       }

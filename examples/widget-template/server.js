@@ -14,18 +14,21 @@ export default {
   async fetch(ctx) {
     const headers = ctx.options.key ? { authorization: `Bearer ${ctx.options.key}` } : {};
     const res = await ctx.fetch('stats.json', { headers });
-    if (!res.ok) throw new Error(`the API answered ${res.status}`); // shown on the card
+    // "answered <status>" is turned into advice on the card (check the key, the URL, ...)
+    if (!res.ok) throw new Error(`the API answered ${res.status}`);
 
     const json = await res.json();
     const value = Number(json[ctx.options.field]);
+    if (!Number.isFinite(value)) throw new Error(`no number in field "${ctx.options.field}"`);
     const previous = ctx.cache.get('previous');
     ctx.cache.set('previous', value);
 
     return {
-      // `blocks` is enough for the standard look; client.js below is optional.
+      // `blocks` is enough for the standard look; client.js is optional.
+      // Labels are keys in i18n.json; `key` lets users pick blocks with `fields:`.
       blocks: [
-        { label: 'value', value },
-        { label: 'change', value: previous === undefined ? null : value - previous },
+        { key: 'value', label: 'value', value },
+        { key: 'change', label: 'change', value: previous === undefined ? null : value - previous },
       ],
       // Anything else is free-form data for client.js.
       value,

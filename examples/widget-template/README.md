@@ -1,7 +1,8 @@
 # Example counter (widget template)
 
 A starting point for your own homelab-dashboard widget. Copy this folder into its own
-repository, change `id`, `name` and the code, and publish it.
+repository, change `id`, `name` and the code, and publish it. The same widget as a complete
+repository, with tests and a release workflow: [homelab-dashboard-widget-example](https://github.com/stefanrenne/homelab-dashboard-widget-example).
 
 ## Use it
 

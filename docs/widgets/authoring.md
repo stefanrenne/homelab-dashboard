@@ -4,7 +4,10 @@ A widget is a folder that you keep in your own repository. The dashboard never n
 
 ## 1. Start from the template
 
-Copy [`examples/widget-template`](../../examples/widget-template) into a new repository and rename:
+Start from [homelab-dashboard-widget-example](https://github.com/stefanrenne/homelab-dashboard-widget-example) (**Use this template** on GitHub): the
+same widget as [`examples/widget-template`](../../examples/widget-template), set up as a
+repository with tests that run without the dashboard and CI that releases a version tag, so
+users can install it with `#latest`. Then rename:
 
 - `id`, `name` and `version` in `widget.yaml`
 - `hd-example-counter` in `client.js` → `hd-<your id>`

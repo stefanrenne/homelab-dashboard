@@ -22,7 +22,7 @@ pulled in through `plugins:` in `settings.yaml`. A single Docker container, Node
 | `src/layout.js` | Widget instances (server side) and the layout JSON (browser side). |
 | `public/index.html` | The dashboard. A single file, vanilla JS, no build step. |
 | `widgets/` | Built-in widgets. Same contract as external ones (hard rule 3). |
-| `examples/widget-template/` | Copy-and-go template for widget authors; covered by tests. |
+| `examples/widget-template/` | Copy-and-go template for widget authors; covered by tests. Its repository form is `../homelab-dashboard-widget-example` ([GitHub](https://github.com/stefanrenne/homelab-dashboard-widget-example)); keep the two in step. |
 | `config.example/` | Example config: the default for an empty `/config` and for `npm run dev`. |
 | `deploy/` | Your own installations (config, compose file, preview scripts). Ignored by git; never referenced from the rest of the codebase. |
 | `tests/` | `node:test` for everything, jsdom for the frontend, fixtures in `tests/fixtures/`. |

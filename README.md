@@ -69,8 +69,8 @@ plugins:
 ```
 
 Writing one takes a manifest and one function. Start from
-[examples/widget-template](examples/widget-template) and read
-[docs/widgets/authoring.md](docs/widgets/authoring.md).
+[homelab-dashboard-widget-example](https://github.com/stefanrenne/homelab-dashboard-widget-example), a complete widget repository with tests and a
+release workflow, and read [docs/widgets/authoring.md](docs/widgets/authoring.md).
 
 ## Documentation
 

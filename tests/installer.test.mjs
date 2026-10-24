@@ -196,10 +196,10 @@ test('the widget template works end to end through the runtime', async () => {
     const rt = new WidgetRuntime({ registry: new Map([[widget.id, widget]]), log: silentLog, now: () => now });
     rt.setInstances(new Map([['i', { type: widget.id, options, secretValues: ['k3y'], refreshMs: widget.manifest.refreshMs }]]));
     const first = await rt.get('i');
-    assert.deepEqual(first.data.blocks, [{ label: 'value', value: 10 }, { label: 'change', value: null }]);
+    assert.deepEqual(first.data.blocks, [{ key: 'value', label: 'value', value: 10 }, { key: 'change', label: 'change', value: null }]);
     now += 60_000;
     const second = await rt.get('i');
-    assert.deepEqual(second.data.blocks, [{ label: 'value', value: 11 }, { label: 'change', value: 1 }]);
+    assert.deepEqual(second.data.blocks, [{ key: 'value', label: 'value', value: 11 }, { key: 'change', label: 'change', value: 1 }]);
   } finally {
     await srv.close();
   }

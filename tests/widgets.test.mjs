@@ -106,8 +106,13 @@ test('resources: memory and disk now, CPU from the second call on', async () => 
   const first = await resources.fetch(ctx);
   assert.deepEqual(first.blocks.map((b) => b.label), ['cpu', 'memory', 'disk']);
   assert.equal(first.blocks[0].value, null);
-  for (let i = 0; i < 2e6; i++); // let some CPU time pass
-  const second = await resources.fetch(ctx);
+  // CPU counters tick in ~10 ms steps; keep sampling until they have moved.
+  let second;
+  for (let tries = 0; tries < 50; tries++) {
+    await new Promise((r) => setTimeout(r, 20));
+    second = await resources.fetch(ctx);
+    if (second.blocks[0].value !== null) break;
+  }
   assert.equal(typeof second.blocks[0].value, 'number');
   assert.ok(second.blocks[2].value >= 0 && second.blocks[2].value <= 100);
 });
@@ -124,4 +129,48 @@ test('client-only widgets ship a client.js that defines hd-<id>', () => {
     const src = fs.readFileSync(path.resolve('widgets', id, 'client.js'), 'utf8');
     assert.match(src, new RegExp(`customElements\\.define\\('hd-${id}'`));
   }
+});
+
+test('custom-api: homepage mapping options and list display', async () => {
+  const { mapValue } = await import('../widgets/custom-api/server.js');
+  const remap = [{ value: 'PLAYING', to: 'Playing' }, { any: true, to: 'Other' }];
+  assert.deepEqual(mapValue({ remap }, 'PLAYING'), { value: 'Playing', unit: undefined });
+  assert.deepEqual(mapValue({ remap }, 'X'), { value: 'Other', unit: undefined });
+  assert.deepEqual(mapValue({ suffix: '%' }, 24), { value: 24, unit: '%' });
+  assert.deepEqual(mapValue({ format: 'bytes' }, 1536), { value: '1.5 KB', unit: undefined });
+  assert.deepEqual(mapValue({ format: 'percent', scale: 100 }, 0.5), { value: 50, unit: '%' });
+  assert.deepEqual(mapValue({ prefix: 'v' }, '2.0.1'), { value: 'v2.0.1', unit: undefined });
+  assert.deepEqual(mapValue({}, ''), { value: null });
+
+  const srv = await serve((req, res) => res.end(JSON.stringify({ playbackState: 'STOPPED', currentTrack: { artist: '' }, volume: 24 })));
+  try {
+    const out = await customApi.fetch(fakeCtx({
+      url: srv.url, method: 'GET', display: 'list',
+      mappings: [
+        { field: 'playbackState', label: 'State', remap: [{ value: 'STOPPED', to: 'Stopped' }] },
+        { field: 'currentTrack.artist', label: 'Artist' },
+        { field: 'volume', label: 'Volume', suffix: '%' },
+      ],
+    }));
+    assert.deepEqual(out.rows, [
+      { label: 'State', value: 'Stopped' },
+      { label: 'Artist', value: '' },
+      { label: 'Volume', value: '24 %' },
+    ]);
+  } finally {
+    await srv.close();
+  }
+});
+
+test('ping: a homepage-style URL means its host', async () => {
+  const { hostOf } = await import('../widgets/ping/server.js');
+  assert.equal(hostOf('http://192.168.1.50'), '192.168.1.50');
+  assert.equal(hostOf('https://nas.lan:8443/x'), 'nas.lan');
+  assert.equal(hostOf('nas.lan'), 'nas.lan');
+});
+
+test('resources: meters with free space for the homepage look', async () => {
+  const out = await resources.fetch(fakeCtx({ cpu: false, memory: true, disk: ['/'] }));
+  assert.deepEqual(out.meters.map((m) => [m.kind, m.caption]), [['memory', 'free'], ['disk', 'free']]);
+  assert.match(out.meters[1].text, /^\d+(\.\d)? (B|KB|MB|GB|TB|PB)$/);
 });

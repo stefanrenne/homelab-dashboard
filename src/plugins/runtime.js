@@ -56,7 +56,7 @@ export class WidgetRuntime {
           Promise.resolve().then(() => widget.server.fetch(ctx)),
           new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(controller.signal.reason))),
         ]);
-        result = { ok: true, data: checkData(data ?? {}), fetchedAt: this.now() };
+        result = { ok: true, data: selectFields(checkData(data ?? {}), instance.fields), fetchedAt: this.now() };
       } catch (err) {
         const message = scrub(err?.message ?? String(err), instance.secretValues);
         this.log.warn(`widget ${instance.type} (${instanceId}): ${message}`);
@@ -133,15 +133,31 @@ export function checkData(data) {
   if (data.status !== undefined && !SERVICE_STATUSES.includes(data.status)) {
     throw new Error(`status must be one of ${SERVICE_STATUSES.join(', ')}`);
   }
+  if (data.statusText !== undefined && typeof data.statusText !== 'string') throw new Error('statusText must be text');
+  if (data.rows !== undefined) {
+    if (!Array.isArray(data.rows)) throw new Error('rows must be a list');
+    data.rows.forEach((r, i) => {
+      if (typeof r !== 'object' || r === null || typeof r.label !== 'string') throw new Error(`rows[${i}]: needs a "label"`);
+      if (r.value !== undefined && r.value !== null && !['string', 'number'].includes(typeof r.value)) throw new Error(`rows[${i}]: value must be text, a number or null`);
+      if (r.progress !== undefined && !(typeof r.progress === 'number' && r.progress >= 0 && r.progress <= 100)) throw new Error(`rows[${i}]: progress must be 0-100`);
+    });
+  }
   if (data.blocks !== undefined) {
     if (!Array.isArray(data.blocks)) throw new Error('blocks must be a list');
     data.blocks.forEach((b, i) => {
       if (typeof b !== 'object' || b === null || typeof b.label !== 'string') throw new Error(`blocks[${i}]: needs a "label"`);
       if (b.value !== null && !['string', 'number'].includes(typeof b.value)) throw new Error(`blocks[${i}]: value must be text, a number or null`);
       if (b.status !== undefined && !BLOCK_STATUSES.includes(b.status)) throw new Error(`blocks[${i}]: unknown status "${b.status}"`);
+      if (b.key !== undefined && typeof b.key !== 'string') throw new Error(`blocks[${i}]: key must be text`);
     });
   }
   return data;
+}
+
+/** Keeps only the blocks named in `fields` (by `key`, else `label`), in the widget's order. */
+export function selectFields(data, fields) {
+  if (!fields || !Array.isArray(data.blocks)) return data;
+  return { ...data, blocks: data.blocks.filter((b) => fields.includes(b.key ?? b.label)) };
 }
 
 /** Removes secret values from a message before it is logged or sent to the browser. */

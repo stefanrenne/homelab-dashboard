@@ -24,8 +24,10 @@ pulled in through `plugins:` in `settings.yaml`. A single Docker container, Node
 | `widgets/` | Built-in widgets. Same contract as external ones (hard rule 3). |
 | `examples/widget-template/` | Copy-and-go template for widget authors; covered by tests. |
 | `config.example/` | Example config: the default for an empty `/config` and for `npm run dev`. |
+| `deploy/` | Your own installations (config, compose file, preview scripts). Ignored by git; never referenced from the rest of the codebase. |
 | `tests/` | `node:test` for everything, jsdom for the frontend, fixtures in `tests/fixtures/`. |
 | `scripts/screenshots.mjs` | Recreates the README screenshots (Playwright, not in `package.json`). |
+| `../homelab-dashboard-widgets` | Separate repo: the homepage-style widgets (radarr, unraid, ...) as a collection. Not part of this codebase on purpose. |
 | `docs/` | Architecture, configuration, widgets (authoring, API reference, security), discovery, development, publishing, decisions. |
 | `todo.md` / `completed.md` | Open and finished work. Update them when you pick something up or finish it. |
 | `CHANGELOG.md` | What changed per version, for users. A user-visible change gets a line under `## [Unreleased]`. |
@@ -69,6 +71,9 @@ the image and smoke-tests it.
 10. **External code is run, never fetched implicitly.** Plugins are installed only from sources the
     user listed, are pinned through the lock file, and arguments to `git`/`npm`/`ping` are
     validated and passed without a shell.
+11. **Nothing installation-specific outside `deploy/`.** No host names, IP addresses, user names
+    or personal config in `src/`, `public/`, `widgets/`, `docs/`, tests or examples; use
+    `example.com`/`*.lan` and made-up data. `deploy/` is in `.gitignore`.
 
 ## Conventions
 
@@ -98,3 +103,8 @@ See `docs/decisions.md` for the background. In short:
 - A widget package with a `package.json` needs `"type": "module"`, otherwise Node warns and reparses.
 - `HEAD` must be answered like `GET`: status checks (including on this dashboard) use HEAD.
 - `os.freemem()` on macOS only counts free pages, so memory looks almost full in development.
+- Do not name a CSS class `row` or `column` for layout: `.row` is the widget row style.
+- Docker's `label` filter is AND-only; discovery lists all containers and matches both
+  `homelab.*` and `homepage.*` itself.
+- Values in discovered labels must go through `substitute()` too, or `{{HOMEPAGE_VAR_*}}`
+  stays literal and its value is not known as a secret.

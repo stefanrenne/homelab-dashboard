@@ -1,5 +1,6 @@
-// Docker discovery: containers with a `homelab.name` label become services.
-// Only GET calls on the Docker API (hard rule 9).
+// Docker discovery: containers with a `homelab.name` label become services. Containers
+// labelled for homepage (`homepage.name` + `homepage.group`) work too, so an existing
+// setup carries over. Only GET calls on the Docker API (hard rule 9).
 
 import http from 'node:http';
 import https from 'node:https';
@@ -7,6 +8,7 @@ import { serviceFromLabels } from './labels.js';
 
 export const DEFAULT_SOCKET = '/var/run/docker.sock';
 export const LABEL_PREFIX = 'homelab.';
+export const HOMEPAGE_PREFIX = 'homepage.';
 
 export function dockerGet(server, path, { timeoutMs = 5000 } = {}) {
   return new Promise((resolve, reject) => {
@@ -38,7 +40,13 @@ export function dockerGet(server, path, { timeoutMs = 5000 } = {}) {
 export function servicesFromContainers(containers, server) {
   const out = [];
   for (const c of containers) {
-    const svc = serviceFromLabels(c.Labels ?? {}, LABEL_PREFIX);
+    const labels = c.Labels ?? {};
+    // homepage only discovers containers that have both a name and a group.
+    const svc = labels[LABEL_PREFIX + 'name']
+      ? serviceFromLabels(labels, LABEL_PREFIX)
+      : labels[HOMEPAGE_PREFIX + 'group']
+        ? serviceFromLabels(labels, HOMEPAGE_PREFIX)
+        : null;
     if (!svc) continue;
     const container = (c.Names?.[0] ?? '').replace(/^\//, '');
     svc.group ??= 'Docker';
@@ -50,7 +58,7 @@ export function servicesFromContainers(containers, server) {
 }
 
 export async function discoverDocker(server) {
-  const filters = encodeURIComponent(JSON.stringify({ label: [`${LABEL_PREFIX}name`] }));
-  const containers = await dockerGet(server, `/containers/json?all=1&filters=${filters}`);
+  // Docker's label filter is AND-only, so both prefixes are matched here instead.
+  const containers = await dockerGet(server, '/containers/json?all=1');
   return servicesFromContainers(containers, server);
 }

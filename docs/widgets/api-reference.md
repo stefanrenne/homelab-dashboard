@@ -77,8 +77,22 @@ An object; all fields are optional.
 |---|---|
 | `status` | `up`, `down`, `warn` or `unknown`. Used when the widget is a service's status check. |
 | `latency` | Milliseconds, shown next to the status dot. |
-| `blocks` | List of `{ label, value, unit?, status? }`. `label` is a string, translated through `i18n.json` when it is a key. `value` is a string, number or `null` (shown as –). A string value is translated too when it is a key. `status` is `ok`, `warn`, `error` or `unknown` and colours the value. |
+| `statusText` | Text for the status label in the card corner instead of the latency (e.g. `healthy`). Translated when it is a key. |
+| `blocks` | List of `{ key?, label, value, unit?, status? }`. `label` is a string, translated through `i18n.json` when it is a key. `value` is a string, number or `null` (shown as –). A string value is translated too when it is a key. `status` is `ok`, `warn`, `error` or `unknown` and colours the value. `key` names the block for `fields` (default: the label). |
+| `rows` | List of `{ label, value?, progress? }`, shown below the blocks as label-left/value-right lines (a download queue, current streams, `display: list`). `progress` (0–100) fills the row's background. |
 | anything else | Free-form JSON for `client.js`. |
+
+### Keys the dashboard keeps for itself
+
+These keys in a widget entry are read by the dashboard and not passed to the widget, unless the
+widget declares an option with the same name:
+
+| Key | Meaning |
+|---|---|
+| `refreshInterval` | Refresh time of this instance in milliseconds (homepage's name). Minimum 1000. |
+| `refresh` | The same as a duration: `5s`, `1h`. |
+| `fields` | List of block keys to show, e.g. `[cpu, memoryPercent]`. The widget's order is kept. |
+| `hideErrors` / `hide_errors` | `true` hides the error box of this widget. |
 
 A thrown error (or a timeout) shows its message on the card. Secret values in it are replaced by `***`.
 
@@ -121,6 +135,6 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 
 ## Changes
 
-| API | Change |
-|---|---|
-| 1 | First version. |
+| API | Dashboard | Change |
+|---|---|---|
+| 1 | 0.1.0 | First version. |

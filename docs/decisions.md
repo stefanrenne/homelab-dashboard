@@ -2,6 +2,17 @@
 
 Why things are the way they are. Newest first.
 
+## homepage compatibility as a migration path (2026-10-23)
+The first real installation replaces a homepage. Reading `homepage.*` labels,
+`{{HOMEPAGE_VAR_*}}`, homepage's widget keys (`refreshInterval`, `fields`, `hide_errors`) and
+its look means a homepage setup moves over without relabelling containers or renaming
+secrets. The homepage-specific widgets (radarr, unraid, ...) still live outside this
+repository, in a collection, to keep the core small and to prove the plugin model.
+
+## Several status labels per service (2026-10-23)
+homepage shows a label per check (site monitor, ping, container). A single dot hid which check
+failed, so `statuses` is a list and each check is its own widget instance.
+
 ## Path checks on resolved paths (2026-10-23)
 `/widgets/<id>/assets/..%2Fserver.js` passed a "starts with assets/" check on the raw path. Every
 check is now done on the result of `safeJoin`, and a test covers the traversal.

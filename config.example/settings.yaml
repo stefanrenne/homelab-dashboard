@@ -2,7 +2,10 @@
 title: Homelab
 language: en          # en, nl, fr, de, es
 theme: auto           # auto, dark, light
-color: slate          # slate, blue, sky, emerald, green, violet, purple, rose, red, amber, orange, teal, zinc
+color: slate          # any Tailwind colour: slate, gray, zinc, neutral, stone, red, orange, amber, yellow, lime,
+                      # green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose
+showTitle: true       # false hides the title on the page (it stays the browser tab title)
+headerStyle: boxed    # boxed: header widgets in a box; clean: without
 target: _blank        # where service links open
 
 layout:

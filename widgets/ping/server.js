@@ -8,9 +8,19 @@ export function parseLatency(output) {
   return match ? Math.round(Number(match[1]) * 10) / 10 : null;
 }
 
+/** `http://192.168.1.2` (homepage style) and `nas.lan` both mean the host. */
+export function hostOf(value) {
+  try {
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(value)) return new URL(value).hostname.replace(/^\[|\]$/g, '');
+  } catch {
+    // fall through: validated below
+  }
+  return value;
+}
+
 export default {
   async fetch(ctx) {
-    const { host } = ctx.options;
+    const host = hostOf(ctx.options.host);
     if (!HOST.test(host)) throw new Error(`invalid host "${host}"`);
     const result = await new Promise((resolve) => {
       execFile('ping', ['-c', '1', host], { signal: ctx.signal, timeout: 5000 }, (err, stdout) =>

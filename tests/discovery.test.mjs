@@ -37,10 +37,14 @@ test('docker: containers with labels become services with container and server',
   assert.deepEqual(out.map((s) => [s.group, s.name, s.def.container, s.def.server]), [
     ['Media', 'Plex', 'plex', 'local'],
     ['Docker', 'Uptime Kuma', 'uptime-kuma', 'local'],
+    ['Media', 'Radarr', 'radarr', 'local'],
   ]);
+  const radarr = out[2];
+  assert.equal(radarr.def.widget.type, 'radarr');
+  assert.equal(radarr.def.widget.key, '{{HOMEPAGE_VAR_RADARR_KEY}}');
 });
 
-test('docker: discovery over a unix socket filters on the name label', async () => {
+test('docker: discovery over a unix socket', async () => {
   const socketPath = path.join(tmpDir('hd-sock-'), 'd.sock');
   let seen;
   const srv = await serve((req, res) => {
@@ -50,8 +54,8 @@ test('docker: discovery over a unix socket filters on the name label', async () 
   }, { socketPath });
   try {
     const out = await discoverDocker({ name: 'local', socket: socketPath });
-    assert.equal(out.length, 2);
-    assert.match(seen, /^\/containers\/json\?all=1&filters=\{"label":\["homelab\.name"\]\}$/);
+    assert.equal(out.length, 3);
+    assert.equal(seen, '/containers/json?all=1');
   } finally {
     await srv.close();
   }
@@ -65,6 +69,26 @@ test('kubernetes: enabled ingresses with href derived from rules and TLS', () =>
   ]);
   assert.throws(() => k8sApiUrl({}), /not running in a Kubernetes cluster/);
   assert.equal(k8sApiUrl({ KUBERNETES_SERVICE_HOST: '10.0.0.1', KUBERNETES_SERVICE_PORT: '6443' }), 'https://10.0.0.1:6443');
+});
+
+test('kubernetes: gethomepage.dev annotations work too', () => {
+  const out = servicesFromIngresses({ items: [{
+    metadata: { name: 'x', namespace: 'n', annotations: { 'gethomepage.dev/enabled': 'true', 'gethomepage.dev/name': 'X', 'gethomepage.dev/group': 'G' } },
+    spec: { rules: [{ host: 'x.lan' }] },
+  }] });
+  assert.deepEqual(out.map((s) => [s.group, s.name, s.def.href]), [['G', 'X', 'http://x.lan/']]);
+});
+
+test('Discovery substitutes variables in labels and records them as secrets', async () => {
+  const d = new Discovery({
+    log: silentLog,
+    env: { HOMEPAGE_VAR_K: 'k-123' },
+    docker: async () => [{ group: 'G', name: 'S', def: { widget: { type: 'x', key: '{{HOMEPAGE_VAR_K}}' } }, weight: 0 }],
+  });
+  await d.configure({ settings: { discovery: { interval: '1h' } }, docker: [{ name: 'l', discover: true }], kubernetes: { mode: 'disabled' } });
+  d.stop();
+  assert.equal(d.found[0].def.widget.key, 'k-123');
+  assert.deepEqual([...d.secrets], ['k-123']);
 });
 
 test('merge: YAML wins, new groups are added, weight orders discovered services', () => {

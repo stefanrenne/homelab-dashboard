@@ -6,115 +6,193 @@
 <meta name="color-scheme" content="light dark">
 <title>Homelab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap">
 <style>
+  /* Theme shades --t50 … --t950 are set from the colour palette (PALETTES below). */
   :root {
-    --hd-hue: 222;
-    --hd-bg: hsl(var(--hd-hue) 30% 7%);
-    --hd-bg2: hsl(var(--hd-hue) 30% 11%);
-    --hd-card: hsl(var(--hd-hue) 25% 13% / .85);
-    --hd-card-hover: hsl(var(--hd-hue) 25% 17% / .9);
-    --hd-border: hsl(var(--hd-hue) 20% 24%);
-    --hd-text: hsl(var(--hd-hue) 20% 92%);
-    --hd-muted: hsl(var(--hd-hue) 12% 62%);
-    --hd-accent: hsl(var(--hd-hue) 85% 66%);
-    --hd-ok: #34d399;
-    --hd-warn: #fbbf24;
-    --hd-error: #f87171;
-    --hd-radius: 12px;
+    --t50: #f8fafc; --t100: #f1f5f9; --t200: #e2e8f0; --t300: #cbd5e1; --t400: #94a3b8; --t500: #64748b;
+    --t600: #475569; --t700: #334155; --t800: #1e293b; --t900: #0f172a; --t950: #020617;
+    --hd-ok: rgb(16 185 129 / .8);
+    --hd-warn: rgb(245 158 11 / .85);
+    --hd-error: rgb(244 63 94 / .8);
+  }
+  :root[data-theme="dark"] {
     color-scheme: dark;
+    --hd-bg: var(--t800);
+    --hd-text: var(--t200);
+    --hd-muted: var(--t300);
+    --hd-heading: var(--t300);
+    --hd-card: rgb(255 255 255 / .05);
+    --hd-card-hover: rgb(255 255 255 / .1);
+    --hd-block: color-mix(in srgb, var(--t900) 20%, transparent);
+    --hd-tab: color-mix(in srgb, var(--t900) 50%, transparent);
+    --hd-border: color-mix(in srgb, var(--t200) 20%, transparent);
+    --hd-accent: var(--t400);
+    --hd-shadow: color-mix(in srgb, var(--t900) 20%, transparent);
   }
   :root[data-theme="light"] {
-    --hd-bg: hsl(var(--hd-hue) 30% 96%);
-    --hd-bg2: hsl(var(--hd-hue) 35% 90%);
-    --hd-card: hsl(0 0% 100% / .9);
-    --hd-card-hover: hsl(0 0% 100%);
-    --hd-border: hsl(var(--hd-hue) 20% 84%);
-    --hd-text: hsl(var(--hd-hue) 30% 14%);
-    --hd-muted: hsl(var(--hd-hue) 10% 42%);
-    --hd-accent: hsl(var(--hd-hue) 75% 45%);
-    --hd-ok: #059669;
-    --hd-warn: #b45309;
-    --hd-error: #dc2626;
     color-scheme: light;
+    --hd-bg: var(--t50);
+    --hd-text: var(--t700);
+    --hd-muted: var(--t500);
+    --hd-heading: var(--t800);
+    --hd-card: color-mix(in srgb, var(--t100) 20%, transparent);
+    --hd-card-hover: color-mix(in srgb, var(--t300) 20%, transparent);
+    --hd-block: color-mix(in srgb, var(--t200) 50%, transparent);
+    --hd-tab: color-mix(in srgb, var(--t500) 10%, transparent);
+    --hd-border: color-mix(in srgb, var(--t800) 20%, transparent);
+    --hd-accent: var(--t600);
+    --hd-shadow: color-mix(in srgb, var(--t900) 10%, transparent);
+    --hd-ok: rgb(5 150 105);
+    --hd-warn: rgb(180 83 9);
+    --hd-error: rgb(225 29 72);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
     min-height: 100vh;
-    font: 15px/1.45 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font: 500 16px/1.5 Manrope, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    letter-spacing: .1px;
     color: var(--hd-text);
-    background: radial-gradient(1200px 600px at 10% -10%, var(--hd-bg2), transparent), var(--hd-bg);
+    background-color: var(--hd-bg);
     background-attachment: fixed;
     background-size: cover;
+    background-position: center;
   }
-  .wrap { max-width: 1400px; margin: 0 auto; padding: 24px 16px 48px; }
-  header { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; margin-bottom: 28px; }
-  header h1 { font-size: 1.5rem; margin: 0; font-weight: 700; letter-spacing: -.01em; }
-  .header-widgets { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; flex: 1; justify-content: flex-end; }
-  .header-widgets > * { min-width: 120px; }
-  .header-widgets .hw-search { flex: 1; max-width: 420px; }
-  .header-widgets .hw-resources { min-width: min(100%, 300px); }
-  .messages { margin-bottom: 24px; display: grid; gap: 8px; }
-  .msg { border: 1px solid var(--hd-border); border-left: 4px solid var(--hd-error); background: var(--hd-card); border-radius: 8px; padding: 10px 14px; }
-  .msg.warn { border-left-color: var(--hd-warn); }
-  .msg summary { cursor: pointer; font-weight: 600; }
+  button { font: inherit; color: inherit; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 20px 20px 24px; }
+  @media (min-width: 640px) { .wrap { padding: 36px 36px 24px; } }
+  .shadow { box-shadow: 0 4px 6px -1px var(--hd-shadow), 0 2px 4px -2px var(--hd-shadow); }
+
+  /* header */
+  h1.title { font-size: 1.5rem; font-weight: 600; margin: 0 0 16px; color: var(--hd-heading); }
+  header.info { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+  header.info.boxed { background: var(--hd-card); border-radius: 6px; padding: 12px; }
+  header.info:empty { display: none; }
+  .hw { flex: none; }
+  .hw-search { flex: 1 1 260px; }
+  .hw-datetime { flex: none; }
+
+  .messages { margin-top: 16px; display: grid; gap: 8px; }
+  .msg { border-radius: 6px; padding: 10px 14px; font-size: 13px; background: color-mix(in srgb, var(--hd-error) 25%, var(--hd-card)); }
+  .msg.warn { background: color-mix(in srgb, var(--hd-warn) 18%, var(--hd-card)); }
+  .msg summary { cursor: pointer; font-weight: 700; }
   .msg ul { margin: 8px 0 0; padding-left: 18px; }
-  .msg code { font-size: .85em; color: var(--hd-muted); }
-  .groups { display: grid; gap: 28px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
-  .group.wide { grid-column: 1 / -1; }
-  .group h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--hd-muted); margin: 0 0 10px; font-weight: 600; }
-  .cards { display: grid; gap: 10px; grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr)); }
-  @media (max-width: 700px) { .cards { grid-template-columns: 1fr; } }
-  .card {
-    background: var(--hd-card); border: 1px solid var(--hd-border); border-radius: var(--hd-radius);
-    padding: 12px 14px; backdrop-filter: blur(6px); transition: background .15s, border-color .15s;
-  }
-  .card:hover { background: var(--hd-card-hover); border-color: color-mix(in srgb, var(--hd-accent) 40%, var(--hd-border)); }
-  .card-head { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; min-width: 0; }
-  .icon { width: 36px; height: 36px; flex: none; border-radius: 8px; display: grid; place-items: center; overflow: hidden; }
-  .icon img { width: 100%; height: 100%; object-fit: contain; }
-  .icon.letter { background: color-mix(in srgb, var(--hd-accent) 20%, transparent); color: var(--hd-accent); font-weight: 700; }
-  .title { min-width: 0; flex: 1; }
-  .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .desc { color: var(--hd-muted); font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .status { display: inline-flex; align-items: center; gap: 6px; font-size: .75rem; color: var(--hd-muted); flex: none; }
-  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--hd-muted); }
-  .dot.up { background: var(--hd-ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hd-ok) 20%, transparent); }
-  .dot.down { background: var(--hd-error); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hd-error) 20%, transparent); }
-  .dot.warn { background: var(--hd-warn); }
-  .widget { margin-top: 10px; }
-  .blocks { display: grid; gap: 6px; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); }
-  .block { background: color-mix(in srgb, var(--hd-text) 5%, transparent); border-radius: 8px; padding: 6px 8px; text-align: center; min-width: 0; }
-  .block .v { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .block .l { font-size: .72rem; color: var(--hd-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .msg code { font-size: .9em; opacity: .8; }
+
+  /* groups */
+  .groups { display: flex; flex-wrap: wrap; margin: 16px -4px 0; }
+  .group { flex: 1 1 100%; padding: 4px; min-width: 0; }
+  .group.layout-column { flex-basis: 100%; }
+  @media (min-width: 768px) { .group.layout-column { flex-basis: 50%; } }
+  @media (min-width: 1024px) { .group.layout-column { flex-basis: 33.333%; } }
+  @media (min-width: 1280px) { .group.layout-column { flex-basis: 25%; } }
+  .group h2 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 500; color: var(--hd-heading); }
+  .group h2 + .cards { margin-top: 12px; }
+  .cards { display: grid; column-gap: 8px; grid-template-columns: 1fr; align-items: start; }
+  @media (min-width: 768px) { .group.layout-row .cards { grid-template-columns: repeat(min(2, var(--cols)), minmax(0, 1fr)); } }
+  @media (min-width: 1024px) { .group.layout-row .cards { grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); } }
+
+  /* service card */
+  .card { position: relative; margin-bottom: 8px; padding: 4px; border-radius: 6px; background: var(--hd-card); transition: background .15s; min-width: 0; }
+  .card:hover { background: var(--hd-card-hover); }
+  .card-head { display: flex; align-items: center; color: inherit; text-decoration: none; min-width: 0; cursor: default; }
+  a.card-head { cursor: pointer; }
+  .icon { width: 48px; height: 52px; flex: none; display: grid; place-items: center; }
+  .icon img { width: 32px; height: 32px; object-fit: contain; }
+  .icon.letter span { width: 32px; height: 32px; border-radius: 6px; display: grid; place-items: center; font-weight: 700; font-size: 14px;
+    background: color-mix(in srgb, var(--hd-text) 12%, transparent); }
+  .names { flex: 1; min-width: 0; padding: 8px; font-size: 14px; line-height: 20px; }
+  .card-head.no-icon .names { padding-left: 8px; }
+  .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .desc { font-size: 12px; line-height: 16px; font-weight: 300; color: var(--hd-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tags { position: absolute; top: 0; right: 0; margin-right: 8px; display: flex; gap: 8px; z-index: 1; }
+  .tag { padding: 2px 6px; border-radius: 0 0 3px 3px; background: var(--hd-tab); font-size: 8px; line-height: 12px; font-weight: 700; text-transform: uppercase;
+    color: var(--hd-muted); border: 0; cursor: default; min-width: 24px; text-align: center; }
+  button.tag { cursor: pointer; }
+  .tag.up { color: var(--hd-ok); }
+  .tag.down { color: var(--hd-error); }
+  .tag.warn { color: var(--hd-warn); }
+
+  /* widget content */
+  .widget:empty { display: none; }
+  .blocks { display: flex; flex-wrap: wrap; }
+  .block { flex: 1 1 0; min-width: 64px; margin: 4px; padding: 4px; border-radius: 4px; background: var(--hd-block);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 44px; }
+  .block .v { font-size: 14px; line-height: 20px; font-weight: 200; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; font-variant-numeric: tabular-nums; }
+  .block .l { font-size: 12px; line-height: 16px; font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .block.ok .v { color: var(--hd-ok); }
   .block.warn .v { color: var(--hd-warn); }
   .block.error .v { color: var(--hd-error); }
-  .widget-error { font-size: .8rem; color: var(--hd-error); background: color-mix(in srgb, var(--hd-error) 10%, transparent); border-radius: 8px; padding: 6px 8px; overflow-wrap: anywhere; }
-  .badge { font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; color: var(--hd-muted); border: 1px solid var(--hd-border); border-radius: 4px; padding: 0 4px; margin-left: 6px; vertical-align: middle; }
-  .bookmarks { margin-top: 36px; display: grid; gap: 24px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
-  .bm-list { display: grid; gap: 6px; }
-  .bm { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; color: inherit; text-decoration: none; background: var(--hd-card); border: 1px solid var(--hd-border); }
-  .bm:hover { border-color: var(--hd-accent); }
-  .bm .icon { width: 24px; height: 24px; font-size: .7rem; border-radius: 6px; }
-  .empty { text-align: center; color: var(--hd-muted); padding: 64px 16px; border: 1px dashed var(--hd-border); border-radius: var(--hd-radius); }
-  .empty code { color: var(--hd-text); }
-  footer { margin-top: 48px; text-align: center; font-size: .75rem; color: var(--hd-muted); }
-  a:focus-visible, input:focus-visible { outline: 2px solid var(--hd-accent); outline-offset: 2px; }
+  .rows { display: flex; flex-direction: column; }
+  .row { position: relative; overflow: hidden; margin: 4px; padding: 4px; border-radius: 4px; background: var(--hd-block);
+    display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; line-height: 16px; }
+  .row .rl { font-weight: 200; padding-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; z-index: 1; }
+  .row .rv { font-weight: 500; text-align: right; white-space: nowrap; z-index: 1; }
+  .row .progress { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--hd-text) 12%, transparent); }
+  .api-error { margin: 4px; border-radius: 6px; background: color-mix(in srgb, rgb(136 19 55) 80%, transparent); color: var(--t200); font-size: 12px; text-align: center; }
+  .api-error summary { cursor: pointer; padding: 8px; list-style: none; font-weight: 600; }
+  .api-error summary::before { content: "ⓘ "; }
+  .api-error div { padding: 0 10px 8px; text-align: left; overflow-wrap: anywhere; font-weight: 400; }
+
+  /* bookmarks */
+  .bookmarks { display: flex; flex-wrap: wrap; margin: 8px -4px 0; }
+  .bookmarks .group { flex: 1 1 100%; }
+  @media (min-width: 768px) { .bookmarks .group { flex-basis: 50%; } }
+  @media (min-width: 1024px) { .bookmarks .group { flex-basis: 25%; } }
+  .bm { display: flex; align-items: center; gap: 0; margin-bottom: 8px; border-radius: 6px; background: var(--hd-card); color: inherit; text-decoration: none; font-size: 14px; overflow: hidden; }
+  .bm:hover { background: var(--hd-card-hover); }
+  .bm .abbr { width: 40px; align-self: stretch; display: grid; place-items: center; font-weight: 700; font-size: 12px; background: var(--hd-block); }
+  .bm .abbr img { width: 20px; height: 20px; object-fit: contain; }
+  .bm .bn { padding: 8px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .empty { text-align: center; color: var(--hd-muted); padding: 64px 16px; border-radius: 6px; background: var(--hd-card); width: 100%; margin: 4px; }
+
+  /* footer */
+  footer { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; color: var(--hd-muted); }
+  footer .right { display: flex; align-items: center; gap: 12px; }
+  .icon-btn { background: none; border: 0; padding: 4px; cursor: pointer; color: var(--hd-text); opacity: .8; display: inline-flex; }
+  .icon-btn:hover { opacity: 1; }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .switch { width: 30px; height: 16px; border-radius: 999px; background: color-mix(in srgb, var(--hd-text) 70%, transparent); position: relative; border: 0; cursor: pointer; padding: 0; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--hd-bg); transition: left .15s; }
+  :root[data-theme="dark"] .switch::after { left: 16px; }
+  .palette { display: none; gap: 6px; flex-wrap: wrap; max-width: 520px; margin-left: 8px; }
+  .palette.open { display: flex; }
+  .swatch { width: 16px; height: 16px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+  .swatch.active { border-color: var(--hd-text); }
+  .version { font-size: 11px; opacity: .6; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--t900); color: var(--t100); padding: 8px 14px; border-radius: 6px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: .95; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--hd-accent); outline-offset: 2px; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1 id="title"></h1>
-    <div class="header-widgets" id="header-widgets"></div>
-  </header>
+  <h1 class="title" id="title" hidden></h1>
+  <header class="info" id="header-widgets"></header>
   <div class="messages" id="messages"></div>
   <main id="groups" class="groups" aria-live="polite"></main>
   <section id="bookmarks" class="bookmarks"></section>
-  <footer id="footer"></footer>
+  <footer>
+    <div style="display:flex;align-items:center">
+      <button class="icon-btn" id="color-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10a2.5 2.5 0 0 0 2.5-2.5c0-.61-.23-1.2-.64-1.67a.53.53 0 0 1 .4-.83H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9Zm-5.5 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg>
+      </button>
+      <div class="palette" id="palette"></div>
+    </div>
+    <div class="right">
+      <span class="version" id="version"></span>
+      <button class="icon-btn" id="refresh-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      </button>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <button class="switch" id="theme-btn" type="button" role="switch"></button>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+    </div>
+  </footer>
 </div>
+<div class="toast" id="toast" role="status"></div>
 <script>
 'use strict';
 
@@ -123,45 +201,83 @@ const I18N = {
   en: {
     loading: 'Loading…', errors: 'Configuration errors', warnings: 'Warnings', empty: 'No services yet.',
     emptyHint: 'Add them to services.yaml in your config folder, or label your containers with homelab.name.',
-    up: 'Online', down: 'Offline', warn: 'Degraded', unknown: 'Unknown', widgetFailed: 'Widget failed',
-    unknownWidget: 'Unknown widget type', discovered: 'auto', offline: 'Server unreachable, retrying…',
-    clientFailed: 'Could not load the widget code',
+    up: 'Online', down: 'Offline', warn: 'Degraded', unknown: 'Unknown', tagDown: 'Down',
+    apiError: 'API Error Information', unknownWidget: 'Unknown widget type', discovered: 'discovered from',
+    offline: 'Server unreachable, retrying…', clientFailed: 'Could not load the widget code',
+    containerStats: 'Show container stats', refresh: 'Refresh', theme: 'Dark mode', color: 'Change color', started: 'Started',
   },
   nl: {
     loading: 'Laden…', errors: 'Fouten in de configuratie', warnings: 'Waarschuwingen', empty: 'Nog geen services.',
     emptyHint: 'Zet ze in services.yaml in je configmap, of geef je containers het label homelab.name.',
-    up: 'Online', down: 'Offline', warn: 'Verstoord', unknown: 'Onbekend', widgetFailed: 'Widget mislukt',
-    unknownWidget: 'Onbekend widgettype', discovered: 'auto', offline: 'Server onbereikbaar, opnieuw proberen…',
-    clientFailed: 'De widgetcode kon niet geladen worden',
+    up: 'Online', down: 'Offline', warn: 'Verstoord', unknown: 'Onbekend', tagDown: 'Offline',
+    apiError: 'API-foutinformatie', unknownWidget: 'Onbekend widgettype', discovered: 'gevonden via',
+    offline: 'Server onbereikbaar, opnieuw proberen…', clientFailed: 'De widgetcode kon niet geladen worden',
+    containerStats: 'Containerstatistieken tonen', refresh: 'Vernieuwen', theme: 'Donkere modus', color: 'Kleur wijzigen', started: 'Gestart',
   },
   fr: {
     loading: 'Chargement…', errors: 'Erreurs de configuration', warnings: 'Avertissements', empty: 'Aucun service pour l’instant.',
     emptyHint: 'Ajoutez-les dans services.yaml de votre dossier de configuration, ou étiquetez vos conteneurs avec homelab.name.',
-    up: 'En ligne', down: 'Hors ligne', warn: 'Dégradé', unknown: 'Inconnu', widgetFailed: 'Échec du widget',
-    unknownWidget: 'Type de widget inconnu', discovered: 'auto', offline: 'Serveur injoignable, nouvelle tentative…',
-    clientFailed: 'Impossible de charger le code du widget',
+    up: 'En ligne', down: 'Hors ligne', warn: 'Dégradé', unknown: 'Inconnu', tagDown: 'Hors ligne',
+    apiError: 'Informations sur l’erreur API', unknownWidget: 'Type de widget inconnu', discovered: 'découvert via',
+    offline: 'Serveur injoignable, nouvelle tentative…', clientFailed: 'Impossible de charger le code du widget',
+    containerStats: 'Afficher les statistiques du conteneur', refresh: 'Actualiser', theme: 'Mode sombre', color: 'Changer de couleur', started: 'Lancé',
   },
   de: {
     loading: 'Lädt…', errors: 'Konfigurationsfehler', warnings: 'Warnungen', empty: 'Noch keine Dienste.',
     emptyHint: 'Trage sie in services.yaml im Konfigurationsordner ein oder versieh deine Container mit dem Label homelab.name.',
-    up: 'Online', down: 'Offline', warn: 'Beeinträchtigt', unknown: 'Unbekannt', widgetFailed: 'Widget fehlgeschlagen',
-    unknownWidget: 'Unbekannter Widget-Typ', discovered: 'auto', offline: 'Server nicht erreichbar, neuer Versuch…',
-    clientFailed: 'Widget-Code konnte nicht geladen werden',
+    up: 'Online', down: 'Offline', warn: 'Beeinträchtigt', unknown: 'Unbekannt', tagDown: 'Offline',
+    apiError: 'API-Fehlerinformationen', unknownWidget: 'Unbekannter Widget-Typ', discovered: 'gefunden über',
+    offline: 'Server nicht erreichbar, neuer Versuch…', clientFailed: 'Widget-Code konnte nicht geladen werden',
+    containerStats: 'Container-Statistiken anzeigen', refresh: 'Aktualisieren', theme: 'Dunkelmodus', color: 'Farbe ändern', started: 'Gestartet',
   },
   es: {
     loading: 'Cargando…', errors: 'Errores de configuración', warnings: 'Advertencias', empty: 'Todavía no hay servicios.',
     emptyHint: 'Añádelos en services.yaml de tu carpeta de configuración, o etiqueta tus contenedores con homelab.name.',
-    up: 'En línea', down: 'Sin conexión', warn: 'Degradado', unknown: 'Desconocido', widgetFailed: 'Error del widget',
-    unknownWidget: 'Tipo de widget desconocido', discovered: 'auto', offline: 'Servidor inaccesible, reintentando…',
-    clientFailed: 'No se pudo cargar el código del widget',
+    up: 'En línea', down: 'Sin conexión', warn: 'Degradado', unknown: 'Desconocido', tagDown: 'Caído',
+    apiError: 'Información del error de la API', unknownWidget: 'Tipo de widget desconocido', discovered: 'descubierto en',
+    offline: 'Servidor inaccesible, reintentando…', clientFailed: 'No se pudo cargar el código del widget',
+    containerStats: 'Mostrar estadísticas del contenedor', refresh: 'Actualizar', theme: 'Modo oscuro', color: 'Cambiar color', started: 'Iniciado',
   },
 };
 
-const COLORS = { slate: 222, blue: 217, sky: 199, emerald: 160, green: 142, violet: 263, purple: 271, rose: 350, red: 0, amber: 38, orange: 25, teal: 173, zinc: 240 };
+// Tailwind colour scales (50 … 950), the same names homepage uses for `color:`.
+const PALETTES = {
+  slate: '#f8fafc #f1f5f9 #e2e8f0 #cbd5e1 #94a3b8 #64748b #475569 #334155 #1e293b #0f172a #020617',
+  gray: '#f9fafb #f3f4f6 #e5e7eb #d1d5db #9ca3af #6b7280 #4b5563 #374151 #1f2937 #111827 #030712',
+  zinc: '#fafafa #f4f4f5 #e4e4e7 #d4d4d8 #a1a1aa #71717a #52525b #3f3f46 #27272a #18181b #09090b',
+  neutral: '#fafafa #f5f5f5 #e5e5e5 #d4d4d4 #a3a3a3 #737373 #525252 #404040 #262626 #171717 #0a0a0a',
+  stone: '#fafaf9 #f5f5f4 #e7e5e4 #d6d3d1 #a8a29e #78716c #57534e #44403c #292524 #1c1917 #0c0a09',
+  red: '#fef2f2 #fee2e2 #fecaca #fca5a5 #f87171 #ef4444 #dc2626 #b91c1c #991b1b #7f1d1d #450a0a',
+  orange: '#fff7ed #ffedd5 #fed7aa #fdba74 #fb923c #f97316 #ea580c #c2410c #9a3412 #7c2d12 #431407',
+  amber: '#fffbeb #fef3c7 #fde68a #fcd34d #fbbf24 #f59e0b #d97706 #b45309 #92400e #78350f #451a03',
+  yellow: '#fefce8 #fef9c3 #fef08a #fde047 #facc15 #eab308 #ca8a04 #a16207 #854d0e #713f12 #422006',
+  lime: '#f7fee7 #ecfccb #d9f99d #bef264 #a3e635 #84cc16 #65a30d #4d7c0f #3f6212 #365314 #1a2e05',
+  green: '#f0fdf4 #dcfce7 #bbf7d0 #86efac #4ade80 #22c55e #16a34a #15803d #166534 #14532d #052e16',
+  emerald: '#ecfdf5 #d1fae5 #a7f3d0 #6ee7b7 #34d399 #10b981 #059669 #047857 #065f46 #064e3b #022c22',
+  teal: '#f0fdfa #ccfbf1 #99f6e4 #5eead4 #2dd4bf #14b8a6 #0d9488 #0f766e #115e59 #134e4a #042f2e',
+  cyan: '#ecfeff #cffafe #a5f3fc #67e8f9 #22d3ee #06b6d4 #0891b2 #0e7490 #155e75 #164e63 #083344',
+  sky: '#f0f9ff #e0f2fe #bae6fd #7dd3fc #38bdf8 #0ea5e9 #0284c7 #0369a1 #075985 #0c4a6e #082f49',
+  blue: '#eff6ff #dbeafe #bfdbfe #93c5fd #60a5fa #3b82f6 #2563eb #1d4ed8 #1e40af #1e3a8a #172554',
+  indigo: '#eef2ff #e0e7ff #c7d2fe #a5b4fc #818cf8 #6366f1 #4f46e5 #4338ca #3730a3 #312e81 #1e1b4b',
+  violet: '#f5f3ff #ede9fe #ddd6fe #c4b5fd #a78bfa #8b5cf6 #7c3aed #6d28d9 #5b21b6 #4c1d95 #2e1065',
+  purple: '#faf5ff #f3e8ff #e9d5ff #d8b4fe #c084fc #a855f7 #9333ea #7e22ce #6b21a8 #581c87 #3b0764',
+  fuchsia: '#fdf4ff #fae8ff #f5d0fe #f0abfc #e879f9 #d946ef #c026d3 #a21caf #86198f #701a75 #4a044e',
+  pink: '#fdf2f8 #fce7f3 #fbcfe8 #f9a8d4 #f472b6 #ec4899 #db2777 #be185d #9d174d #831843 #500724',
+  rose: '#fff1f2 #ffe4e6 #fecdd3 #fda4af #fb7185 #f43f5e #e11d48 #be123c #9f1239 #881337 #4c0519',
+};
+const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 
 let lang = 'en';
 function translate(key) {
   return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+}
+
+// Per-viewer choices (theme and colour) override settings.yaml; storage may be unavailable.
+function stored(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function store(key, value) {
+  try { localStorage.setItem(key, value); } catch { /* private mode */ }
 }
 
 // ---------------------------------------------------------------- helpers
@@ -183,16 +299,16 @@ function safeHref(href) {
   return /^\s*(javascript|data|vbscript):/i.test(href) ? null : href;
 }
 
-function iconNode(icon, name, cls) {
-  const box = el('span', { class: 'icon' + (cls ? ' ' + cls : '') });
+function iconNode(icon, name) {
+  const box = el('span', { class: 'icon' });
   const letter = () => {
     box.classList.add('letter');
-    box.textContent = (name || '?').trim().charAt(0).toUpperCase();
+    box.replaceChildren(el('span', { text: (name || '?').trim().charAt(0).toUpperCase() }));
   };
   if (!icon) letter();
   else {
     const img = el('img', { src: icon, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
-    img.addEventListener('error', () => { img.remove(); letter(); });
+    img.addEventListener('error', letter);
     box.append(img);
   }
   return box;
@@ -202,6 +318,32 @@ function formatValue(value) {
   if (value === null || value === undefined) return '–';
   if (typeof value === 'number') return new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(value);
   return String(value);
+}
+
+function toast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ---------------------------------------------------------------- theme
+function applyTheme(settings) {
+  const color = PALETTES[stored('hd-color')] ? stored('hd-color') : PALETTES[settings.color] ? settings.color : 'slate';
+  const shades = PALETTES[color].split(' ');
+  SHADES.forEach((s, i) => document.documentElement.style.setProperty(`--t${s}`, shades[i]));
+  let theme = stored('hd-theme') || settings.theme;
+  if (theme === 'auto') theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  document.documentElement.dataset.theme = theme;
+  document.getElementById('theme-btn').setAttribute('aria-checked', String(theme === 'dark'));
+  const palette = document.getElementById('palette');
+  palette.replaceChildren(...Object.keys(PALETTES).map((name) => {
+    const b = el('button', { class: 'swatch' + (name === color ? ' active' : ''), type: 'button', title: name, 'aria-label': name });
+    b.style.background = PALETTES[name].split(' ')[5];
+    b.addEventListener('click', () => { store('hd-color', name); applyTheme(settings); });
+    return b;
+  }));
 }
 
 // ---------------------------------------------------------------- widgets
@@ -214,25 +356,47 @@ function widgetT(type) {
   return (key) => (Object.prototype.hasOwnProperty.call(strings, key) ? strings[key] : translate(key));
 }
 
-function renderBlocks(container, type, result) {
-  const t = widgetT(type);
+function apiError(message) {
+  return el('details', { class: 'api-error' }, el('summary', { text: translate('apiError') }), el('div', { text: message }));
+}
+
+/** Renders a result the standard way: blocks, then rows. */
+function renderResult(container, instance, result) {
+  const t = widgetT(instance.type);
   container.replaceChildren();
   if (!result) return;
   if (!result.ok) {
-    container.append(el('div', { class: 'widget-error', text: `${translate('widgetFailed')}: ${result.error}` }));
+    if (!instance.hideErrors) container.append(apiError(result.error));
     return;
   }
-  const blocks = (result.data && result.data.blocks) || [];
-  if (!blocks.length) return;
-  const grid = el('div', { class: 'blocks' });
-  for (const b of blocks) {
-    const value = typeof b.value === 'string' ? t(b.value) : formatValue(b.value);
-    const shown = b.unit && b.value !== null ? `${value} ${b.unit}` : value;
-    grid.append(el('div', { class: 'block' + (b.status ? ' ' + b.status : ''), title: `${t(b.label)}: ${shown}` },
-      el('div', { class: 'v', text: shown }),
-      el('div', { class: 'l', text: t(b.label) })));
+  const data = result.data || {};
+  if (Array.isArray(data.blocks) && data.blocks.length) {
+    const grid = el('div', { class: 'blocks' });
+    for (const b of data.blocks) {
+      const value = typeof b.value === 'string' ? t(b.value) : formatValue(b.value);
+      // "22%" like homepage; other units get a space ("12 ms", "3 MiB").
+      const shown = b.unit && b.value !== null && b.value !== undefined ? `${value}${b.unit === '%' ? '' : ' '}${b.unit}` : value;
+      grid.append(el('div', { class: 'block' + (b.status ? ' ' + b.status : ''), title: `${t(b.label)}: ${shown}` },
+        el('div', { class: 'v', text: shown }),
+        el('div', { class: 'l', text: t(b.label) })));
+    }
+    container.append(grid);
   }
-  container.append(grid);
+  if (Array.isArray(data.rows) && data.rows.length) {
+    const list = el('div', { class: 'rows' });
+    for (const r of data.rows) {
+      const row = el('div', { class: 'row', title: r.label });
+      if (typeof r.progress === 'number') {
+        const bar = el('div', { class: 'progress' });
+        bar.style.width = `${r.progress}%`;
+        row.append(bar);
+      }
+      const value = r.value === null || r.value === undefined ? '' : typeof r.value === 'string' ? t(r.value) : formatValue(r.value);
+      row.append(el('span', { class: 'rl', text: t(r.label) }), el('span', { class: 'rv', text: value }));
+      list.append(row);
+    }
+    container.append(list);
+  }
 }
 
 /** Creates the DOM for one widget instance and starts polling its data. */
@@ -240,10 +404,18 @@ function mountWidget(instance, extraClass) {
   const box = el('div', { class: 'widget' + (extraClass ? ' ' + extraClass : '') });
   const type = layout.widgetTypes[instance.type];
   if (!instance.known || !type) {
-    box.append(el('div', { class: 'widget-error', text: `${translate('unknownWidget')}: ${instance.type}` }));
+    box.append(apiError(`${translate('unknownWidget')}: ${instance.type}`));
     return box;
   }
   let custom = null;
+  let last = null;
+  const apply = (result) => {
+    last = result;
+    if (custom) {
+      custom.error = result.ok || instance.hideErrors ? null : result.error;
+      custom.data = result.ok ? result.data : null;
+    } else if (!type.client) renderResult(box, instance, result);
+  };
   if (type.client) {
     if (!clientModules.has(instance.type)) clientModules.set(instance.type, import(type.client));
     clientModules.get(instance.type).then(() => {
@@ -255,17 +427,9 @@ function mountWidget(instance, extraClass) {
       box.replaceChildren(custom);
       if (last) apply(last);
     }, (err) => {
-      box.replaceChildren(el('div', { class: 'widget-error', text: `${translate('clientFailed')}: ${err.message}` }));
+      box.replaceChildren(apiError(`${translate('clientFailed')}: ${err.message}`));
     });
   }
-  let last = null;
-  const apply = (result) => {
-    last = result;
-    if (custom) {
-      custom.error = result.ok ? null : result.error;
-      custom.data = result.ok ? result.data : null;
-    } else if (!type.client) renderBlocks(box, instance.type, result);
-  };
   if (instance.server) poll(instance, apply);
   return box;
 }
@@ -279,9 +443,8 @@ function poll(instance, onResult) {
       onResult({ ok: false, error: translate('offline') });
     }
   };
-  const every = Math.max(2000, instance.refreshMs || 30000);
-  const entry = { run, timer: setInterval(() => { if (!document.hidden) run(); }, every) };
-  pollers.push(entry);
+  const every = Math.max(1000, instance.refreshMs || 30000);
+  pollers.push({ run, timer: setInterval(() => { if (!document.hidden) run(); }, every) });
   run();
 }
 
@@ -290,23 +453,48 @@ function stopPolling() {
   pollers.length = 0;
 }
 
-function statusNode(instance) {
-  const wrap = el('span', { class: 'status' });
-  const dot = el('span', { class: 'dot', role: 'img', 'aria-label': translate('unknown') });
-  const label = el('span');
-  wrap.append(label, dot);
-  if (!instance.known) {
-    dot.title = `${translate('unknownWidget')}: ${instance.type}`;
-    return wrap;
+/**
+ * A status label in the top-right corner of a card, like homepage: "78 ms" or "down" for
+ * HTTP and ping checks, the container state ("healthy", "running") for Docker. Clicking a
+ * container label shows the container's CPU and memory below the card.
+ */
+function statusTag(status, card) {
+  const isContainer = status.kind === 'container';
+  const tag = el(isContainer ? 'button' : 'div', { class: 'tag', type: isContainer ? 'button' : null, text: '·' });
+  if (!status.known) {
+    tag.textContent = '?';
+    tag.title = `${translate('unknownWidget')}: ${status.type}`;
+    return tag;
   }
-  poll(instance, (result) => {
-    const status = result.ok ? (result.data && result.data.status) || 'unknown' : 'down';
-    dot.className = 'dot ' + status;
-    dot.setAttribute('aria-label', translate(status));
-    dot.title = result.ok ? translate(status) : `${translate('down')}: ${result.error}`;
-    label.textContent = result.ok && result.data && typeof result.data.latency === 'number' ? `${Math.round(result.data.latency)} ms` : '';
+  let stats = null;
+  let last = null;
+  if (isContainer) {
+    tag.title = translate('containerStats');
+    tag.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (stats) { stats.remove(); stats = null; return; }
+      stats = el('div', { class: 'widget container-stats' });
+      card.append(stats);
+      renderResult(stats, { type: 'docker' }, last);
+    });
+  }
+  poll(status, (result) => {
+    last = result;
+    const t = widgetT(status.type);
+    const s = result.ok ? (result.data && result.data.status) || 'unknown' : 'down';
+    tag.className = 'tag ' + s;
+    let text;
+    if (!result.ok) text = translate('tagDown');
+    else if (result.data.statusText) text = t(result.data.statusText);
+    else if (s === 'up' && typeof result.data.latency === 'number') text = `${Math.round(result.data.latency)} ms`;
+    else text = s === 'down' ? translate('tagDown') : translate(s);
+    tag.textContent = text;
+    tag.setAttribute('aria-label', `${translate(s)}: ${text}`);
+    if (!isContainer) tag.title = result.ok ? translate(s) : result.error;
+    if (stats) renderResult(stats, { type: 'docker' }, result);
   });
-  return wrap;
+  return tag;
 }
 
 // ---------------------------------------------------------------- page
@@ -326,15 +514,32 @@ function renderMessages(messages) {
   section(messages.warnings, 'warn', translate('warnings'));
 }
 
+/** `target: hidden-iframe` (homepage): call the URL without leaving the page, e.g. a webhook. */
+function hiddenFrame(href) {
+  const frame = el('iframe', { src: href, hidden: '', 'aria-hidden': 'true' });
+  document.body.append(frame);
+  setTimeout(() => frame.remove(), 60000);
+  toast(translate('started'));
+}
+
 function renderService(service) {
   const href = safeHref(service.href);
-  const head = el(href ? 'a' : 'div', { class: 'card-head', href, target: href ? service.target : null, rel: href ? 'noopener noreferrer' : null });
-  const name = el('div', { class: 'name', text: service.name });
-  if (service.discovered) name.append(el('span', { class: 'badge', title: service.discovered, text: translate('discovered') }));
-  head.append(iconNode(service.icon, service.name),
-    el('div', { class: 'title' }, name, service.description ? el('div', { class: 'desc', text: service.description }) : null));
-  if (service.status) head.append(statusNode(service.status));
-  const card = el('article', { class: 'card', 'data-service': service.id }, head);
+  const hidden = service.target === 'hidden-iframe';
+  const head = el(href ? 'a' : 'div', {
+    class: 'card-head' + (service.icon ? '' : ' no-icon'),
+    href,
+    target: href && !hidden ? service.target : null,
+    rel: href ? 'noopener noreferrer' : null,
+  });
+  if (href && hidden) head.addEventListener('click', (e) => { e.preventDefault(); hiddenFrame(href); });
+  // Discovered services look the same as configured ones; the source is in the tooltip.
+  const name = el('div', { class: 'name', text: service.name, title: service.discovered ? `${service.name} (${translate('discovered')}: ${service.discovered})` : null });
+  if (service.icon) head.append(iconNode(service.icon, service.name));
+  head.append(el('div', { class: 'names' }, name, service.description ? el('div', { class: 'desc', text: service.description }) : null));
+  const card = el('article', { class: 'card shadow', 'data-service': service.id }, head);
+  if (service.statuses.length) {
+    card.append(el('div', { class: 'tags' }, ...service.statuses.map((s) => statusTag(s, card))));
+  }
   for (const w of service.widgets) card.append(mountWidget(w));
   return card;
 }
@@ -346,16 +551,17 @@ function render(data) {
   lang = I18N[s.language] ? s.language : 'en';
   document.documentElement.lang = s.language || 'en';
   document.title = s.title;
-  const dark = s.theme === 'dark' || (s.theme === 'auto' && !(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches));
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  document.documentElement.style.setProperty('--hd-hue', COLORS[s.color] !== undefined ? COLORS[s.color] : 222);
+  applyTheme(s);
   document.body.style.backgroundImage = s.background
-    ? `linear-gradient(color-mix(in srgb, var(--hd-bg) 70%, transparent), var(--hd-bg)), url("${encodeURI(s.background)}")`
+    ? `linear-gradient(color-mix(in srgb, var(--hd-bg) 60%, transparent), color-mix(in srgb, var(--hd-bg) 85%, transparent)), url("${encodeURI(s.background)}")`
     : '';
-  document.getElementById('title').textContent = s.title;
+  const title = document.getElementById('title');
+  title.textContent = s.title;
+  title.hidden = s.showTitle === false;
 
   const header = document.getElementById('header-widgets');
-  header.replaceChildren(...data.header.map((w) => mountWidget(w, 'hw-' + w.type)));
+  header.className = 'info' + (s.headerStyle === 'clean' ? '' : ' boxed shadow');
+  header.replaceChildren(...data.header.map((w) => mountWidget(w, 'hw hw-' + w.type)));
 
   renderMessages(data.messages);
 
@@ -363,13 +569,15 @@ function render(data) {
   groups.replaceChildren();
   const visible = data.groups.filter((g) => g.services.length);
   if (!visible.length) {
-    groups.append(el('div', { class: 'empty group wide' }, el('p', { text: translate('empty') }), el('p', { text: translate('emptyHint') })));
+    groups.append(el('div', { class: 'empty' }, el('p', { text: translate('empty') }), el('p', { text: translate('emptyHint') })));
   }
   for (const g of visible) {
-    const cols = Number(g.layout.columns) || 1;
-    const section = el('section', { class: 'group' + (cols > 1 ? ' wide' : '') }, el('h2', { text: g.name }));
+    const cols = Number(g.layout.columns) || 0;
+    const row = g.layout.style === 'row' || cols > 0;
+    const section = el('section', { class: 'group ' + (row ? 'layout-row' : 'layout-column'), 'data-group': g.name });
+    if (g.layout.header !== false) section.append(el('h2', { text: g.name }));
     const cards = el('div', { class: 'cards' });
-    cards.style.setProperty('--cols', cols);
+    cards.style.setProperty('--cols', cols || 4);
     for (const svc of g.services) cards.append(renderService(svc));
     section.append(cards);
     groups.append(section);
@@ -377,15 +585,25 @@ function render(data) {
 
   const bookmarks = document.getElementById('bookmarks');
   bookmarks.replaceChildren(...data.bookmarks.map((g) => {
-    const list = el('div', { class: 'bm-list' });
+    const section = el('section', { class: 'group' }, el('h2', { text: g.name }));
+    const list = el('div', { class: 'cards' });
     for (const b of g.bookmarks) {
-      list.append(el('a', { class: 'bm', href: safeHref(b.href), target: '_blank', rel: 'noopener noreferrer', title: b.description || null },
-        iconNode(b.icon, b.abbr || b.name), el('span', { text: b.name })));
+      const abbr = el('span', { class: 'abbr' });
+      if (b.icon) abbr.append(el('img', { src: b.icon, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' }));
+      else abbr.textContent = b.abbr || b.name.slice(0, 2).toUpperCase();
+      list.append(el('a', { class: 'bm shadow', href: safeHref(b.href), target: '_blank', rel: 'noopener noreferrer', title: b.description || null },
+        abbr, el('span', { class: 'bn', text: b.name })));
     }
-    return el('section', { class: 'group' }, el('h2', { text: g.name }), list);
+    section.append(list);
+    return section;
   }));
 
-  document.getElementById('footer').textContent = `homelab-dashboard ${data.version || ''}`;
+  document.getElementById('version').textContent = `homelab-dashboard ${data.version || ''}`;
+  for (const [id, key] of [['refresh-btn', 'refresh'], ['theme-btn', 'theme'], ['color-btn', 'color']]) {
+    const b = document.getElementById(id);
+    b.title = translate(key);
+    b.setAttribute('aria-label', translate(key));
+  }
 }
 
 async function load() {
@@ -411,9 +629,14 @@ function connectEvents() {
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) for (const p of pollers) p.run();
 });
+document.getElementById('refresh-btn').addEventListener('click', () => load());
+document.getElementById('theme-btn').addEventListener('click', () => {
+  store('hd-theme', document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  if (layout) applyTheme(layout.settings);
+});
+document.getElementById('color-btn').addEventListener('click', () => document.getElementById('palette').classList.toggle('open'));
 
-window.HD = { I18N, translate, render, safeHref, formatValue, load };
-document.getElementById('title').textContent = translate('loading');
+window.HD = { I18N, PALETTES, translate, render, safeHref, formatValue, load };
 load();
 connectEvents();
 </script>

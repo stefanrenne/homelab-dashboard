@@ -38,7 +38,9 @@ const SECURITY_HEADERS = {
   'referrer-policy': 'no-referrer',
   'content-security-policy':
     "default-src 'self'; img-src * data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'self'",
+    "font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; " +
+    // frame-src: services with `target: hidden-iframe` call their URL in a hidden frame (homepage feature).
+    "frame-src http: https:; frame-ancestors 'self'",
 };
 
 export async function createApp({
@@ -54,7 +56,7 @@ export async function createApp({
   const sseClients = new Set();
   const runtime = new WidgetRuntime({ registry: new Map(), log, timeoutMs });
   const state = { config: null, registry: new Map(), pluginResult: { errors: [], warnings: [] }, registryErrors: [], layout: null };
-  const discovery = new Discovery({ log, onChange: () => state.config && rebuild(), ...discoveryOptions });
+  const discovery = new Discovery({ log, env, onChange: () => state.config && rebuild(), ...discoveryOptions });
   let chain = Promise.resolve();
 
   function rebuild() {
@@ -67,6 +69,7 @@ export async function createApp({
       groups: merged.groups,
       extraErrors: [...pluginMessages(state.pluginResult.errors), ...pluginMessages(state.registryErrors), ...discovery.errors],
       extraWarnings: [...pluginMessages(state.pluginResult.warnings), ...merged.warnings],
+      secrets: new Set([...state.config.secrets, ...discovery.secrets]),
     });
     runtime.setInstances(instances, state.registry);
     state.layout = { ...layout, version: VERSION };

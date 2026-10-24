@@ -4,7 +4,8 @@
 //   <prefix>siteMonitor, <prefix>ping, <prefix>weight,
 //   <prefix>widget.type, <prefix>widget.<option>, <prefix>widget.<map>.<key>
 //
-// Docker uses the prefix "homelab.", Kubernetes "homelab.dev/".
+// Docker uses the prefix "homelab." (or homepage's "homepage."), Kubernetes "homelab.dev/"
+// (or "gethomepage.dev/").
 
 const FIELDS = ['href', 'icon', 'description', 'siteMonitor', 'ping'];
 

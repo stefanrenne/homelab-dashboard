@@ -1,7 +1,62 @@
 [
-  { "Id": "a1", "Names": ["/plex"], "State": "running",
-    "Labels": { "homelab.name": "Plex", "homelab.group": "Media", "homelab.icon": "plex.svg", "homelab.href": "http://plex.lan:32400" } },
-  { "Id": "b2", "Names": ["/uptime-kuma"], "State": "running",
-    "Labels": { "homelab.name": "Uptime Kuma", "homelab.siteMonitor": "http://uptime-kuma:3001" } },
-  { "Id": "c3", "Names": ["/postgres"], "State": "running", "Labels": { "com.docker.compose.service": "db" } }
+  {
+    "Id": "a1",
+    "Names": [
+      "/plex"
+    ],
+    "State": "running",
+    "Labels": {
+      "homelab.name": "Plex",
+      "homelab.group": "Media",
+      "homelab.icon": "plex.svg",
+      "homelab.href": "http://plex.lan:32400"
+    }
+  },
+  {
+    "Id": "b2",
+    "Names": [
+      "/uptime-kuma"
+    ],
+    "State": "running",
+    "Labels": {
+      "homelab.name": "Uptime Kuma",
+      "homelab.siteMonitor": "http://uptime-kuma:3001"
+    }
+  },
+  {
+    "Id": "c3",
+    "Names": [
+      "/postgres"
+    ],
+    "State": "running",
+    "Labels": {
+      "com.docker.compose.service": "db"
+    }
+  },
+  {
+    "Id": "d4",
+    "Names": [
+      "/radarr"
+    ],
+    "State": "running",
+    "Labels": {
+      "homepage.group": "Media",
+      "homepage.name": "Radarr",
+      "homepage.icon": "radarr.png",
+      "homepage.href": "https://radarr.lan",
+      "homepage.widget.type": "radarr",
+      "homepage.widget.url": "http://radarr:7878",
+      "homepage.widget.key": "{{HOMEPAGE_VAR_RADARR_KEY}}"
+    }
+  },
+  {
+    "Id": "e5",
+    "Names": [
+      "/only-name"
+    ],
+    "State": "running",
+    "Labels": {
+      "homepage.name": "No group"
+    }
+  }
 ]

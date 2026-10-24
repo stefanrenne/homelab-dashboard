@@ -132,3 +132,9 @@ test('parseDuration and safeJoin', () => {
   assert.equal(safeJoin('/a/b', '../c'), null);
   assert.equal(safeJoin('/a/b', 'c/d.svg'), path.resolve('/a/b/c/d.svg'));
 });
+
+test('homepage placeholders work like HD_ ones', () => {
+  const out = substitute({ a: '{{HOMEPAGE_VAR_KEY}}' }, { env: { HOMEPAGE_VAR_KEY: 'pk' } });
+  assert.equal(out.value.a, 'pk');
+  assert.ok(out.secrets.has('pk'));
+});

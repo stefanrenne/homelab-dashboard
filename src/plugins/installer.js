@@ -3,7 +3,11 @@
 //   - source: git+https://github.com/someone/hd-widget-x#v1.2.0   (tag, branch or commit)
 //   - source: npm:hd-widget-y@2.0.1
 //   - path: ./my-widgets/z                                        (relative to the config dir)
-//   any of them with `subdir: widgets/x` for a repository that holds several widgets.
+//   any of them with `subdir: widgets/x` for one widget out of a repository.
+//
+// A source without widget.yaml at its root is a collection: every folder with a
+// widget.yaml directly inside it (or inside its widgets/ folder) is installed, or only
+// the folders named in `only: [radarr, sonarr]`.
 //
 // Downloads land in <config>/plugins/<id>@<version>. plugins.lock.yaml records what a
 // source resolved to (commit or tarball integrity), so later starts reuse the same files
@@ -14,7 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import YAML from 'yaml';
-import { readManifest } from './loader.js';
+import { readManifest, widgetDirs } from './loader.js';
 import { safeJoin } from '../util.js';
 
 export const PLUGINS_DIR = 'plugins';
@@ -30,6 +34,9 @@ export function parseSource(entry) {
   const subdir = entry.subdir ? String(entry.subdir) : '';
   if (subdir && (path.isAbsolute(subdir) || subdir.split(/[\\/]/).includes('..'))) {
     throw new Error(`subdir "${subdir}" must be a relative path inside the package`);
+  }
+  if (entry.only !== undefined && (!Array.isArray(entry.only) || entry.only.some((x) => typeof x !== 'string'))) {
+    throw new Error('only: expected a list of widget folder names');
   }
   if (entry.path) return { kind: 'path', key: `path:${entry.path}`, path: String(entry.path), subdir };
   const source = String(entry.source);
@@ -98,9 +105,8 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
     try {
       const src = parseSource(entry);
       if (src.kind === 'path') {
-        const dir = path.resolve(configDir, src.path, src.subdir);
-        readManifest(dir);
-        installed.push({ dir, source: label });
+        const dir = path.resolve(configDir, src.path.replace(/^~(?=\/)/, process.env.HOME ?? '~'), src.subdir);
+        for (const d of packageDirs(dir, Boolean(src.subdir), entry.only, label, warnings)) installed.push({ dir: d, source: label });
         continue;
       }
       if (src.floating) {
@@ -111,7 +117,7 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
       }
       const locked = lock[src.key];
       let record;
-      if (!update && locked && locked.dir && fs.existsSync(path.join(pluginsRoot, locked.dir, 'widget.yaml'))) {
+      if (!update && locked && locked.dir && fs.existsSync(path.join(pluginsRoot, locked.dir))) {
         record = locked;
       } else {
         record = src.kind === 'git'
@@ -120,7 +126,8 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
         log.info(`plugins: installed ${label} as ${record.dir}`);
       }
       nextLock[src.key] = record;
-      installed.push({ dir: path.join(pluginsRoot, record.dir, src.subdir), source: label });
+      const root = path.join(pluginsRoot, record.dir, src.subdir);
+      for (const d of packageDirs(root, Boolean(src.subdir), entry.only, label, warnings)) installed.push({ dir: d, source: label });
     } catch (err) {
       errors.push({ source: label, message: err.message });
     }
@@ -130,18 +137,49 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
   return { installed, errors, warnings };
 }
 
+/** The widget folders of a package: the package itself, or the widgets of a collection. */
+export function collectionDirs(root) {
+  return [...widgetDirs(root), ...widgetDirs(path.join(root, 'widgets'))];
+}
+
+function packageDirs(root, single, only, label, warnings) {
+  if (single || fs.existsSync(path.join(root, 'widget.yaml'))) {
+    readManifest(root);
+    return [root];
+  }
+  if (!fs.existsSync(root)) throw new Error(`${root} does not exist`);
+  let dirs = collectionDirs(root);
+  if (dirs.length === 0) throw new Error(`no widget.yaml in ${root} or in its folders`);
+  if (only) {
+    const names = new Set(dirs.map((d) => path.basename(d)));
+    for (const name of only) if (!names.has(name)) warnings.push({ source: label, message: `only: no widget folder "${name}"` });
+    dirs = dirs.filter((d) => only.includes(path.basename(d)));
+  }
+  return dirs;
+}
+
 function freshTmp(pluginsRoot) {
   const tmp = path.join(pluginsRoot, '.tmp');
   fs.mkdirSync(tmp, { recursive: true });
   return fs.mkdtempSync(path.join(tmp, 'x-'));
 }
 
-/** Moves an unpacked package into place as <id>@<version> and returns that folder name. */
-function place(pkgRoot, subdir, pluginsRoot) {
+/**
+ * Moves an unpacked package into place and returns that folder name: <id>@<version> for a
+ * widget, `collectionName` for a collection.
+ */
+function place(pkgRoot, subdir, pluginsRoot, collectionName) {
   const widgetDir = subdir ? safeJoin(pkgRoot, subdir) : pkgRoot;
   if (!widgetDir) throw new Error(`subdir "${subdir}" is outside the package`);
-  const manifest = readManifest(widgetDir);
-  const name = `${manifest.id}@${manifest.version}`.replace(/[^\w@.-]/g, '_');
+  let name;
+  if (subdir || fs.existsSync(path.join(widgetDir, 'widget.yaml'))) {
+    const manifest = readManifest(widgetDir);
+    name = `${manifest.id}@${manifest.version}`;
+  } else {
+    if (collectionDirs(widgetDir).length === 0) throw new Error('no widget.yaml at the root of the package or in its folders');
+    name = collectionName;
+  }
+  name = name.replace(/[^\w@.-]/g, '_');
   const target = path.join(pluginsRoot, name);
   fs.rmSync(target, { recursive: true, force: true });
   fs.renameSync(pkgRoot, target);
@@ -162,7 +200,8 @@ async function installGit(src, pluginsRoot, run, locked) {
     }
     const resolved = (await run('git', ['-C', checkout, 'rev-parse', 'HEAD'])).trim();
     fs.rmSync(path.join(checkout, '.git'), { recursive: true, force: true });
-    const dir = place(checkout, src.subdir, pluginsRoot);
+    const repo = path.basename(src.url.replace(/\/+$/, '')).replace(/\.git$/, '');
+    const dir = place(checkout, src.subdir, pluginsRoot, `${repo}@${resolved.slice(0, 12)}`);
     return { dir, commit: resolved };
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
@@ -181,7 +220,7 @@ async function installNpm(src, pluginsRoot, run, locked) {
     const unpack = path.join(tmp, 'unpack');
     fs.mkdirSync(unpack);
     await run('tar', ['-xzf', path.join(tmp, info.filename), '-C', unpack]);
-    const dir = place(path.join(unpack, 'package'), src.subdir, pluginsRoot);
+    const dir = place(path.join(unpack, 'package'), src.subdir, pluginsRoot, `${src.name}@${info.version}`);
     return { dir, version: info.version, integrity: info.integrity };
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });

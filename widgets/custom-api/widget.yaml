@@ -1,11 +1,15 @@
 id: custom-api
 name: Custom API
-version: 1.0.0
+version: 1.1.0
 apiVersion: 1
-description: Shows fields from any JSON API, without writing a widget.
+description: Shows fields from any JSON API, without writing a widget. Mappings follow homepage's customapi.
 refresh: 30s
 options:
   url: { type: url, required: true }
   method: { type: enum, values: [GET, POST], default: GET }
   headers: { type: object, secret: true }
-  mappings: { type: list, required: true }  # [{ field: data.count, label: Count, unit: ms }]
+  body: { type: object }
+  display: { type: enum, values: [block, list], default: block }   # list: one row per field
+  # [{ field: data.count, label: Count, format: number|percent|bytes|text, scale: 100,
+  #    prefix: "", suffix: "%", remap: [{ value: PLAYING, to: Playing }, { any: true, to: Other }] }]
+  mappings: { type: list, required: true }

@@ -1,3 +1,5 @@
 node_modules/
 /config/
 .DS_Store
+# Your own installations (config, compose, preview scripts); see CLAUDE.md rule 11.
+/deploy/

@@ -18,12 +18,19 @@ const url = `http://127.0.0.1:${server.address().port}/`;
 
 // Stable widget data, so the screenshots do not depend on the network or this machine.
 const byType = {};
-for (const g of app.layout.groups) for (const s of g.services) for (const w of [s.status, ...s.widgets]) if (w) byType[w.instanceId] = w.type;
+for (const g of app.layout.groups) for (const s of g.services) for (const w of [...s.statuses, ...s.widgets]) byType[w.instanceId] = w.type;
 for (const w of app.layout.header) byType[w.instanceId] = w.type;
 const fake = {
   'http-status': { status: 'up', latency: 18, blocks: [{ label: 'status', value: 200, status: 'ok' }] },
   ping: { status: 'up', latency: 2.4, blocks: [] },
-  resources: { blocks: [{ label: 'cpu', value: 7.5, unit: '%', status: 'ok' }, { label: 'memory', value: 41.2, unit: '%', status: 'ok' }, { label: 'disk', value: 63, unit: '%', status: 'ok' }] },
+  resources: {
+    blocks: [],
+    meters: [
+      { kind: 'cpu', text: '8%', caption: 'cpu', percent: 8 },
+      { kind: 'memory', text: '9.4 GB', caption: 'free', percent: 41 },
+      { kind: 'disk', text: '1.2 TB', caption: 'free', percent: 63 },
+    ],
+  },
   'custom-api': { blocks: [{ label: 'Version', value: '0.1.0' }, { label: 'Healthy', value: 'true' }] },
 };
 

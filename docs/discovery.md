@@ -24,8 +24,12 @@ labels:
   homelab.widget.headers.Authorization: "Bearer {{HD_VAR_GRAFANA}}"    # dots make nested maps
 ```
 
-Without `siteMonitor` or `ping`, a discovered container gets the Docker container state as its
-status dot.
+A discovered container always gets its Docker state as a status label, next to `siteMonitor`
+or `ping` when those are set.
+
+**Coming from homepage?** Containers labelled for homepage (`homepage.group` + `homepage.name`,
+`homepage.widget.*`, ...) are discovered as they are, and `{{HOMEPAGE_VAR_*}}` in their
+labels is filled in from the environment. `homelab.*` labels win when a container has both.
 
 **Access.** Only `GET /containers/json` and `GET /containers/<name>/json|stats` are used.
 Recommended: [docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy) with only
@@ -68,3 +72,5 @@ metadata:
     homelab.dev/widget.type: http-status
     homelab.dev/widget.url: http://grafana.monitoring:3000/api/health
 ```
+
+homepage's `gethomepage.dev/*` annotations work as well.

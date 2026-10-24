@@ -19,6 +19,8 @@ export const DEFAULT_SETTINGS = {
   theme: 'auto', // auto | dark | light
   color: 'slate',
   target: '_blank',
+  showTitle: true,
+  headerStyle: 'boxed', // boxed | clean
   layout: {},
   plugins: [],
   discovery: { interval: '30s' },
@@ -108,6 +110,11 @@ export function normalizeSettings(raw, ctx) {
     ctx.warn(file, 'theme', `unknown theme "${settings.theme}", using auto`);
     settings.theme = 'auto';
   }
+  if (!['boxed', 'clean'].includes(settings.headerStyle)) {
+    ctx.warn(file, 'headerStyle', `unknown headerStyle "${settings.headerStyle}", using boxed`);
+    settings.headerStyle = 'boxed';
+  }
+  settings.showTitle = settings.showTitle !== false;
   if (!isPlainObject(settings.layout)) {
     ctx.error(file, 'layout', 'expected a map of group name to layout');
     settings.layout = {};

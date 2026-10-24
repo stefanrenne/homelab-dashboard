@@ -20,7 +20,9 @@ skipped and the rest keeps working.
 
 Any value can contain `{{HD_VAR_NAME}}` (the environment variable `HD_VAR_NAME`) or
 `{{HD_FILE_NAME}}` (the contents of the file whose path is in `HD_FILE_NAME`, e.g. a Docker
-secret). Substituted values are treated as secrets: they never reach the browser.
+secret). homepage's `{{HOMEPAGE_VAR_*}}` and `{{HOMEPAGE_FILE_*}}` work the same, so an
+existing homepage environment can be reused. Substituted values are treated as secrets: they
+never reach the browser.
 
 ## settings.yaml
 
@@ -28,12 +30,18 @@ secret). Substituted values are treated as secrets: they never reach the browser
 title: Homelab
 language: en        # en, nl, fr, de, es
 theme: auto         # auto, dark, light
-color: slate        # slate, blue, sky, emerald, green, violet, purple, rose, red, amber, orange, teal, zinc
+color: slate        # a Tailwind colour: slate, gray, zinc, neutral, stone, red, orange, amber, yellow, lime,
+                    # green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose
+showTitle: true     # false: the title is only the browser tab title (as in homepage)
+headerStyle: boxed  # boxed or clean
 target: _blank      # default link target of services
 background: https://example.com/wallpaper.jpg   # optional
 layout:
   Media:
-    columns: 3      # cards per row for this group (the group then spans the full width)
+    columns: 3      # cards per row (2 on tablets, 1 on phones); the group spans the full width
+    header: false   # hide the group title
+  Tools:
+    style: column   # default without columns: groups side by side, cards stacked
 discovery:
   interval: 30s
 plugins:
@@ -42,7 +50,15 @@ plugins:
   - source: git+https://github.com/someone/widgets#v3.0.0
     subdir: widgets/z                                           # a repo with several widgets
   - path: ./my-widgets/w                                        # relative to the config folder
+  - source: git+https://github.com/someone/widgets#v1.0.0      # a collection: every widget in it,
+    only: [radarr, sonarr]                                      # or only these folders
 ```
+
+A source without `widget.yaml` at its root is a **collection**: every folder with a
+`widget.yaml` directly in it, or in its `widgets/` folder, is installed.
+
+Viewers can switch dark/light and pick another colour with the buttons in the footer; that choice
+is remembered in their browser and overrides `theme` and `color`.
 
 ## services.yaml
 
@@ -52,7 +68,8 @@ plugins:
         href: http://app.lan          # link of the card
         icon: app.svg                 # dashboard-icons name (.svg/.png/.webp), /icons/..., or a URL
         description: One line
-        target: _self                 # overrides settings.target
+        target: _self                 # overrides settings.target; hidden-iframe calls the URL
+                                      # in the background (a webhook) without leaving the page
         # status check, the first one that is set:
         siteMonitor: http://app.lan   # HTTP check (http-status widget)
         ping: app.lan                 # ICMP ping (ping widget)
@@ -66,7 +83,17 @@ plugins:
         widgets:                      # or several
           - type: ping
             host: app.lan
+            refreshInterval: 5000     # dashboard keys, for every widget: refreshInterval (ms) or
+            fields: [latency]         # refresh (5s), fields (which blocks), hide_errors
 ```
+
+Every check that is set gets its own label in the card's top-right corner, as in homepage:
+the response time (or "down") for `siteMonitor` and `ping`, the container state for `container`.
+Click a container label to see the container's CPU and memory. `ping` also accepts a URL
+(`ping: http://192.168.1.2`).
+
+Icons: a dashboard-icons name with or without extension (`plex`, `plex.svg`), `si-<name>`
+for Simple Icons, `/icons/<file>` from the config folder, or any URL.
 
 ## widgets.yaml
 
@@ -118,11 +145,15 @@ mode: cluster   # or disabled (default)
 |---|---|
 | `datetime` | `locale`, `dateStyle`, `timeStyle` |
 | `search` | `provider`, `url`, `target` |
-| `resources` | `cpu`, `memory`, `disk` (list of mount points) |
+| `resources` | `cpu`, `memory` (both off by default), `disk` (list of mount points), `label` |
 | `http-status` | `url` (required), `method` (`HEAD`/`GET`) |
-| `ping` | `host` (required) |
+| `ping` | `host` (required; a name, IP or URL) |
 | `docker` | `container` (required), `socket` or `url` |
-| `custom-api` | `url` (required), `method`, `headers` (secret), `mappings` (required: `field`, `label`, `unit`, `scale`) |
+| `custom-api` | `url` (required), `method`, `headers` (secret), `body`, `display` (`block`/`list`), `mappings` (required: `field`, `label`, `format` (`number`/`percent`/`bytes`/`text`), `scale`, `prefix`, `suffix`, `remap: [{ value, to }, { any: true, to }]`) |
+
+Widgets for radarr, sonarr, bazarr, prowlarr, sabnzbd, seerr, stash, tautulli, tdarr, What's
+up Docker, Portainer and Unraid are in the separate
+[homelab-dashboard-widgets](../../homelab-dashboard-widgets) collection.
 
 ## Migration
 

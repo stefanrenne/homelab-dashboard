@@ -152,3 +152,47 @@ test('the widget template works end to end through the runtime', async () => {
     await srv.close();
   }
 });
+
+/** A collection repo: widgets/a and widgets/b, both copies of the template with their own id. */
+function collectionRepo() {
+  const repo = path.join(tmpDir('hd-coll-'), 'my-widgets');
+  for (const id of ['alpha', 'beta']) {
+    const dir = path.join(repo, 'widgets', id);
+    fs.cpSync(TEMPLATE, dir, { recursive: true });
+    const yaml = fs.readFileSync(path.join(dir, 'widget.yaml'), 'utf8').replace('id: example-counter', `id: ${id}`);
+    fs.writeFileSync(path.join(dir, 'widget.yaml'), yaml);
+  }
+  return repo;
+}
+
+test('a path to a collection installs every widget in it, or the ones in only', async () => {
+  const repo = collectionRepo();
+  const all = await syncPlugins({ configDir: tmpDir(), entries: [{ path: repo }], log: silentLog });
+  assert.deepEqual(all.errors, []);
+  assert.deepEqual(all.installed.map((i) => path.basename(i.dir)), ['alpha', 'beta']);
+  const some = await syncPlugins({ configDir: tmpDir(), entries: [{ path: repo, only: ['beta', 'gamma'] }], log: silentLog });
+  assert.deepEqual(some.installed.map((i) => path.basename(i.dir)), ['beta']);
+  assert.match(some.warnings[0].message, /no widget folder "gamma"/);
+});
+
+test('a git collection is installed once and locked as <repo>@<commit>', async () => {
+  const repo = collectionRepo();
+  const git = (...args) => execFileSync('git', ['-C', repo, ...args], { stdio: 'pipe' });
+  git('init', '-q', '-b', 'main');
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'add', '.');
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'c');
+  git('tag', 'v0.1.0');
+  const configDir = tmpDir();
+  const entries = [{ source: `git+file://${repo}#v0.1.0` }];
+  const out = await syncPlugins({ configDir, entries, log: silentLog });
+  assert.deepEqual(out.errors, []);
+  assert.deepEqual(out.installed.map((i) => path.basename(i.dir)), ['alpha', 'beta']);
+  const record = Object.values(readLock(configDir))[0];
+  assert.match(record.dir, /^my-widgets@[0-9a-f]{12}$/);
+  const again = await syncPlugins({ configDir, entries, log: silentLog });
+  assert.equal(again.installed.length, 2);
+});
+
+test('only must be a list of names', () => {
+  assert.throws(() => parseSource({ path: 'x', only: 'radarr' }), /only: expected a list/);
+});

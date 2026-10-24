@@ -32,7 +32,7 @@ export default {
     };
     const name = encodeURIComponent(container);
     const info = await get(`/containers/${name}/json`);
-    if (!info) return { status: 'down', blocks: [{ label: 'status', value: 'not found', status: 'error' }] };
+    if (!info) return { status: 'down', statusText: 'not found', blocks: [{ label: 'status', value: 'not found', status: 'error' }] };
     const state = info.State?.Status ?? 'unknown';
     const health = info.State?.Health?.Status;
     const blocks = [{ label: 'status', value: health ? `${state} (${health})` : state }];
@@ -46,6 +46,6 @@ export default {
       }
     }
     blocks[0].status = status === 'up' ? 'ok' : status === 'warn' ? 'warn' : 'error';
-    return { status, blocks };
+    return { status, statusText: health ?? state, blocks };
   },
 };

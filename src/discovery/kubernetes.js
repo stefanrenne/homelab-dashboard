@@ -7,6 +7,7 @@ import { serviceFromLabels } from './labels.js';
 
 export const K8S_SA_DIR = '/var/run/secrets/kubernetes.io/serviceaccount';
 export const ANNOTATION_PREFIX = 'homelab.dev/';
+export const HOMEPAGE_PREFIX = 'gethomepage.dev/';
 
 export function k8sApiUrl(env = process.env) {
   const host = env.KUBERNETES_SERVICE_HOST;
@@ -41,9 +42,10 @@ export function servicesFromIngresses(list) {
   const out = [];
   for (const ing of list.items ?? []) {
     const ann = ing.metadata?.annotations ?? {};
-    if (ann[ANNOTATION_PREFIX + 'enabled'] !== 'true') continue;
-    const labels = { [ANNOTATION_PREFIX + 'name']: ing.metadata.name, ...ann };
-    const svc = serviceFromLabels(labels, ANNOTATION_PREFIX);
+    const prefix = [ANNOTATION_PREFIX, HOMEPAGE_PREFIX].find((p) => ann[p + 'enabled'] === 'true');
+    if (!prefix) continue;
+    const labels = { [prefix + 'name']: ing.metadata.name, ...ann };
+    const svc = serviceFromLabels(labels, prefix);
     svc.group ??= ing.metadata.namespace ?? 'Kubernetes';
     if (!svc.def.href) {
       const rule = ing.spec?.rules?.find((r) => r.host);

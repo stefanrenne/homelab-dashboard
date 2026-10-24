@@ -3,11 +3,14 @@
 import { discoverDocker } from './docker.js';
 import { discoverKubernetes } from './kubernetes.js';
 import { normalizeService } from '../config/load.js';
+import { substitute } from '../config/vars.js';
 import { parseDuration } from '../util.js';
 
 export class Discovery {
-  constructor({ log = console, onChange = () => {}, docker = discoverDocker, kubernetes = discoverKubernetes } = {}) {
+  constructor({ log = console, onChange = () => {}, docker = discoverDocker, kubernetes = discoverKubernetes, env = process.env } = {}) {
     this.log = log;
+    this.env = env;
+    this.secrets = new Set();
     this.onChange = onChange;
     this.sources = { docker, kubernetes };
     this.found = [];
@@ -46,8 +49,16 @@ export class Discovery {
         errors.push({ file: 'kubernetes.yaml', path: 'mode', message: `discovery: ${err.message}` });
       }
     }
+    // Labels may use {{HD_VAR_*}} / {{HOMEPAGE_VAR_*}} too; those values are secrets (hard rule 1).
+    const secrets = new Set();
+    for (const svc of found) {
+      const sub = substitute(svc.def, { env: this.env });
+      svc.def = sub.value;
+      for (const s of sub.secrets) secrets.add(s);
+    }
     this.found = found;
     this.errors = errors;
+    this.secrets = secrets;
     const signature = JSON.stringify([found, errors]);
     if (signature !== this.signature) {
       this.signature = signature;

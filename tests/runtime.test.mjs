@@ -111,3 +111,10 @@ test('ctx.fetch resolves relative URLs against the url option', async () => {
     await srv.close();
   }
 });
+
+test('result: rows, statusText and block keys are validated', () => {
+  assert.doesNotThrow(() => checkData({ statusText: 'healthy', rows: [{ label: 'a', value: 'b', progress: 40 }], blocks: [{ key: 'k', label: 'l', value: 1 }] }));
+  assert.throws(() => checkData({ rows: [{ value: 1 }] }), /rows\[0\]: needs a "label"/);
+  assert.throws(() => checkData({ rows: [{ label: 'x', progress: 140 }] }), /progress must be 0-100/);
+  assert.throws(() => checkData({ statusText: 3 }), /statusText must be text/);
+});

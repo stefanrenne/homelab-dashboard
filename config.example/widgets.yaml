@@ -3,6 +3,7 @@
     dateStyle: full
     timeStyle: short
 - resources:
+    label: System
     cpu: true
     memory: true
     disk: ["/"]

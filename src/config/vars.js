@@ -2,6 +2,7 @@
 //
 // HD_VAR_NAME  -> the value of the environment variable HD_VAR_NAME
 // HD_FILE_NAME -> the trimmed contents of the file whose path is in HD_FILE_NAME
+// HOMEPAGE_VAR_* and HOMEPAGE_FILE_* work the same, so a homepage config can be reused.
 //
 // Every substituted value is recorded in `secrets`, so the layout builder can keep
 // them out of anything sent to the browser (hard rule 1).
@@ -9,7 +10,7 @@
 import fs from 'node:fs';
 import { isPlainObject } from '../util.js';
 
-const PLACEHOLDER = /\{\{\s*(HD_(?:VAR|FILE)_[A-Z0-9_]+)\s*\}\}/g;
+const PLACEHOLDER = /\{\{\s*((?:HD|HOMEPAGE)_(?:VAR|FILE)_[A-Z0-9_]+)\s*\}\}/g;
 
 export function substitute(value, { env = process.env, readFile = (p) => fs.readFileSync(p, 'utf8') } = {}) {
   const secrets = new Set();
@@ -23,7 +24,7 @@ export function substitute(value, { env = process.env, readFile = (p) => fs.read
         return whole;
       }
       let out = raw;
-      if (name.startsWith('HD_FILE_')) {
+      if (/^(HD|HOMEPAGE)_FILE_/.test(name)) {
         try {
           out = readFile(raw).trim();
         } catch (err) {

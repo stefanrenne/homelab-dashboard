@@ -78,14 +78,69 @@ test('status checks come from siteMonitor, ping and container', async () => {
     - B: { ping: b.lan }
     - C: { container: c }
     - D: { href: "http://d.lan" }
+    - E: { siteMonitor: "http://e.lan", container: e }
 `,
   });
   try {
     const services = t.app.layout.groups[0].services;
-    assert.deepEqual(services.map((s) => s.status?.type ?? null), ['http-status', 'ping', 'docker', null]);
-    assert.deepEqual(services[2].status.options, { container: 'c', socket: '/tmp/none.sock' });
+    assert.deepEqual(services.map((s) => s.statuses.map((x) => `${x.kind}:${x.type}`)), [
+      ['siteMonitor:http-status'], ['ping:ping'], ['container:docker'], [], ['siteMonitor:http-status', 'container:docker'],
+    ]);
+    assert.deepEqual(services[2].statuses[0].options, { container: 'c', socket: '/tmp/none.sock' });
   } finally {
     await t.close();
+  }
+});
+
+test('refreshInterval, fields and hide_errors belong to the dashboard, not the widget', async () => {
+  const upstream = await serve((req, res) => res.end(JSON.stringify({ a: 1, b: 2, c: 3 })));
+  const t = await startApp({
+    'services.yaml': `
+- G:
+    - S:
+        widget:
+          type: custom-api
+          url: ${upstream.url}/
+          refreshInterval: 5000
+          hide_errors: true
+          fields: [A, C]
+          mappings: [{ field: a, label: A }, { field: b, label: B }, { field: c, label: C }]
+    - T:
+        widget: { type: ping, host: x.lan, refresh: 1ms }
+`,
+  });
+  try {
+    const [s, tt] = t.app.layout.groups[0].services;
+    assert.equal(s.widgets[0].refreshMs, 5000);
+    assert.equal(s.widgets[0].hideErrors, true);
+    assert.equal('fields' in s.widgets[0].options, false);
+    assert.equal(tt.widgets[0].refreshMs, 1000, 'clamped to the minimum');
+    const data = await t.json(`/api/widgets/${s.widgets[0].instanceId}`);
+    assert.deepEqual(data.data.blocks.map((b) => b.label), ['A', 'C']);
+  } finally {
+    await t.close();
+    await upstream.close();
+  }
+});
+
+test('secrets from discovered labels stay out of the layout', async () => {
+  const configDir = tmpDir('hd-app-');
+  fs.writeFileSync(path.join(configDir, 'docker.yaml'), 'local:\n  socket: /tmp/x.sock\n');
+  const app = await createApp({
+    configDir,
+    env: { HOMEPAGE_VAR_KEY: SECRET },
+    log: silentLog,
+    discovery: {
+      docker: async () => [{ group: 'G', name: 'S', weight: 0,
+        def: { href: 'http://s.lan', widget: { type: 'custom-api', url: 'http://s.lan/', mappings: [{ field: 'a' }], extra: '{{HOMEPAGE_VAR_KEY}}' } } }],
+    },
+  });
+  try {
+    const raw = JSON.stringify(app.layout);
+    assert.equal(raw.includes(SECRET), false);
+    assert.equal(app.layout.groups[0].services[0].name, 'S');
+  } finally {
+    app.close();
   }
 });
 

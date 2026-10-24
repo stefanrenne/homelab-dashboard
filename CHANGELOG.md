@@ -47,6 +47,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Twelve more languages, homepage's set: Catalan, Hebrew (right to left), Croatian, Hungarian,
   Italian, Norwegian Bokmål, Portuguese, Russian, Swedish, Vietnamese and Chinese (simplified and
   traditional; `zh-CN` works too). Widgets of the collection fall back to English until translated.
+- `logpath` and `LOG_TARGETS`: a rotated log file (10 MiB, five files), as in homepage. Without
+  `logpath` the log stays on stdout only.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

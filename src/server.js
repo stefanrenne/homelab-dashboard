@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // Entry point: `node src/server.js [--config <dir>] [--port <n>] [--host <addr>]`.
-// Environment: HD_CONFIG_DIR, PORT, HOST.
+// Environment: HD_CONFIG_DIR, PORT, HOST, LOG_TARGETS (both, stdout or file; see src/log.js).
 
 import http from 'node:http';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { createApp, VERSION } from './app.js';
+import { createLogger } from './log.js';
 
 const { values } = parseArgs({
   options: {
@@ -16,11 +17,7 @@ const { values } = parseArgs({
 });
 
 const configDir = path.resolve(values.config);
-const log = {
-  info: (...a) => console.log(new Date().toISOString(), 'INFO', ...a),
-  warn: (...a) => console.warn(new Date().toISOString(), 'WARN', ...a),
-  error: (...a) => console.error(new Date().toISOString(), 'ERROR', ...a),
-};
+const log = createLogger(); // stdout, and a file when settings.yaml has logpath
 
 const app = await createApp({ configDir, log, watch: true });
 const server = http.createServer(app.handler);

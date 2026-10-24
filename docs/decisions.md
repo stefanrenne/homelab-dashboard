@@ -44,6 +44,11 @@ and every call has a timeout. Workers are on the to-do list for resource isolati
 The status dot and widgets then share one runtime, cache and error handling, and a third-party
 widget can serve as a status check by returning `status`.
 
+## A log file only with logpath (2026-10-24)
+homepage writes a log file into the config folder by default. Hard rule 5 keeps the app out of
+the user's files, so here the log goes to stdout (docker logs) unless `logpath` asks for a file;
+then the rotation is homepage's (10 MiB, five files) and `LOG_TARGETS` works the same.
+
 ## The version is hidden unless asked for (2026-10-24)
 homepage shows its version and checks GitHub for updates by default. The HIG audit took the
 version out of the footer (it is noise for the people using the page), so here `hideVersion:

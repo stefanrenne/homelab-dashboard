@@ -98,6 +98,7 @@ export async function createApp({
   function reload({ update = false } = {}) {
     chain = chain.then(async () => {
       const config = loadConfig(configDir, { env });
+      log.setLogPath?.(config.settings.logpath ? path.resolve(configDir, config.settings.logpath) : null);
       config.docker = withMountedSocket(config.docker, dockerSocket);
       const entries = withDefaultPlugins(config.settings.plugins, defaultPlugins);
       const pluginResult = await syncPlugins({ configDir, entries, update, log });

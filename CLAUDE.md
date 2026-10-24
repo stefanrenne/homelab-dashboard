@@ -63,7 +63,8 @@ the image and smoke-tests it.
    ends up on the widget's card. The same holds for broken packages, unknown types and bad options:
    they become messages, never exceptions.
 5. **The user's files are never written.** The app only writes under `<config>/plugins/`
-   (downloaded packages and `plugins.lock.yaml`).
+   (downloaded packages and `plugins.lock.yaml`), and a log file under `logpath` when the user
+   sets one (`src/log.js`).
 6. **Config files are a contract** with existing installations. Change them in a
    backward-compatible way only. When a key is renamed, the old one keeps working with a warning.
    Describe it under "Migration" in `docs/configuration.md`, and add a test with config in the old form.

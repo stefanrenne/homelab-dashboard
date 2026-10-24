@@ -15,7 +15,6 @@ Already there: title, theme, color, language (5 of homepage's ±40), target, bac
 headerStyle, showTitle, layout per group (columns, row/column style, header, initiallyCollapsed),
 hideErrors, status labels, container stats on click, search widget, bookmarks.
 
-- [ ] `logpath`: a log file with rotation (10 MiB, five files), `LOG_TARGETS` (both, stdout, file)
 - [ ] Search suggestions (`showSearchSuggestions`, `suggestionUrl`) for the search widget and quick launch, through the server because of the CSP
 - [ ] Resources widget: `expanded`, per-disk labels, `units`, `refresh`, `uptime`, `cputemp`, `network`
 

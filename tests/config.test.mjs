@@ -205,3 +205,17 @@ test('!include works in the other files too, and a whole file can be one include
   assert.equal(cfg.bookmarks[0].bookmarks[0].href, 'https://github.com');
   assert.equal(cfg.widgets[0].options.dateStyle, 'full');
 });
+
+test('background: a URL as before, or homepage\'s map with filters; cardBlur in pixels', () => {
+  assert.deepEqual(loadConfig(configDir({ 'settings.yaml': 'background: https://example.com/a.jpg\n' })).settings.background, { image: 'https://example.com/a.jpg' });
+  const cfg = loadConfig(configDir({ 'settings.yaml': [
+    'background:', '  image: /icons/wall.jpg', '  blur: sm', '  saturate: 50', '  brightness: 250', '  opacity: 40', 'cardBlur: xl', '',
+  ].join('\n') }));
+  assert.deepEqual(cfg.settings.background, { image: '/icons/wall.jpg', blur: 8, saturate: 50, opacity: 40 });
+  assert.equal(cfg.settings.cardBlur, 24);
+  assert.deepEqual(cfg.warnings.map((w) => w.path), ['background.brightness']);
+  const bad = loadConfig(configDir({ 'settings.yaml': 'background: { blur: sm }\ncardBlur: huge\n' }));
+  assert.equal(bad.settings.background, null);
+  assert.equal(bad.settings.cardBlur, null);
+  assert.deepEqual(bad.warnings.map((w) => w.path).sort(), ['background', 'cardBlur']);
+});

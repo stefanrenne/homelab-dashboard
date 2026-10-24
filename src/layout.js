@@ -166,6 +166,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       theme: config.settings.theme,
       color: config.settings.color,
       background: config.settings.background ?? null,
+      cardBlur: config.settings.cardBlur ?? null,
       showTitle: config.settings.showTitle,
       headerStyle: config.settings.headerStyle,
     },

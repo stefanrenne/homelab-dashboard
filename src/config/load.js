@@ -125,6 +125,8 @@ export function normalizeSettings(raw, ctx) {
     } else settings[key] = settings[key].trim();
   }
   settings.pwa = normalizePwa(settings.pwa, file, ctx);
+  settings.background = normalizeBackground(settings.background, file, ctx);
+  settings.cardBlur = blurPx(settings.cardBlur, file, 'cardBlur', ctx);
   if (!isPlainObject(settings.layout)) {
     ctx.error(file, 'layout', 'expected a map of group name to layout');
     settings.layout = {};
@@ -139,6 +141,39 @@ export function normalizeSettings(raw, ctx) {
     return false;
   });
   return settings;
+}
+
+// homepage's blur sizes (Tailwind's scale) in pixels; '' is Tailwind's plain `blur`.
+export const BLUR_PX = { none: 0, xs: 4, sm: 8, '': 8, md: 12, lg: 16, xl: 24, '2xl': 40, '3xl': 64 };
+
+function blurPx(value, file, p, ctx) {
+  if (value === undefined || value === null) return null;
+  const px = BLUR_PX[String(value)];
+  if (px === undefined) {
+    ctx.warn(file, p, `unknown blur "${value}" (${Object.keys(BLUR_PX).filter(Boolean).join(', ')}), ignored`);
+    return null;
+  }
+  return px;
+}
+
+/** `background: <url>` or homepage's `{ image, blur, saturate, brightness, opacity }`. */
+function normalizeBackground(raw, file, ctx) {
+  if (raw === undefined || raw === null || raw === '') return null;
+  if (typeof raw === 'string') return { image: raw };
+  if (!isPlainObject(raw) || typeof raw.image !== 'string') {
+    ctx.warn(file, 'background', 'expected an image URL, or a map with image, blur, saturate, brightness, opacity; ignored');
+    return null;
+  }
+  const background = { image: raw.image };
+  const blur = blurPx(raw.blur, file, 'background.blur', ctx);
+  if (blur !== null) background.blur = blur;
+  for (const [key, max] of [['saturate', 200], ['brightness', 200], ['opacity', 100]]) {
+    if (raw[key] === undefined || raw[key] === null) continue;
+    const n = Number(raw[key]);
+    if (!Number.isFinite(n) || n < 0 || n > max) ctx.warn(file, `background.${key}`, `expected a number from 0 to ${max}, ignored`);
+    else background[key] = n;
+  }
+  return background;
 }
 
 /** homepage's `pwa:`: `icons` [{ src, type, sizes }] and `shortcuts` [{ name, url, description }]. */

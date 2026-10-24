@@ -99,7 +99,14 @@ color: slate        # a Tailwind colour: slate, gray, zinc, neutral, stone, red,
 showTitle: true     # false: the title is only the browser tab title (as in homepage)
 headerStyle: boxed  # boxed or clean
 target: _blank      # default link target of services
-background: https://example.com/wallpaper.jpg   # optional
+background: https://example.com/wallpaper.jpg   # optional; or a map, as in homepage:
+# background:
+#   image: https://example.com/wallpaper.jpg
+#   blur: sm          # xs, sm, md, lg, xl, 2xl, 3xl
+#   saturate: 50      # 0-200 (%)
+#   brightness: 75    # 0-200 (%)
+#   opacity: 50       # 0-100 (%)
+cardBlur: md        # frosted cards over the background: xs, sm, md, lg, xl, 2xl, 3xl
 layout:
   Media:
     columns: 3      # cards per row (2 on tablets, 1 on phones); the group spans the full width

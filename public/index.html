@@ -63,10 +63,14 @@
     letter-spacing: .1px;
     color: var(--hd-text);
     background-color: var(--hd-bg);
-    background-attachment: fixed;
-    background-size: cover;
-    background-position: center;
   }
+  /* settings.background: the image on its own layer, so blur and brightness leave the text alone */
+  #bg { position: fixed; inset: 0; z-index: -1; background-size: cover; background-position: center; pointer-events: none; }
+  #bg::after { content: ""; position: absolute; inset: 0;
+    background: linear-gradient(color-mix(in srgb, var(--hd-bg) 60%, transparent), color-mix(in srgb, var(--hd-bg) 85%, transparent)); }
+  #bg[hidden] { display: none; }
+  /* settings.cardBlur */
+  .card-blur .card, .card-blur header.info.boxed { backdrop-filter: blur(var(--hd-card-blur)); -webkit-backdrop-filter: blur(var(--hd-card-blur)); }
   button { font: inherit; color: inherit; }
   .wrap { max-width: 1280px; margin: 0 auto;
     padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
@@ -213,6 +217,7 @@
 </style>
 </head>
 <body>
+<div id="bg" aria-hidden="true" hidden></div>
 <div class="wrap">
   <h1 class="title" id="title" hidden></h1>
   <header class="info" id="header-widgets"></header>
@@ -785,6 +790,22 @@ function renderService(service) {
   return card;
 }
 
+/** settings.background ({ image, blur, saturate, brightness, opacity }) and settings.cardBlur. */
+function applyBackground(s) {
+  const bg = document.getElementById('bg');
+  const b = s.background;
+  bg.hidden = !b;
+  bg.style.backgroundImage = b ? `url("${encodeURI(b.image)}")` : '';
+  const filters = [];
+  if (b?.blur) filters.push(`blur(${b.blur}px)`);
+  if (b?.saturate !== undefined) filters.push(`saturate(${b.saturate}%)`);
+  if (b?.brightness !== undefined) filters.push(`brightness(${b.brightness}%)`);
+  bg.style.filter = filters.join(' ');
+  bg.style.opacity = b?.opacity !== undefined ? String(b.opacity / 100) : '';
+  document.body.classList.toggle('card-blur', Boolean(s.cardBlur));
+  document.body.style.setProperty('--hd-card-blur', s.cardBlur ? `${s.cardBlur}px` : '');
+}
+
 function render(data) {
   stopPolling();
   layout = data;
@@ -793,9 +814,7 @@ function render(data) {
   document.documentElement.lang = s.language || 'en';
   document.title = s.title;
   applyTheme(s);
-  document.body.style.backgroundImage = s.background
-    ? `linear-gradient(color-mix(in srgb, var(--hd-bg) 60%, transparent), color-mix(in srgb, var(--hd-bg) 85%, transparent)), url("${encodeURI(s.background)}")`
-    : '';
+  applyBackground(s);
   const title = document.getElementById('title');
   title.textContent = s.title;
   title.hidden = false;

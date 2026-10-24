@@ -294,3 +294,21 @@ test('a row opens to show its full text', async () => {
   assert.equal(row.classList.contains('expanded'), false);
   w.close();
 });
+
+test('background image with filters on its own layer, and card blur', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.settings.background = { image: 'https://example.com/wall paper.jpg', blur: 8, saturate: 50, brightness: 75, opacity: 40 };
+  layout.settings.cardBlur = 12;
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const bg = w.document.getElementById('bg');
+  assert.equal(bg.hidden, false);
+  assert.equal(bg.style.backgroundImage, 'url("https://example.com/wall%20paper.jpg")');
+  assert.equal(bg.style.filter, 'blur(8px) saturate(50%) brightness(75%)');
+  assert.equal(bg.style.opacity, '0.4');
+  assert.ok(w.document.body.classList.contains('card-blur'));
+  assert.equal(w.document.body.style.getPropertyValue('--hd-card-blur'), '12px');
+
+  const plain = await page();
+  assert.equal(plain.document.getElementById('bg').hidden, true);
+  assert.ok(!plain.document.body.classList.contains('card-blur'));
+});

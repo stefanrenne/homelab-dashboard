@@ -112,9 +112,15 @@ export function normalizeSettings(raw, ctx) {
     ctx.warn(file, 'theme', `unknown theme "${settings.theme}", using auto`);
     settings.theme = 'auto';
   }
-  if (!['boxed', 'clean'].includes(settings.headerStyle)) {
-    ctx.warn(file, 'headerStyle', `unknown headerStyle "${settings.headerStyle}", using boxed`);
+  if (!['boxed', 'clean', 'underlined', 'boxedWidgets'].includes(settings.headerStyle)) {
+    ctx.warn(file, 'headerStyle', `unknown headerStyle "${settings.headerStyle}" (boxed, clean, underlined, boxedWidgets), using boxed`);
     settings.headerStyle = 'boxed';
+  }
+  for (const [key, values] of [['cardStyle', ['hairline']], ['blockStyle', ['refined']], ['font', ['plex', 'plexData']]]) {
+    if (settings[key] !== undefined && !values.includes(settings[key])) {
+      ctx.warn(file, key, `expected ${values.join(' or ')} (or leave it out), ignored`);
+      delete settings[key];
+    }
   }
   settings.showTitle = settings.showTitle !== false;
   for (const key of ['description', 'favicon', 'startUrl']) {

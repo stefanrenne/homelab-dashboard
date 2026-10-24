@@ -118,6 +118,16 @@
   .group.collapsed .group-toggle svg { transform: rotate(-90deg); }
   .group.collapsed .cards { display: none; }
   #groups.searching .group.collapsed .cards { display: grid; } /* search looks inside folded groups */
+  /* settings: headerStyle underlined / boxedWidgets, cardStyle hairline, blockStyle refined, font plex / plexData */
+  header.info.underlined { padding-bottom: 12px; border-bottom: 1px solid color-mix(in srgb, var(--hd-text) 20%, transparent); }
+  header.info.boxed-widgets .hw { background: var(--hd-card); border-radius: 6px; padding: 12px; border: 1px solid var(--hd-card-border, transparent); }
+  .card-hairline .card, .card-hairline .bm, .card-hairline header.info.boxed, .card-hairline header.info.boxed-widgets .hw {
+    box-shadow: none; border: 1px solid color-mix(in srgb, var(--hd-text) 14%, transparent); }
+  .card-hairline .card:hover, .card-hairline .bm:hover { border-color: color-mix(in srgb, var(--hd-text) 32%, transparent); }
+  .block-refined .block .v { font-size: 1rem; line-height: 1.5rem; font-weight: 700; }
+  .font-plex, .font-plex button { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; }
+  .font-plex-data .block .v, .font-plex-data .rv, .font-plex-data .tag, .font-plex-data .hw-datetime, .font-plex-data .hw-resources {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; }
   /* settings: fullWidth, maxGroupColumns / maxBookmarkGroupColumns, useEqualHeights */
   .full-width .wrap { max-width: none; }
   @media (min-width: 1536px) {
@@ -894,6 +904,14 @@ function applyBackground(s) {
   document.body.classList.toggle('card-blur', Boolean(s.cardBlur));
   document.body.classList.toggle('icon-style-theme', s.iconStyle === 'theme');
   document.body.classList.toggle('full-width', s.fullWidth === true);
+  document.body.classList.toggle('card-hairline', s.cardStyle === 'hairline');
+  document.body.classList.toggle('block-refined', s.blockStyle === 'refined');
+  document.body.classList.toggle('font-plex', s.font === 'plex');
+  document.body.classList.toggle('font-plex-data', s.font === 'plexData');
+  if (s.font && !document.getElementById('font-plex')) {
+    document.head.append(el('link', { id: 'font-plex', rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap' }));
+  }
   document.body.classList.toggle('max-group-cols', Boolean(s.maxGroupColumns));
   document.body.style.setProperty('--max-group-cols', s.maxGroupColumns || '');
   document.body.classList.toggle('max-bookmark-cols', Boolean(s.maxBookmarkGroupColumns));
@@ -958,7 +976,7 @@ function render(data) {
   title.classList.toggle('sr-only', s.showTitle === false); // a page keeps its h1 for screen readers
 
   const header = document.getElementById('header-widgets');
-  header.className = 'info' + (s.headerStyle === 'clean' ? '' : ' boxed shadow');
+  header.className = 'info' + ({ clean: '', underlined: ' underlined', boxedWidgets: ' boxed-widgets' }[s.headerStyle] ?? ' boxed shadow');
   header.replaceChildren(...data.header.map((w) => mountWidget(w, 'hw hw-' + w.type)));
 
   renderMessages(data.messages);

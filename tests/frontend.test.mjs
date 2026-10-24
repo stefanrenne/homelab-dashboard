@@ -438,3 +438,20 @@ test('a bookmark group listed between service groups in the layout block is show
   assert.ok(doc.querySelector('#groups .bookmark-group .bm'), 'the bookmark group keeps its look');
   assert.equal(doc.querySelectorAll('#bookmarks .group').length, 0);
 });
+
+test('headerStyle underlined/boxedWidgets, cardStyle hairline, blockStyle refined, font plex/plexData', async () => {
+  const layout = structuredClone(LAYOUT);
+  Object.assign(layout.settings, { headerStyle: 'underlined', cardStyle: 'hairline', blockStyle: 'refined', font: 'plexData' });
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const doc = w.document;
+  assert.equal(doc.getElementById('header-widgets').className, 'info underlined');
+  for (const cls of ['card-hairline', 'block-refined', 'font-plex-data']) assert.ok(doc.body.classList.contains(cls), cls);
+  assert.ok(!doc.body.classList.contains('font-plex'));
+  assert.match(doc.getElementById('font-plex').getAttribute('href'), /^https:\/\/fonts\.googleapis\.com\/css2\?family=IBM\+Plex\+Mono/);
+
+  layout.settings.headerStyle = 'boxedWidgets';
+  layout.settings.font = null;
+  const b = await page({ ...RESULTS, '/api/layout': layout });
+  assert.equal(b.document.getElementById('header-widgets').className, 'info boxed-widgets');
+  assert.equal(b.document.getElementById('font-plex'), null, 'the font is only loaded when asked for');
+});

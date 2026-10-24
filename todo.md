@@ -15,7 +15,6 @@ Already there: title, theme, color, language (5 of homepage's ±40), target, bac
 headerStyle, showTitle, layout per group (columns, row/column style, header, initiallyCollapsed),
 hideErrors, status labels, container stats on click, search widget, bookmarks.
 
-- [ ] `cardStyle`, `blockStyle`, `font`
 - [ ] Block highlighting: `highlight:` per widget (numeric gt/gte/lt/lte/eq/ne/between/outside, string equals/includes/startsWith/endsWith/regex, `negate`, `valueOnly`) and the `blockHighlights` level colours in settings
 - [ ] `statusStyle: dot|basic` for siteMonitor/ping labels
 - [ ] `quicklaunch`: keyboard launcher over services, bookmarks and search, with `searchDescriptions`, `hideInternetSearch`, `showSearchSuggestions`, `provider`
@@ -28,7 +27,6 @@ hideErrors, status labels, container stats on click, search widget, bookmarks.
 - [ ] Custom CSS/JS from the config folder (`custom.css`, `custom.js`)
 - [ ] More UI languages (homepage: ca, de, en, es, fr, he, hr, hu, it, nb-NO, nl, pt, ru, sv, vi, zh-Hans, zh-Hant; ours: en, nl, fr, de, es)
 - [ ] `logpath`: a log file with rotation (10 MiB, five files), `LOG_TARGETS` (both, stdout, file)
-- [ ] `headerStyle: underlined` and `boxedWidgets`
 - [ ] Search widget: suggestions (`showSearchSuggestions`), through the server because of the CSP
 - [ ] Resources widget: `expanded`, per-disk labels, `units`, `refresh`, `uptime`, `cputemp`, `network`
 

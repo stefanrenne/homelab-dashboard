@@ -241,3 +241,12 @@ test('width, column and collapse settings: types are checked', () => {
   assert.deepEqual(bad.warnings.map((w) => w.path).sort(), ['fullWidth', 'groupsInitiallyCollapsed', 'maxBookmarkGroupColumns', 'maxGroupColumns']);
   assert.equal(bad.settings.maxGroupColumns, undefined);
 });
+
+test('headerStyle, cardStyle, blockStyle and font take homepage\'s values', () => {
+  const good = loadConfig(configDir({ 'settings.yaml': 'headerStyle: boxedWidgets\ncardStyle: hairline\nblockStyle: refined\nfont: plex\n' }));
+  assert.deepEqual(good.warnings, []);
+  assert.equal(good.settings.headerStyle, 'boxedWidgets');
+  const bad = loadConfig(configDir({ 'settings.yaml': 'headerStyle: fancy\ncardStyle: thick\nfont: comic\n' }));
+  assert.deepEqual(bad.warnings.map((w) => w.path).sort(), ['cardStyle', 'font', 'headerStyle']);
+  assert.equal(bad.settings.headerStyle, 'boxed');
+});

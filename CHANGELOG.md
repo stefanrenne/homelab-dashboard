@@ -23,6 +23,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   group), `disableCollapse` and `groupsInitiallyCollapsed`, as in homepage.
 - Groups follow the order of the `layout` block (which may also be a list), with bookmark
   groups placed between service groups where the block lists them, as in homepage.
+- `headerStyle: underlined` and `boxedWidgets`, `cardStyle: hairline`, `blockStyle: refined` and
+  `font: plex` / `plexData` (IBM Plex Mono), as in homepage.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

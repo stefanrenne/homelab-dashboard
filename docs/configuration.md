@@ -97,7 +97,10 @@ theme: auto         # auto, dark, light
 color: slate        # a Tailwind colour: slate, gray, zinc, neutral, stone, red, orange, amber, yellow, lime,
                     # green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose
 showTitle: true     # false: the title is only the browser tab title (as in homepage)
-headerStyle: boxed  # boxed or clean
+headerStyle: boxed  # boxed, clean, underlined (a line under the header) or boxedWidgets (a box per widget)
+cardStyle: hairline # a thin border instead of the shadow
+blockStyle: refined # heavier, larger values in widget blocks
+font: plexData      # IBM Plex Mono for values, the clock and status labels; plex: for everything
 target: _blank      # default link target of services
 background: https://example.com/wallpaper.jpg   # optional; or a map, as in homepage:
 # background:

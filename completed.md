@@ -17,3 +17,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 1: `mdi-`/`sh-` icons, icon colours and `iconStyle`.
 - 2026-10-24: homepage parity, phase 1: fullWidth, max group columns, equal heights, disableCollapse, groupsInitiallyCollapsed.
 - 2026-10-24: homepage parity, phase 1: group order from the layout block, mixed with bookmark groups.
+- 2026-10-24: homepage parity, phase 1: header styles, cardStyle, blockStyle, font.

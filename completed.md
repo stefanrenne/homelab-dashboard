@@ -9,3 +9,4 @@ Finished work, newest first.
   and the widget collection repo (12 widgets).
 - 2026-10-24: Apple HIG audits of the dashboard and the widgets; all findings fixed (Critical to Low).
 - 2026-10-24: homepage parity, phase 1: `description` and `favicon` in settings.yaml.
+- 2026-10-24: homepage parity, phase 1: `startUrl` and the PWA manifest (`pwa.icons`, `pwa.shortcuts`).

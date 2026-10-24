@@ -117,13 +117,14 @@ export function normalizeSettings(raw, ctx) {
     settings.headerStyle = 'boxed';
   }
   settings.showTitle = settings.showTitle !== false;
-  for (const key of ['description', 'favicon']) {
+  for (const key of ['description', 'favicon', 'startUrl']) {
     if (settings[key] === undefined || settings[key] === null) delete settings[key];
     else if (typeof settings[key] !== 'string') {
       ctx.warn(file, key, 'expected text, ignored');
       delete settings[key];
     } else settings[key] = settings[key].trim();
   }
+  settings.pwa = normalizePwa(settings.pwa, file, ctx);
   if (!isPlainObject(settings.layout)) {
     ctx.error(file, 'layout', 'expected a map of group name to layout');
     settings.layout = {};
@@ -138,6 +139,30 @@ export function normalizeSettings(raw, ctx) {
     return false;
   });
   return settings;
+}
+
+/** homepage's `pwa:`: `icons` [{ src, type, sizes }] and `shortcuts` [{ name, url, description }]. */
+function normalizePwa(raw, file, ctx) {
+  if (raw === undefined || raw === null) return {};
+  if (!isPlainObject(raw)) {
+    ctx.warn(file, 'pwa', 'expected a map with icons and shortcuts, ignored');
+    return {};
+  }
+  const list = (key, required, optional) => {
+    if (raw[key] === undefined) return [];
+    if (!Array.isArray(raw[key])) {
+      ctx.warn(file, `pwa.${key}`, 'expected a list, ignored');
+      return [];
+    }
+    return raw[key].flatMap((item, i) => {
+      if (!isPlainObject(item) || required.some((k) => typeof item[k] !== 'string')) {
+        ctx.warn(file, `pwa.${key}[${i}]`, `expected ${required.join(' and ')}, ignored`);
+        return [];
+      }
+      return [Object.fromEntries([...required, ...optional].filter((k) => item[k] !== undefined).map((k) => [k, String(item[k])]))];
+    });
+  };
+  return { icons: list('icons', ['src'], ['type', 'sizes', 'purpose']), shortcuts: list('shortcuts', ['name', 'url'], ['description']) };
 }
 
 export function normalizeServices(raw, ctx) {

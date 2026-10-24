@@ -15,7 +15,6 @@ Already there: title, theme, color, language (5 of homepage's ±40), target, bac
 headerStyle, showTitle, layout per group (columns, row/column style, header, initiallyCollapsed),
 hideErrors, status labels, container stats on click, search widget, bookmarks.
 
-- [ ] `startUrl`, PWA manifest with app icons and `shortcuts`
 - [ ] `background` as a map: `image`, `blur`, `saturate`, `brightness`, `opacity`; `cardBlur`
 - [ ] `layout.<group>.tab` and tabs in the header (URL hash per tab)
 - [ ] Nested groups (a group inside a group), with their own layout

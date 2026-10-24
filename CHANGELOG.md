@@ -7,6 +7,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 ### Added
 - `description` and `favicon` in settings.yaml, as in homepage: the meta description and the
   browser tab icon, written into the page itself.
+- `startUrl` and `pwa` (`icons`, `shortcuts`), as in homepage: a web app manifest at
+  `/site.webmanifest`, so the dashboard installs as an app with its palette's colour.
 
 ## [0.4.0] - 2026-10-24
 

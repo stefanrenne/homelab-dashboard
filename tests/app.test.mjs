@@ -392,3 +392,25 @@ test('the page carries description and favicon from settings.yaml', async () => 
     await t.close();
   }
 });
+
+test('/site.webmanifest from settings.yaml, with pwa icons and shortcuts', async () => {
+  const t = await startApp({ 'settings.yaml': [
+    'title: My lab', 'startUrl: /#media', 'color: teal',
+    'pwa:', '  icons:', '    - { src: /icons/app-192.png, sizes: 192x192, type: image/png }', '    - { nosrc: x }',
+    '  shortcuts:', '    - { name: Media, url: "/#media" }', '',
+  ].join('\n') });
+  try {
+    const res = await t.get('/site.webmanifest');
+    assert.equal(res.headers.get('content-type'), 'application/manifest+json');
+    const m = await res.json();
+    assert.equal(m.name, 'My lab');
+    assert.equal(m.start_url, '/#media');
+    assert.equal(m.theme_color, '#115e59');
+    assert.deepEqual(m.icons, [{ src: '/icons/app-192.png', sizes: '192x192', type: 'image/png' }]);
+    assert.deepEqual(m.shortcuts, [{ name: 'Media', url: '/#media' }]);
+    const warnings = (await (await t.get('/api/layout')).json()).messages.warnings;
+    assert.ok(warnings.some((w) => w.path === 'pwa.icons[1]'), JSON.stringify(warnings));
+  } finally {
+    await t.close();
+  }
+});

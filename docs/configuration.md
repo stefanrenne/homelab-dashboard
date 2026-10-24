@@ -85,6 +85,13 @@ nothing by itself. `!include` is this dashboard's own; homepage does not read it
 title: Homelab
 description: The start page of my homelab   # meta description, for link previews and search engines
 favicon: /icons/lab.svg   # a URL, a dashboard-icons name (proxmox.svg) or a file in config/icons
+startUrl: /               # where the installed app opens
+pwa:                      # installing the dashboard as an app (site.webmanifest)
+  icons:                  # without icons, the favicon is the app icon
+    - { src: /icons/app-192.png, sizes: 192x192, type: image/png }
+    - { src: /icons/app-512.png, sizes: 512x512, type: image/png }
+  shortcuts:              # long-press menu of the app icon
+    - { name: Media, url: "/#media", description: The media group }
 language: en        # en, nl, fr, de, es
 theme: auto         # auto, dark, light
 color: slate        # a Tailwind colour: slate, gray, zinc, neutral, stone, red, orange, amber, yellow, lime,

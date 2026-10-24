@@ -97,9 +97,11 @@ the image and smoke-tests it.
   same format (its CLAUDE.md); the site shows the collection's newest release.
 - Everything is **English**: code comments, log lines, Markdown docs, this file. Only UI texts in
   `I18N` (and widget `i18n.json`) are translated.
-- The UI is multilingual (en, nl, fr, de, es): all page texts live in `I18N` in `index.html` and go
-  through `translate()`. A new text gets a key in **every** language; a test checks this, also for
-  the `i18n.json` of built-in widgets.
+- The UI is multilingual (en, nl, fr, de, es, ca, he, hr, hu, it, nb-NO, pt, ru, sv, vi, zh-Hans,
+  zh-Hant; homepage's set plus nl): all page texts live in `I18N` in `index.html` and go through
+  `translate()`. A new text gets a key in **every** language; a test checks this, also for the
+  `i18n.json` of built-in widgets. Hebrew is right-to-left: use logical CSS properties
+  (`inset-inline-end`, `padding-inline-start`), not left/right.
 - Config errors and warnings always name the file and a path into it (`services.yaml › [0].Network[1].Router`).
 - Small, focused changes. New logic gets a test. Bugs get a test that fails without the fix.
 - Frontend: no frameworks, no build step, no external assets except Google Fonts (with a system

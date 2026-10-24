@@ -124,6 +124,7 @@ export function normalizeSettings(raw, ctx) {
     }
   }
   settings.showTitle = settings.showTitle !== false;
+  if (settings.language === 'zh-CN') settings.language = 'zh-Hans'; // homepage's old name, still accepted
   for (const key of ['description', 'favicon', 'startUrl', 'instanceName', 'base']) {
     if (settings[key] === undefined || settings[key] === null) delete settings[key];
     else if (typeof settings[key] !== 'string') {

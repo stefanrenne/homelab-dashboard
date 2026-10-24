@@ -28,3 +28,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 1: `disableIndexing`.
 - 2026-10-24: homepage parity, phase 1: `base` (sub path behind a reverse proxy).
 - 2026-10-24: homepage parity, phase 1: `custom.css` and `custom.js`.
+- 2026-10-24: homepage parity, phase 1: twelve more languages (homepage's set), right-to-left for Hebrew.

@@ -93,7 +93,7 @@ pwa:                      # installing the dashboard as an app (site.webmanifest
     - { src: /icons/app-512.png, sizes: 512x512, type: image/png }
   shortcuts:              # long-press menu of the app icon
     - { name: Media, url: "/#media", description: The media group }
-language: en        # en, nl, fr, de, es
+language: en        # en, nl, fr, de, es, ca, he, hr, hu, it, nb-NO, pt, ru, sv, vi, zh-Hans, zh-Hant (zh-CN works too)
 theme: auto         # auto, dark, light
 color: slate        # a Tailwind colour: slate, gray, zinc, neutral, stone, red, orange, amber, yellow, lime,
                     # green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose

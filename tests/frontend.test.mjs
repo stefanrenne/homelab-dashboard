@@ -610,3 +610,18 @@ test('the footer shows the version only with showVersion, and links a newer rele
   const plain = await page();
   assert.equal(plain.document.getElementById('version-box').hidden, true);
 });
+
+test('17 languages: Hebrew turns the page right-to-left, the others left-to-right', async () => {
+  const keys = Object.keys((await page()).HD.I18N.en).sort();
+  const w = await page();
+  for (const lang of ['ca', 'he', 'hr', 'hu', 'it', 'nb-NO', 'pt', 'ru', 'sv', 'vi', 'zh-Hans', 'zh-Hant']) {
+    assert.deepEqual(Object.keys(w.HD.I18N[lang] ?? {}).sort(), keys, lang);
+  }
+  const he = structuredClone(LAYOUT);
+  he.settings.language = 'he';
+  const r = await page({ ...RESULTS, '/api/layout': he });
+  assert.equal(r.document.documentElement.dir, 'rtl');
+  assert.equal(r.document.documentElement.lang, 'he');
+  assert.equal(r.document.getElementById('refresh-btn').getAttribute('aria-label'), 'רענון');
+  assert.equal(w.document.documentElement.dir, 'ltr');
+});

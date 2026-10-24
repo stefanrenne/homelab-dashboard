@@ -38,5 +38,101 @@
     "free": "Libre",
     "used": "usado",
     "notFound": "no encontrado"
+  },
+  "ca": {
+    "cpu": "CPU",
+    "memory": "Memòria",
+    "disk": "Disc",
+    "free": "Lliure",
+    "used": "usat",
+    "notFound": "no trobat"
+  },
+  "he": {
+    "cpu": "מעבד",
+    "memory": "זיכרון",
+    "disk": "דיסק",
+    "free": "פנוי",
+    "used": "בשימוש",
+    "notFound": "לא נמצא"
+  },
+  "hr": {
+    "cpu": "CPU",
+    "memory": "Memorija",
+    "disk": "Disk",
+    "free": "Slobodno",
+    "used": "zauzeto",
+    "notFound": "nije pronađeno"
+  },
+  "hu": {
+    "cpu": "CPU",
+    "memory": "Memória",
+    "disk": "Lemez",
+    "free": "Szabad",
+    "used": "foglalt",
+    "notFound": "nem található"
+  },
+  "it": {
+    "cpu": "CPU",
+    "memory": "Memoria",
+    "disk": "Disco",
+    "free": "Libero",
+    "used": "usato",
+    "notFound": "non trovato"
+  },
+  "nb-NO": {
+    "cpu": "CPU",
+    "memory": "Minne",
+    "disk": "Disk",
+    "free": "Ledig",
+    "used": "brukt",
+    "notFound": "ikke funnet"
+  },
+  "pt": {
+    "cpu": "CPU",
+    "memory": "Memória",
+    "disk": "Disco",
+    "free": "Livre",
+    "used": "usado",
+    "notFound": "não encontrado"
+  },
+  "ru": {
+    "cpu": "ЦП",
+    "memory": "Память",
+    "disk": "Диск",
+    "free": "Свободно",
+    "used": "занято",
+    "notFound": "не найден"
+  },
+  "sv": {
+    "cpu": "CPU",
+    "memory": "Minne",
+    "disk": "Disk",
+    "free": "Ledigt",
+    "used": "använt",
+    "notFound": "hittades inte"
+  },
+  "vi": {
+    "cpu": "CPU",
+    "memory": "Bộ nhớ",
+    "disk": "Ổ đĩa",
+    "free": "Trống",
+    "used": "đã dùng",
+    "notFound": "không tìm thấy"
+  },
+  "zh-Hans": {
+    "cpu": "CPU",
+    "memory": "内存",
+    "disk": "磁盘",
+    "free": "可用",
+    "used": "已用",
+    "notFound": "未找到"
+  },
+  "zh-Hant": {
+    "cpu": "CPU",
+    "memory": "記憶體",
+    "disk": "磁碟",
+    "free": "可用",
+    "used": "已用",
+    "notFound": "找不到"
   }
 }

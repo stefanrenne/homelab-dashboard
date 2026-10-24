@@ -3,5 +3,17 @@
   "nl": { "status": "Status", "latency": "Latentie", "cpu": "CPU", "memory": "Geheugen", "offline": "Offline" },
   "fr": { "status": "Statut", "latency": "Latence", "cpu": "CPU", "memory": "Mémoire", "offline": "Hors ligne" },
   "de": { "status": "Status", "latency": "Latenz", "cpu": "CPU", "memory": "Speicher", "offline": "Offline" },
-  "es": { "status": "Estado", "latency": "Latencia", "cpu": "CPU", "memory": "Memoria", "offline": "Sin conexión" }
+  "es": { "status": "Estado", "latency": "Latencia", "cpu": "CPU", "memory": "Memoria", "offline": "Sin conexión" },
+  "ca": { "status": "Estat", "latency": "Latència", "cpu": "CPU", "memory": "Memòria", "offline": "Fora de línia" },
+  "he": { "status": "מצב", "latency": "השהיה", "cpu": "מעבד", "memory": "זיכרון", "offline": "מנותק" },
+  "hr": { "status": "Stanje", "latency": "Latencija", "cpu": "CPU", "memory": "Memorija", "offline": "Nedostupno" },
+  "hu": { "status": "Állapot", "latency": "Késleltetés", "cpu": "CPU", "memory": "Memória", "offline": "Nem elérhető" },
+  "it": { "status": "Stato", "latency": "Latenza", "cpu": "CPU", "memory": "Memoria", "offline": "Offline" },
+  "nb-NO": { "status": "Status", "latency": "Forsinkelse", "cpu": "CPU", "memory": "Minne", "offline": "Frakoblet" },
+  "pt": { "status": "Estado", "latency": "Latência", "cpu": "CPU", "memory": "Memória", "offline": "Offline" },
+  "ru": { "status": "Состояние", "latency": "Задержка", "cpu": "ЦП", "memory": "Память", "offline": "Не в сети" },
+  "sv": { "status": "Status", "latency": "Fördröjning", "cpu": "CPU", "memory": "Minne", "offline": "Offline" },
+  "vi": { "status": "Trạng thái", "latency": "Độ trễ", "cpu": "CPU", "memory": "Bộ nhớ", "offline": "Ngoại tuyến" },
+  "zh-Hans": { "status": "状态", "latency": "延迟", "cpu": "CPU", "memory": "内存", "offline": "离线" },
+  "zh-Hant": { "status": "狀態", "latency": "延遲", "cpu": "CPU", "memory": "記憶體", "offline": "離線" }
 }

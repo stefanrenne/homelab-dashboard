@@ -44,6 +44,9 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - `base` for running behind a reverse proxy under a sub path, as in homepage. The page now asks
   for its data and widget code with relative URLs.
 - `custom.css` and `custom.js` in the config folder are loaded after the page's own, as in homepage.
+- Twelve more languages, homepage's set: Catalan, Hebrew (right to left), Croatian, Hungarian,
+  Italian, Norwegian Bokmål, Portuguese, Russian, Swedish, Vietnamese and Chinese (simplified and
+  traditional; `zh-CN` works too). Widgets of the collection fall back to English until translated.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

@@ -12,7 +12,7 @@ import docker, { cpuPercent } from '../widgets/docker/server.js';
 import resources from '../widgets/resources/server.js';
 import { parseLatency } from '../widgets/ping/server.js';
 
-const LANGS = ['en', 'nl', 'fr', 'de', 'es'];
+const LANGS = ['en', 'nl', 'fr', 'de', 'es', 'ca', 'he', 'hr', 'hu', 'it', 'nb-NO', 'pt', 'ru', 'sv', 'vi', 'zh-Hans', 'zh-Hant'];
 
 test('every built-in widget has its i18n keys in every language', async () => {
   const { widgets } = await loadRegistry({ builtinDir: path.resolve('widgets') });

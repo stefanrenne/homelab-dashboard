@@ -266,3 +266,7 @@ test('base: a full URL, given a trailing slash; anything else is ignored with a 
   assert.equal(bad.settings.base, undefined);
   assert.deepEqual(bad.warnings.map((w) => w.path), ['base']);
 });
+
+test('language zh-CN is read as zh-Hans, as in homepage', () => {
+  assert.equal(loadConfig(configDir({ 'settings.yaml': 'language: zh-CN\n' })).settings.language, 'zh-Hans');
+});

@@ -74,7 +74,7 @@ export default {
 | `ctx.apiVersion` | `1` |
 | `ctx.instanceId` | Stable id of this instance (group + service + position). |
 | `ctx.options` | Validated options, secrets included. A copy: changing it has no effect. |
-| `ctx.fetch(url, init)` | The standard `fetch`, plus: relative URLs resolve against `options.url`; the call is aborted with the widget; `init.socketPath` sends the request over a unix socket (used for Docker); `init.insecure: true` accepts a self-signed certificate for that request (only behind an option the user sets, off by default). `res.headers.getSetCookie()` lists every cookie. |
+| `ctx.fetch(url, init)` | The standard `fetch`, plus: relative URLs resolve against `options.url`; the call is aborted with the widget; `init.socketPath` sends the request over a unix socket (used for Docker); `init.insecure: true` accepts a self-signed certificate for that request (only behind an option the user sets, off by default); `init.tls: { ca, cert, key }` (PEM text) trusts that CA and sends that client certificate, as for a Docker daemon with `--tlsverify`. `res.headers.getSetCookie()` lists every cookie. |
 | `ctx.params` | What the page sent through `hd-widget-params`: only names in widget.yaml `params`, each a non-empty string of at most 100 characters; `{}` when nothing was sent. Comes from the browser, so treat it as untrusted input (validate, never put it in a URL path unchecked). Each set of params has its own cached result. |
 | `ctx.signal` | `AbortSignal`, aborted when the call times out (10 s). |
 | `ctx.cache` | A `Map` that survives between calls of this instance (e.g. the previous value for a delta). Cleared when the instance disappears from the config. |
@@ -192,4 +192,5 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 | 1 | next | Option type `icon`; `string` options accept numbers and booleans. |
 | 1 | next | `aliases` in widget.yaml. |
 | 1 | next | `ctx.fetch(url, { insecure: true })` for self-signed certificates. |
+| 1 | next | `ctx.fetch(url, { tls: { ca, cert, key } })` for a CA and client certificate. |
 | 1 | next | `params` in widget.yaml, the `hd-widget-params` page event and `ctx.params`. |

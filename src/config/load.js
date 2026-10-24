@@ -73,7 +73,7 @@ export function loadConfig(dir, opts = {}) {
     services: normalizeServices(raw.services, ctx),
     widgets: normalizeHeaderWidgets(raw.widgets, ctx),
     bookmarks: normalizeBookmarks(raw.bookmarks, ctx),
-    docker: normalizeDocker(raw.docker, ctx),
+    docker: normalizeDocker(raw.docker, ctx, dir),
     kubernetes: normalizeKubernetes(raw.kubernetes, ctx),
     errors,
     warnings,
@@ -393,7 +393,7 @@ export function normalizeBookmarks(raw, ctx) {
   return groups;
 }
 
-export function normalizeDocker(raw, ctx) {
+export function normalizeDocker(raw, ctx, configDir = '.') {
   const file = 'docker.yaml';
   if (raw === undefined || raw === null) return [];
   if (!isPlainObject(raw)) {
@@ -408,11 +408,41 @@ export function normalizeDocker(raw, ctx) {
     }
     if (def.socket) servers.push({ name, socket: String(def.socket), discover: def.discover !== false });
     else if (def.host) {
-      const protocol = def.protocol === 'https' ? 'https' : 'http';
-      servers.push({ name, url: `${protocol}://${def.host}:${def.port ?? 2375}`, discover: def.discover !== false });
+      const tls = def.tls === undefined ? undefined : dockerTls(def.tls, `${name}.tls`, ctx, configDir);
+      if (tls === null) continue;
+      // tls means https, as in homepage
+      const protocol = tls || def.protocol === 'https' ? 'https' : 'http';
+      servers.push({ name, url: `${protocol}://${def.host}:${def.port ?? 2375}`, discover: def.discover !== false, ...(tls ? { tls } : {}) });
     } else ctx.error(file, name, 'needs "socket" or "host"');
   }
   return servers;
+}
+
+/**
+ * homepage's `tls: { caFile, certFile, keyFile }`: paths relative to the config folder, read
+ * as PEM text. null when a file is missing (the server is left out with an error).
+ */
+function dockerTls(raw, p, ctx, configDir) {
+  const file = 'docker.yaml';
+  if (!isPlainObject(raw)) {
+    ctx.error(file, p, 'expected { caFile, certFile, keyFile }');
+    return null;
+  }
+  const out = {};
+  for (const [key, name] of [['caFile', 'ca'], ['certFile', 'cert'], ['keyFile', 'key']]) {
+    if (raw[key] === undefined || raw[key] === null || raw[key] === '') continue;
+    try {
+      out[name] = fs.readFileSync(path.resolve(configDir, String(raw[key])), 'utf8');
+    } catch (err) {
+      ctx.error(file, `${p}.${key}`, `cannot read ${raw[key]}: ${err.code || err.message}`);
+      return null;
+    }
+  }
+  if (!!out.cert !== !!out.key) {
+    ctx.error(file, p, 'certFile and keyFile go together');
+    return null;
+  }
+  return out;
 }
 
 export function normalizeKubernetes(raw, ctx) {

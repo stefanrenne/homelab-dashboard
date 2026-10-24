@@ -115,15 +115,18 @@ export function widgetFetch(input, init, baseUrl, signal) {
   const merged = init.signal ? AbortSignal.any([signal, init.signal]) : signal;
   if (init.socketPath) return unixSocketFetch(String(input), { ...init, signal: merged });
   const url = baseUrl && !/^[a-z][a-z0-9+.-]*:/i.test(String(input)) ? new URL(String(input), baseUrl) : input;
-  // insecure: true accepts a self-signed certificate for this request (an option the user sets)
-  if (init.insecure && new URL(String(url)).protocol === 'https:') return insecureFetch(new URL(String(url)), { ...init, signal: merged });
-  const { insecure, ...rest } = init;
+  // insecure: true accepts a self-signed certificate for this request (an option the user sets);
+  // tls: { ca, cert, key } (PEM text) trusts a CA and/or sends a client certificate (Docker over TLS)
+  if ((init.insecure || init.tls) && new URL(String(url)).protocol === 'https:') return httpsFetch(new URL(String(url)), { ...init, signal: merged });
+  const { insecure, tls, ...rest } = init;
   return fetch(url, { ...rest, signal: merged });
 }
 
-function insecureFetch(url, { method = 'GET', headers = {}, body, signal }) {
+function httpsFetch(url, { method = 'GET', headers = {}, body, signal, insecure, tls }) {
+  const { ca, cert, key } = tls ?? {};
+  const certs = Object.fromEntries(Object.entries({ ca, cert, key }).filter(([, v]) => typeof v === 'string' && v));
   return new Promise((resolve, reject) => {
-    const req = https.request(url, { method, headers: plainHeaders(headers), signal, rejectUnauthorized: false }, (res) => resolve(collect(res)));
+    const req = https.request(url, { method, headers: plainHeaders(headers), signal, ...certs, ...(insecure ? { rejectUnauthorized: false } : {}) }, (res) => resolve(collect(res)));
     req.on('error', reject);
     if (body) req.write(body);
     req.end();

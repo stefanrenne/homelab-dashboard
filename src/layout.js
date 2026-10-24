@@ -155,7 +155,8 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     if (service.container) {
       const server =
         config.docker.find((s) => s.name === service.server) ?? (config.docker.length === 1 ? config.docker[0] : null);
-      const conn = server?.url ? { url: server.url } : server?.socket ? { socket: server.socket } : {};
+      const tls = server?.tls ? Object.fromEntries(Object.entries({ tlsCa: server.tls.ca, tlsCert: server.tls.cert, tlsKey: server.tls.key }).filter(([, v]) => v)) : {};
+      const conn = server?.url ? { url: server.url, ...tls } : server?.socket ? { socket: server.socket } : {};
       out.push({ kind: 'container', ...addInstance(id('container'), 'docker', { container: service.container, ...conn }, where) });
     }
     return out;

@@ -67,6 +67,9 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   Widget API: `params:` in widget.yaml, the `hd-widget-params` page event and `ctx.params`.
 - Widget API: `ctx.fetch(url, { insecure: true })` accepts a self-signed certificate (for an
   option the user turns on), and cookies are kept apart (`headers.getSetCookie()`).
+- Docker over TLS: `tls: { caFile, certFile, keyFile }` for a server in docker.yaml, as in
+  homepage, for discovery and `container:` status. Widget API: `ctx.fetch(url, { tls: { ca,
+  cert, key } })`.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

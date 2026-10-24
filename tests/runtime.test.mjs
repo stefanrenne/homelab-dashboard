@@ -191,6 +191,26 @@ test('ctx.fetch: insecure accepts a self-signed certificate; Set-Cookie stays a 
   }
 });
 
+test('ctx.fetch: tls trusts a CA and sends a client certificate', async () => {
+  const fs = await import('node:fs');
+  const https = await import('node:https');
+  const { widgetFetch } = await import('../src/plugins/runtime.js');
+  const pem = (f) => fs.readFileSync(`tests/fixtures/tls/${f}`, 'utf8');
+  const server = https.createServer({ key: pem('server.key'), cert: pem('server.crt'), ca: pem('ca.crt'), requestCert: true, rejectUnauthorized: true }, (req, res) => {
+    res.end(JSON.stringify({ client: req.socket.getPeerCertificate().subject?.CN ?? null }));
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const url = `https://localhost:${server.address().port}/info`;
+  try {
+    const signal = new AbortController().signal;
+    const res = await widgetFetch('/info', { tls: { ca: pem('ca.crt'), cert: pem('client.crt'), key: pem('client.key') } }, url, signal);
+    assert.deepEqual(await res.json(), { client: 'dashboard' });
+    await assert.rejects(widgetFetch(url, { tls: { ca: pem('ca.crt') } }, null, signal), 'no client certificate');
+  } finally {
+    server.close();
+  }
+});
+
 test('runtime: params reach ctx.params only when the widget declares them, each set cached apart', async () => {
   const { WidgetRuntime } = await import('../src/plugins/runtime.js');
   const seen = [];

@@ -61,6 +61,25 @@ test('docker: discovery over a unix socket', async () => {
   }
 });
 
+test('docker: discovery over TLS with a client certificate (dockerd --tlsverify)', async () => {
+  const https = await import('node:https');
+  const pem = (f) => fs.readFileSync(path.resolve('tests/fixtures/tls', f), 'utf8');
+  const daemon = https.createServer({ key: pem('server.key'), cert: pem('server.crt'), ca: pem('ca.crt'), requestCert: true, rejectUnauthorized: true }, (req, res) => {
+    res.end(JSON.stringify(req.url.startsWith('/containers/json') ? containers : {}));
+  });
+  await new Promise((r) => daemon.listen(0, '127.0.0.1', r));
+  const url = `https://localhost:${daemon.address().port}`;
+  try {
+    const services = await discoverDocker({ name: 'remote', url, tls: { ca: pem('ca.crt'), cert: pem('client.crt'), key: pem('client.key') } });
+    assert.ok(services.length > 0);
+    assert.equal(services[0].def.server, 'remote');
+    await assert.rejects(discoverDocker({ name: 'remote', url, tls: { ca: pem('ca.crt') } }), 'without a client certificate the daemon hangs up');
+    await assert.rejects(discoverDocker({ name: 'remote', url }), 'the daemon\'s CA is not trusted by default');
+  } finally {
+    daemon.close();
+  }
+});
+
 test('docker: a mounted socket is the server "local" only when docker.yaml has none', () => {
   const yes = () => true;
   const no = () => false;

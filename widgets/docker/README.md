@@ -7,6 +7,10 @@ The dashboard only reads from Docker. Give it a
 [docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy) with `CONTAINERS=1`
 rather than the socket itself: see [Discovery](../../discovery.html).
 
+A Docker daemon over TLS (port 2376) is set up in `docker.yaml` with `tls: { caFile, certFile,
+keyFile }` (see [Configuration](../../configuration.html#dockeryaml)); the dashboard fills in
+`tlsCa`, `tlsCert` and `tlsKey` for `container:` from those files.
+
 ## Fields
 
 `status`, `cpu`, `memory`

@@ -40,3 +40,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 2: Kubernetes widget (tested against a fake API, not a live cluster).
 - 2026-10-24: homepage parity, phase 2: glances, longhorn and unifi (also unifi_console) in the widgets collection. Phase 2 done but the weather's browser location.
 - 2026-10-24: homepage parity, phase 2: weather without coordinates uses the viewer's location (`params` in the widget API, documented in the API reference). Phase 2 done.
+- 2026-10-24: homepage parity, phase 3: Docker over TLS (`tls` in docker.yaml; tested against a local TLS server with client certificates, not a real dockerd).

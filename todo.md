@@ -23,7 +23,6 @@ Generic ones built in, service-specific ones in the widgets collection.
 
 ### Phase 3: integrations (core)
 
-- [ ] Docker over TLS (`tls` with CA/cert/key files in docker.yaml)
 - [ ] Order by weight within a group: YAML services weigh (index + 1) × 100, discovered ones `weight` (default 0), ties by name
 - [ ] Docker Swarm services and stacks
 - [ ] Proxmox: VM/LXC status and stats per service (`proxmoxNode`, `proxmoxVMID`, `proxmox.yaml`)

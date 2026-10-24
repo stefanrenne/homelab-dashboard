@@ -367,6 +367,13 @@ nas:
   port: 2375
   protocol: http
   discover: false                # only for container status, do not add its containers
+remote:
+  host: docker.example.lan       # the Docker daemon over TLS (dockerd --tlsverify, port 2376)
+  port: 2376
+  tls:                           # homepage's keys; paths relative to the config folder
+    caFile: tls/ca.pem
+    certFile: tls/cert.pem
+    keyFile: tls/key.pem
 ```
 
 | Key | Default | What |
@@ -374,7 +381,8 @@ nas:
 | `socket` | | Path of a Docker socket inside the container. Mount it: `/var/run/docker.sock:/var/run/docker.sock:ro` |
 | `host` | | Host name or IP of a Docker API or socket proxy (instead of `socket`) |
 | `port` | `2375` | Port of that API |
-| `protocol` | `http` | `http` or `https` |
+| `protocol` | `http` | `http` or `https` (`https` when `tls` is set) |
+| `tls` | | `caFile` (the CA that signed the daemon's certificate), `certFile` and `keyFile` (the client certificate, together). Read when the config loads; their contents stay on the server |
 | `discover` | `true` | `false`: use the server for `container:` status only, without adding its containers |
 
 The name is what `server:` refers to in `services.yaml`, and what config messages show.

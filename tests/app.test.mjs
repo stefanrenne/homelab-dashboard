@@ -94,6 +94,33 @@ test('status checks come from siteMonitor, ping and container', async () => {
   }
 });
 
+test('container: over Docker TLS, the certificates reach the docker widget but never /api/layout', async () => {
+  const https = await import('node:https');
+  const pem = (f) => fs.readFileSync(path.resolve('tests/fixtures/tls', f), 'utf8');
+  const daemon = https.createServer({ key: pem('server.key'), cert: pem('server.crt'), ca: pem('ca.crt'), requestCert: true, rejectUnauthorized: true }, (req, res) => {
+    res.end(JSON.stringify(req.url.startsWith('/containers/c/json') ? { State: { Status: 'exited' } } : {}));
+  });
+  await new Promise((r) => daemon.listen(0, '127.0.0.1', r));
+  const t = await startApp({
+    'tls/ca.pem': pem('ca.crt'),
+    'tls/cert.pem': pem('client.crt'),
+    'tls/key.pem': pem('client.key'),
+    'docker.yaml': `remote:\n  host: localhost\n  port: ${daemon.address().port}\n  discover: false\n  tls: { caFile: tls/ca.pem, certFile: tls/cert.pem, keyFile: tls/key.pem }\n`,
+    'services.yaml': '- G:\n    - C: { container: c }\n',
+  });
+  try {
+    const layout = await (await t.get('/api/layout')).text();
+    assert.ok(!layout.includes('PRIVATE KEY') && !layout.includes('CERTIFICATE'), 'no PEM text in the layout');
+    const status = t.app.layout.groups[0].services[0].statuses[0];
+    const data = await t.json(`/api/widgets/${status.instanceId}`);
+    assert.equal(data.ok, true, data.error);
+    assert.equal(data.data.statusText, 'exited');
+  } finally {
+    await t.close();
+    daemon.close();
+  }
+});
+
 test('refreshInterval, fields and hide_errors belong to the dashboard, not the widget', async () => {
   const upstream = await serve((req, res) => res.end(JSON.stringify({ a: 1, b: 2, c: 3 })));
   const t = await startApp({

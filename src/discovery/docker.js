@@ -24,7 +24,7 @@ export function dockerGet(server, path, { timeoutMs = 5000 } = {}) {
   return new Promise((resolve, reject) => {
     const target = server.url ? new URL(path, server.url) : null;
     const options = target
-      ? { method: 'GET', timeout: timeoutMs }
+      ? { method: 'GET', timeout: timeoutMs, ...(server.tls ?? {}) }
       : { method: 'GET', socketPath: server.socket || DEFAULT_SOCKET, path, headers: { host: 'localhost' }, timeout: timeoutMs };
     const lib = target?.protocol === 'https:' ? https : http;
     const req = (target ? lib.request(target, options) : lib.request(options)).on('response', (res) => {

@@ -126,6 +126,37 @@ test('docker servers and header widgets are normalized', () => {
   assert.deepEqual(cfg.widgets.map((w) => [w.type, w.options]), [['datetime', { locale: 'nl' }], ['search', {}]]);
 });
 
+test('docker.yaml tls: homepage\'s caFile, certFile and keyFile, read relative to the config folder', () => {
+  const pem = (f) => fs.readFileSync(path.resolve('tests/fixtures/tls', f), 'utf8');
+  const cfg = loadConfig(configDir({
+    'tls/ca.pem': pem('ca.crt'),
+    'tls/cert.pem': pem('client.crt'),
+    'tls/key.pem': pem('client.key'),
+    'docker.yaml': `
+remote:
+  host: docker.lan
+  port: 2376
+  tls: { caFile: tls/ca.pem, certFile: tls/cert.pem, keyFile: tls/key.pem }
+caonly:
+  host: ca.lan
+  tls: { caFile: tls/ca.pem }
+missing:
+  host: m.lan
+  tls: { caFile: tls/nope.pem }
+half:
+  host: h.lan
+  tls: { certFile: tls/cert.pem }
+`,
+  }));
+  assert.deepEqual(cfg.docker.map((s) => [s.name, s.url, Object.keys(s.tls ?? {})]), [
+    ['remote', 'https://docker.lan:2376', ['ca', 'cert', 'key']],
+    ['caonly', 'https://ca.lan:2375', ['ca']],
+  ]);
+  assert.equal(cfg.docker[0].tls.key, pem('client.key'));
+  assert.deepEqual(cfg.errors.map((e) => [e.file, e.path]), [['docker.yaml', 'missing.tls.caFile'], ['docker.yaml', 'half.tls']]);
+  assert.match(cfg.errors[0].message, /cannot read tls\/nope.pem: ENOENT/);
+});
+
 test('parseDuration and safeJoin', () => {
   assert.equal(parseDuration('10s'), 10_000);
   assert.equal(parseDuration('500ms'), 500);

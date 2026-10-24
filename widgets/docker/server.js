@@ -22,10 +22,11 @@ export function memoryMB(stats) {
 
 export default {
   async fetch(ctx) {
-    const { container, url } = ctx.options;
+    const { container, url, tlsCa, tlsCert, tlsKey } = ctx.options;
+    const tls = tlsCa || tlsCert ? { tls: { ca: tlsCa, cert: tlsCert, key: tlsKey } } : {};
     const get = async (path) => {
       const res = url
-        ? await ctx.fetch(path)
+        ? await ctx.fetch(path, tls)
         : await ctx.fetch(path, { socketPath: ctx.options.socket || DEFAULT_SOCKET });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error(`Docker API answered ${res.status}`);

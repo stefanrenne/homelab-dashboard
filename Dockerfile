@@ -1,5 +1,5 @@
 # homelab-dashboard: one Node process, config in /config.
-FROM node:22-alpine
+FROM node:25-alpine
 
 # git: installs widget packages from git sources. iputils-ping: the ping widget
 # (busybox ping needs root; iputils' ping works for the unprivileged user).

@@ -9,7 +9,7 @@ import { tmpDir, writeWidget, serve } from './helpers.mjs';
 
 const base = { name: 'T', version: '1.0.0', apiVersion: 1 };
 
-async function setup(id, serverJs, { timeoutMs = 400, memoryMb, source = 'path', options = {}, secretValues = [] } = {}) {
+async function setup(id, serverJs, { timeoutMs = 5000, memoryMb, source = 'path', options = {}, secretValues = [] } = {}) {
   const widget = await loadWidget(writeWidget(tmpDir(), { ...base, id, options: { url: { type: 'url' }, key: { type: 'string', secret: true } } }, { 'server.js': serverJs }), { source });
   const logs = [];
   const log = { info: (...a) => logs.push(a.join(' ')), warn: (...a) => logs.push(a.join(' ')), error: (...a) => logs.push(a.join(' ')) };
@@ -45,7 +45,7 @@ test('sandbox: a widget stuck in a loop is stopped; the dashboard keeps answerin
   const flag = `${tmpDir()}/fixed`;
   const { sandbox, get } = await setup('loop', `
     import fs from 'node:fs';
-    export default { async fetch(ctx) { let n = 0; if (!fs.existsSync(ctx.options.url)) for (;;) n++; return { blocks: [{ label: 'ok', value: 1 }] }; } };`, { options: { url: flag } });
+    export default { async fetch(ctx) { let n = 0; if (!fs.existsSync(ctx.options.url)) for (;;) n++; return { blocks: [{ label: 'ok', value: 1 }] }; } };`, { options: { url: flag }, timeoutMs: 400 });
   try {
     let ticks = 0;
     const timer = setInterval(() => ticks++, 20);

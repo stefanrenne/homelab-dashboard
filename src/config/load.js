@@ -156,6 +156,10 @@ export function normalizeSettings(raw, ctx) {
     }
   }
   settings.quicklaunch = normalizeQuicklaunch(settings.quicklaunch, file, ctx);
+  if (settings.providers !== undefined && !isPlainObject(settings.providers)) {
+    ctx.warn(file, 'providers', 'expected a map of provider name to a key or a map of options, ignored');
+    delete settings.providers;
+  }
   if (settings.statusStyle !== undefined && !STATUS_STYLES.includes(settings.statusStyle)) {
     ctx.warn(file, 'statusStyle', 'expected dot or basic (or leave it out), ignored');
     delete settings.statusStyle;

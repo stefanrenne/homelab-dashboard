@@ -102,6 +102,7 @@ widget declares an option with the same name:
 | `refresh` | The same as a duration: `5s`, `1h`. |
 | `fields` | List of block keys to show, e.g. `[cpu, memoryPercent]`. The widget's order is kept. |
 | `hideErrors` / `hide_errors` | `true` hides the error box of this widget. |
+| `provider` | Fills options the entry leaves out from `settings.yaml` `providers.<name>`: a map fills the options it names, a text the first unset `secret: true` option. Every provider value is treated as a secret. A widget that declares its own `provider` option keeps it. |
 | `highlight` | Colours blocks by their value, as in homepage: block `key` (or `<type>.<key>`) → `numeric` / `string` rules with a `level` (`good`, `warn`, `danger`). The dashboard adds the result to the block as `highlight: { level, valueOnly }`; `client.js` sees it in `data.blocks` and may use or ignore it. See [Configuration](../configuration.md). |
 
 A thrown error (or a timeout) shows its message on the card. Secret values in it are replaced by `***`.
@@ -161,3 +162,4 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 |---|---|---|
 | 1 | 0.1.0 | First version (including `vars`, row `status` and `defaultFields`). |
 | 1 | next | Blocks can carry `highlight: { level, valueOnly }`, added by the dashboard from the entry's `highlight:` rules. Widgets need no change. |
+| 1 | next | `provider: <name>` in an entry fills options from `settings.yaml` `providers`. Widgets need no change. |

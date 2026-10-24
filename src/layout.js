@@ -13,7 +13,7 @@ import { DEFAULT_LEVELS } from './highlight.js';
  * widget declares an option with that name): how often to refresh, which blocks to show
  * and whether to hide errors. `refreshInterval` (ms) and `hide_errors` are homepage's names.
  */
-export const INSTANCE_KEYS = ['refresh', 'refreshInterval', 'fields', 'hideErrors', 'hide_errors', 'highlight'];
+export const INSTANCE_KEYS = ['refresh', 'refreshInterval', 'fields', 'hideErrors', 'hide_errors', 'highlight', 'provider'];
 export const MIN_REFRESH_MS = 1000;
 
 function splitInstanceKeys(schema, raw) {
@@ -56,7 +56,10 @@ export function resolveIcon(icon) {
   return `${DASHBOARD_ICONS}/${ext}/${match[1]}.${ext}`;
 }
 
-export function buildState({ config, registry, groups, extraErrors = [], extraWarnings = [], secrets = config.secrets }) {
+export function buildState({ config, registry, groups, extraErrors = [], extraWarnings = [], secrets: knownSecrets = config.secrets }) {
+  // every value under settings.providers is a secret, also when written there literally
+  const providers = isPlainObject(config.settings.providers) ? config.settings.providers : {};
+  const secrets = new Set([...knownSecrets, ...stringsIn(providers).filter((s) => s.length >= 4)]);
   const instances = new Map();
   const actions = new Map(); // serviceId -> { name, href }: services the dashboard calls for the viewer
   const errors = [...config.errors, ...extraErrors];
@@ -72,6 +75,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       return { instanceId: id, type, options: {}, known: false };
     }
     const { own, options: widgetOptions } = splitInstanceKeys(widget.manifest.options, rawOptions);
+    if (own.provider !== undefined) applyProvider(widget.manifest.options, String(own.provider), widgetOptions, where, type);
     const { options, publicOptions, errors: optionErrors } = validateOptions(widget.manifest.options, widgetOptions, secrets);
     let refreshMs = widget.manifest.refreshMs;
     try {
@@ -109,6 +113,22 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       ...(hideErrors ? { hideErrors } : {}),
     };
   };
+
+  /**
+   * homepage's `provider: <name>`: settings.providers.<name> fills options the entry left out.
+   * A map fills the options it names; a text (an API key) the first unset secret option.
+   */
+  function applyProvider(schema, name, options, where, type) {
+    const provider = providers[name];
+    if (provider === undefined) {
+      errors.push({ ...where, message: `${type}: provider "${name}" is not in settings.yaml providers` });
+    } else if (typeof provider === 'string' || typeof provider === 'number') {
+      const key = Object.keys(schema).find((k) => schema[k].secret && options[k] === undefined);
+      if (key) options[key] = String(provider);
+    } else if (isPlainObject(provider)) {
+      for (const [k, v] of Object.entries(provider)) if (k in schema && options[k] === undefined) options[k] = v;
+    }
+  }
 
   // Every check that is set gets its own status label, like homepage: HTTP, ping, container.
   const statusesFor = (group, service, where) => {

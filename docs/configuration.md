@@ -110,6 +110,12 @@ quicklaunch:        # start typing anywhere on the page to find a service, bookm
   hideInternetSearch: false   # true: no web search entry
   hideVisitURL: false         # true: no "open <url>" entry for typed addresses
   mobileButtonPosition: bottom-right   # a search button on phones: top-left, top-right, bottom-left, bottom-right
+providers:          # shared keys and logins; a widget entry uses one with provider: <name>
+  openweathermap: "{{HD_VAR_OWM_KEY}}"   # a text fills the widget's first secret option left empty (its key)
+  longhorn:                               # a map fills the options it names
+    url: https://longhorn.lan
+    username: admin
+    password: "{{HD_VAR_LONGHORN_PASSWORD}}"
 showStats: true     # container stats open from the start instead of on a click; a service can set its own
 statusStyle: dot    # status labels: dot (a coloured dot) or basic (Online/Offline for siteMonitor and ping);
                     # default: the response time and container state. A service can set its own.

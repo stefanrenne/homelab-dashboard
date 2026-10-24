@@ -532,3 +532,38 @@ test('showStats: the service setting wins over the global one', async () => {
     await t.close();
   }
 });
+
+test('providers: shared keys and options fill widget entries, and stay secret', async () => {
+  let auth;
+  const srv = await serve((req, res) => { auth = req.headers.authorization; res.end(JSON.stringify({ count: 7 })); });
+  const template = path.resolve('examples/widget-template');
+  const t = await startApp({
+    'settings.yaml': [
+      'plugins:', `  - path: ${template}`,
+      'providers:', '  counterkey: s3cret-provider-key', '  counterhost:', `    url: ${srv.url}/api/`, '',
+    ].join('\n'),
+    'services.yaml': [
+      '- G:',
+      '    - A:', '        widget: { type: example-counter, provider: counterkey, url: "' + srv.url + '/api/" }',
+      '    - B:', '        widget: { type: example-counter, provider: counterhost, key: own-key }',
+      '    - C:', '        widget: { type: example-counter, provider: nope, url: "' + srv.url + '/api/" }', '',
+    ].join('\n'),
+  });
+  try {
+    const res = await t.get('/api/layout');
+    const raw = await res.text();
+    const layout = JSON.parse(raw);
+    assert.ok(!raw.includes('s3cret-provider-key'), 'the provider key never reaches the browser');
+    const [a, b] = layout.groups[0].services.map((s) => s.widgets[0]);
+    assert.equal(a.options.provider, undefined);
+    await (await t.get(`/api/widgets/${a.instanceId}`)).json();
+    assert.equal(auth, 'Bearer s3cret-provider-key', 'a text provider fills the first secret option');
+    const rb = await (await t.get(`/api/widgets/${b.instanceId}`)).json();
+    assert.equal(rb.ok, true, 'a map provider fills url');
+    assert.equal(auth, 'Bearer own-key', 'options in the entry win');
+    assert.ok(layout.messages.errors.some((e) => /provider "nope" is not in settings\.yaml providers/.test(e.message)));
+  } finally {
+    await t.close();
+    await srv.close();
+  }
+});

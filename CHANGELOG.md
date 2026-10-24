@@ -33,6 +33,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   `hideInternetSearch`, `hideVisitURL`, `mobileButtonPosition`). The search widget gains the
   `baidu` and `brave` providers.
 - `showStats`, in settings.yaml and per service: container stats open from the start, as in homepage.
+- `providers` in settings.yaml: shared keys and logins that widget entries use with
+  `provider: <name>`, as in homepage. Provider values never reach the browser.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

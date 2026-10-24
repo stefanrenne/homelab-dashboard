@@ -16,32 +16,8 @@ Phases 1 to 3 (settings and layout, info widgets, integrations) are done; see `c
 Each with a fixture, a test and a README (its CLAUDE.md). homepage's field names, so `fields:`
 carries over.
 
-Batch 2, the rest (63):
+Batch 2, the rest (39):
 
-- [ ] Komga
-- [ ] Komodo
-- [ ] Kopia
-- [ ] Linkwarden
-- [ ] LubeLogger
-- [ ] Mastodon
-- [ ] Mailcow
-- [ ] Maintainerr
-- [ ] Mealie
-- [ ] Medusa
-- [ ] Mikrotik
-- [ ] Minecraft
-- [ ] Miniflux
-- [ ] MJPEG
-- [ ] Moonraker (Klipper)
-- [ ] Mylar3
-- [ ] MySpeed
-- [ ] Netdata
-- [ ] NetAlertX
-- [ ] NetBird
-- [ ] NextDNS
-- [ ] ntfy
-- [ ] OctoPrint
-- [ ] Omada
 - [ ] OpenDTU
 - [ ] OPNSense
 - [ ] OpenWRT

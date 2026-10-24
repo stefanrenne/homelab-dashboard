@@ -2,61 +2,11 @@
 
 Open work, roughly in order of value. Move an item to `completed.md` when it is done.
 
-## Feature parity with homepage
+## Release
 
-Goal: everything [homepage](https://gethomepage.dev) offers, with its config keys accepted as they
-are where that makes sense (hard rule 6 still holds for our own keys). Compared on 2026-10-24
-against homepage's docs: 164 service widgets, 13 info widgets, the settings page and the
-services, docker, kubernetes, proxmox and custom CSS/JS pages.
-
-### Phase 4: service widgets (homelab-dashboard-widgets)
-
-Phases 1 to 3 (settings and layout, info widgets, integrations) are done; see `completed.md`.
-
-Each with a fixture, a test and a README (its CLAUDE.md). homepage's field names, so `fields:`
-carries over.
-
-Batch 2, the rest (39):
-
-- [ ] OpenDTU
-- [ ] OPNSense
-- [ ] OpenWRT
-- [ ] Pangolin
-- [ ] PeaNUT
-- [ ] pfSense
-- [ ] PhotoPrism
-- [ ] Plant-it
-- [ ] Prometheus
-- [ ] Prometheus Metric
-- [ ] Pterodactyl
-- [ ] Pulse
-- [ ] Pyload
-- [ ] QNAP
-- [ ] qui
-- [ ] Romm
-- [ ] ruTorrent
-- [ ] Slskd
-- [ ] SparkyFitness
-- [ ] Spoolman
-- [ ] Sportarr
-- [ ] Suwayomi
-- [ ] SWAG Dashboard
-- [ ] Syncthing Relay Server
-- [ ] Tandoor
-- [ ] Technitium DNS Server
-- [ ] Tracearr
-- [ ] Trilium
-- [ ] Tube Archivist
-- [ ] UniFi Drive
-- [ ] Unmanic
-- [ ] UptimeRobot
-- [ ] UrBackup
-- [ ] Vikunja
-- [ ] Wallos
-- [ ] Wg-Easy
-- [ ] Xteve
-- [ ] Your Spotify
-- [ ] Zabbix
+- [ ] Release the widgets collection (its CHANGELOG's Unreleased: 0.3.0, every homepage widget) before
+  the next dashboard release, which no longer has openmeteo, openweathermap and stocks built in.
+  Waits for the go-ahead.
 
 ## Other
 

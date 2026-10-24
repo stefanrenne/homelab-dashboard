@@ -11,3 +11,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 1: `description` and `favicon` in settings.yaml.
 - 2026-10-24: homepage parity, phase 1: `startUrl` and the PWA manifest (`pwa.icons`, `pwa.shortcuts`).
 - 2026-10-24: homepage parity, phase 1: `background` with filters and `cardBlur`.
+- 2026-10-24: homepage parity, phase 1: tabs (`layout.<group>.tab`).

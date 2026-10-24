@@ -159,7 +159,11 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
   const scrubbed = (list) =>
     list.map((m) => ({ ...m, message: [...secrets].reduce((s, secret) => s.split(secret).join('***'), m.message) }));
 
+  // homepage's tabs: on when a layout group has `tab`, in the order of the layout block
+  const tabs = [...new Set(Object.values(config.settings.layout).map((l) => l?.tab).filter((t) => typeof t === 'string' && t))];
+
   const layout = {
+    tabs,
     settings: {
       title: config.settings.title,
       language: config.settings.language,
@@ -174,6 +178,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     groups: layoutGroups,
     bookmarks: config.bookmarks.map((g) => ({
       name: g.name,
+      layout: config.settings.layout[g.name] ?? {},
       bookmarks: g.bookmarks.map((b) => ({ ...b, icon: resolveIcon(b.icon) })),
     })),
     widgetTypes,

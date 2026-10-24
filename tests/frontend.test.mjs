@@ -312,3 +312,29 @@ test('background image with filters on its own layer, and card blur', async () =
   assert.equal(plain.document.getElementById('bg').hidden, true);
   assert.ok(!plain.document.body.classList.contains('card-blur'));
 });
+
+test('tabs: a tab bar, groups without a tab on every tab, the hash picks the tab', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.tabs = ['First', 'Second Tab'];
+  layout.groups[0].layout.tab = 'Second Tab';       // Network
+  layout.groups[2].layout.tab = 'First';            // Hidden title
+  layout.bookmarks[0].layout = { tab: 'First' };    // Dev
+  const shown = (doc) => [...doc.querySelectorAll('#groups .group, #bookmarks .group')].filter((s) => !s.hidden).map((s) => s.dataset.group ?? s.querySelector('h2').textContent);
+
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const doc = w.document;
+  assert.equal(doc.getElementById('tabs').hidden, false);
+  assert.equal(doc.getElementById('tabs').getAttribute('aria-label'), 'Tabbladen');
+  assert.deepEqual([...doc.querySelectorAll('#tabs a')].map((a) => [a.textContent, a.getAttribute('href')]), [['First', '#first'], ['Second Tab', '#second%20tab']]);
+  assert.equal(doc.querySelector('#tabs a[aria-current="page"]').textContent, 'First');
+  assert.deepEqual(shown(doc), ['Hidden title', 'Dev']);
+
+  w.location.hash = '#second%20tab';
+  w.dispatchEvent(new w.HashChangeEvent('hashchange'));
+  assert.equal(doc.querySelector('#tabs a[aria-current="page"]').textContent, 'Second Tab');
+  assert.deepEqual(shown(doc), ['Network']);
+
+  const none = await page();
+  assert.equal(none.document.getElementById('tabs').hidden, true);
+  assert.ok([...none.document.querySelectorAll('#groups .group')].every((s) => !s.hidden));
+});

@@ -11,6 +11,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   `/site.webmanifest`, so the dashboard installs as an app with its palette's colour.
 - `background` as a map (`image`, `blur`, `saturate`, `brightness`, `opacity`) and `cardBlur`,
   as in homepage. `background: <url>` keeps working.
+- Tabs: `layout.<group>.tab` for service and bookmark groups, as in homepage, with a tab bar and
+  an address per tab (`#media`). Groups without a tab show on every tab.
 
 ## [0.4.0] - 2026-10-24
 

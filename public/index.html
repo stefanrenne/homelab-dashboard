@@ -171,6 +171,13 @@
   .api-error div { padding: 0 10px 8px; text-align: left; overflow-wrap: anywhere; font-weight: 400; }
 
   /* bookmarks */
+  /* settings.layout.<group>.tab */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 4px; }
+  .tabs a { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 14px; border-radius: 6px; font-size: .875rem;
+    color: var(--hd-text); text-decoration: none; background: var(--hd-card); border: 1px solid var(--hd-card-border, transparent); }
+  .tabs a:hover { background: var(--hd-card-hover); }
+  .tabs a[aria-current="page"] { background: var(--hd-tab); font-weight: 700; }
+  [data-tab][hidden] { display: none !important; }
   .bookmarks { display: flex; flex-wrap: wrap; margin: 8px -4px 0; }
   .bookmarks .group { flex: 1 1 100%; }
   @media (min-width: 768px) { .bookmarks .group { flex-basis: 50%; } }
@@ -222,6 +229,7 @@
   <h1 class="title" id="title" hidden></h1>
   <header class="info" id="header-widgets"></header>
   <div class="messages" id="messages"></div>
+  <nav id="tabs" class="tabs" hidden></nav>
   <main id="groups" class="groups" aria-live="polite"></main>
   <section id="bookmarks" class="bookmarks"></section>
   <footer>
@@ -260,7 +268,7 @@
 // ---------------------------------------------------------------- texts
 const I18N = {
   en: {
-    loading: 'Loading…', errors: 'Configuration errors', warnings: 'Warnings', empty: 'No services yet.',
+    tabs: 'Tabs', loading: 'Loading…', errors: 'Configuration errors', warnings: 'Warnings', empty: 'No services yet.',
     emptyHint: 'Add them to services.yaml in your config folder, or label your containers with homelab.name.',
     up: 'Online', down: 'Offline', warn: 'Degraded', unknown: 'Unknown', tagDown: 'Down',
     apiError: 'API Error Information', unknownWidget: 'Unknown widget type', discovered: 'discovered from',
@@ -281,7 +289,7 @@ const I18N = {
     noMatches: "No services found",
   },
   nl: {
-    loading: 'Laden…', errors: 'Fouten in de configuratie', warnings: 'Waarschuwingen', empty: 'Nog geen services.',
+    tabs: 'Tabbladen', loading: 'Laden…', errors: 'Fouten in de configuratie', warnings: 'Waarschuwingen', empty: 'Nog geen services.',
     emptyHint: 'Zet ze in services.yaml in je configmap, of geef je containers het label homelab.name.',
     up: 'Online', down: 'Offline', warn: 'Verstoord', unknown: 'Onbekend', tagDown: 'Offline',
     apiError: 'API-foutinformatie', unknownWidget: 'Onbekend widgettype', discovered: 'gevonden via',
@@ -302,7 +310,7 @@ const I18N = {
     noMatches: "Geen services gevonden",
   },
   fr: {
-    loading: 'Chargement…', errors: 'Erreurs de configuration', warnings: 'Avertissements', empty: 'Aucun service pour l’instant.',
+    tabs: 'Onglets', loading: 'Chargement…', errors: 'Erreurs de configuration', warnings: 'Avertissements', empty: 'Aucun service pour l’instant.',
     emptyHint: 'Ajoutez-les dans services.yaml de votre dossier de configuration, ou étiquetez vos conteneurs avec homelab.name.',
     up: 'En ligne', down: 'Hors ligne', warn: 'Dégradé', unknown: 'Inconnu', tagDown: 'Hors ligne',
     apiError: 'Informations sur l’erreur API', unknownWidget: 'Type de widget inconnu', discovered: 'découvert via',
@@ -323,7 +331,7 @@ const I18N = {
     noMatches: "Aucun service trouvé",
   },
   de: {
-    loading: 'Lädt…', errors: 'Konfigurationsfehler', warnings: 'Warnungen', empty: 'Noch keine Dienste.',
+    tabs: 'Tabs', loading: 'Lädt…', errors: 'Konfigurationsfehler', warnings: 'Warnungen', empty: 'Noch keine Dienste.',
     emptyHint: 'Trage sie in services.yaml im Konfigurationsordner ein oder versieh deine Container mit dem Label homelab.name.',
     up: 'Online', down: 'Offline', warn: 'Beeinträchtigt', unknown: 'Unbekannt', tagDown: 'Offline',
     apiError: 'API-Fehlerinformationen', unknownWidget: 'Unbekannter Widget-Typ', discovered: 'gefunden über',
@@ -344,7 +352,7 @@ const I18N = {
     noMatches: "Keine Dienste gefunden",
   },
   es: {
-    loading: 'Cargando…', errors: 'Errores de configuración', warnings: 'Advertencias', empty: 'Todavía no hay servicios.',
+    tabs: 'Pestañas', loading: 'Cargando…', errors: 'Errores de configuración', warnings: 'Advertencias', empty: 'Todavía no hay servicios.',
     emptyHint: 'Añádelos en services.yaml de tu carpeta de configuración, o etiqueta tus contenedores con homelab.name.',
     up: 'En línea', down: 'Sin conexión', warn: 'Degradado', unknown: 'Desconocido', tagDown: 'Caído',
     apiError: 'Información del error de la API', unknownWidget: 'Tipo de widget desconocido', discovered: 'descubierto en',
@@ -806,6 +814,32 @@ function applyBackground(s) {
   document.body.style.setProperty('--hd-card-blur', s.cardBlur ? `${s.cardBlur}px` : '');
 }
 
+// ---------------------------------------------------------------- tabs
+/** The tab in the URL hash (#name, lowercase and URI-encoded, as in homepage), else the first. */
+function currentTab(tabs) {
+  let hash = '';
+  try { hash = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch { /* a malformed hash */ }
+  return tabs.find((t) => t.toLowerCase() === hash) ?? tabs[0];
+}
+
+function applyTab(tabs) {
+  const current = currentTab(tabs);
+  for (const a of document.querySelectorAll('#tabs a')) {
+    if (a.dataset.name === current) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  }
+  for (const section of document.querySelectorAll('[data-tab]')) section.hidden = section.dataset.tab !== current;
+}
+
+function renderTabs(tabs) {
+  const nav = document.getElementById('tabs');
+  nav.hidden = tabs.length === 0;
+  nav.setAttribute('aria-label', translate('tabs'));
+  nav.replaceChildren(...tabs.map((t) => el('a', { href: '#' + encodeURIComponent(t.toLowerCase()), 'data-name': t, text: t })));
+  applyTab(tabs);
+}
+window.addEventListener('hashchange', () => applyTab(layout?.tabs ?? []));
+
 function render(data) {
   stopPolling();
   layout = data;
@@ -835,7 +869,7 @@ function render(data) {
   for (const g of visible) {
     const cols = Number(g.layout.columns) || 0;
     const row = g.layout.style === 'row' || cols > 0;
-    const section = el('section', { class: 'group ' + (row ? 'layout-row' : 'layout-column'), 'data-group': g.name });
+    const section = el('section', { class: 'group ' + (row ? 'layout-row' : 'layout-column'), 'data-group': g.name, 'data-tab': g.layout.tab || null });
     const cards = el('div', { class: 'cards', id: `cards-${groups.children.length}` });
     if (g.layout.header === false) section.append(el('h2', { text: g.name, class: 'sr-only' }));
     else section.append(el('h2', null, groupToggle(g, section, cards.id)));
@@ -847,7 +881,7 @@ function render(data) {
 
   const bookmarks = document.getElementById('bookmarks');
   bookmarks.replaceChildren(...data.bookmarks.map((g) => {
-    const section = el('section', { class: 'group' }, el('h2', { text: g.name }));
+    const section = el('section', { class: 'group', 'data-tab': g.layout?.tab || null }, el('h2', { text: g.name }));
     const list = el('div', { class: 'cards' });
     for (const b of g.bookmarks) {
       const abbr = el('span', { class: 'abbr' });
@@ -859,6 +893,8 @@ function render(data) {
     section.append(list);
     return section;
   }));
+
+  renderTabs(data.tabs ?? []);
 
   for (const [id, key] of [['refresh-btn', 'refresh'], ['color-btn', 'color'], ['toast-close', 'close']]) {
     const b = document.getElementById(id);

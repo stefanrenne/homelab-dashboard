@@ -414,3 +414,19 @@ test('/site.webmanifest from settings.yaml, with pwa icons and shortcuts', async
     await t.close();
   }
 });
+
+test('tabs come from layout.<group>.tab in the order of the layout block; bookmark groups get their layout', async () => {
+  const t = await startApp({
+    'settings.yaml': 'layout:\n  Bookmarks A:\n    tab: Second\n  Media:\n    tab: First\n  Infra:\n    tab: Second\n  Always:\n    style: row\n',
+    'services.yaml': '- Media:\n    - Plex: { href: http://plex.lan }\n- Infra:\n    - Router: { href: http://router.lan }\n- Always:\n    - Wiki: { href: http://wiki.lan }\n',
+    'bookmarks.yaml': '- Bookmarks A:\n    - GitHub:\n        - href: https://github.com\n',
+  });
+  try {
+    const layout = await (await t.get('/api/layout')).json();
+    assert.deepEqual(layout.tabs, ['Second', 'First']);
+    assert.equal(layout.groups.find((g) => g.name === 'Media').layout.tab, 'First');
+    assert.equal(layout.bookmarks[0].layout.tab, 'Second');
+  } finally {
+    await t.close();
+  }
+});

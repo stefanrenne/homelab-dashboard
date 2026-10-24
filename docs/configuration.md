@@ -142,6 +142,22 @@ fails (offline, a broken release) keeps the version that worked and says so in t
 A source without `widget.yaml` at its root is a **collection**: every folder with a
 `widget.yaml` directly in it, or in its `widgets/` folder, is installed.
 
+**Tabs**, as in homepage: give layout groups a `tab` and the page shows a tab bar. Tabs come
+in the order of the `layout` block. Service and bookmark groups without a `tab` show on every
+tab. Each tab has its own address: `#` plus its name in lowercase (`http://dashboard.lan/#media`).
+
+```yaml
+layout:
+  Infrastructure:
+    tab: Home
+  Developer:          # a bookmark group
+    tab: Home
+  Media:
+    tab: Media
+  Tools:              # no tab: on every tab
+    style: row
+```
+
 Viewers can pick light, dark or "follow the system" and another colour with the buttons in the
 footer; that choice is remembered in their browser and overrides `theme` and `color`.
 

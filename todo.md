@@ -15,7 +15,6 @@ Already there: title, theme, color, language (5 of homepage's ±40), target, bac
 headerStyle, showTitle, layout per group (columns, row/column style, header, initiallyCollapsed),
 hideErrors, status labels, container stats on click, search widget, bookmarks.
 
-- [ ] `layout.<group>.tab` and tabs in the header (URL hash per tab)
 - [ ] Nested groups (a group inside a group), with their own layout
 - [ ] `layout.<group>.iconsOnly`, `layout.<group>.icon` (category icons), `iconStyle: theme|gradient`
 - [ ] `fullWidth`, `maxGroupColumns`, `useEqualHeights`

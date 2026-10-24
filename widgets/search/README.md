@@ -6,6 +6,10 @@ the web with the `provider` when nothing matches. Meant for the header in `widge
 For a search engine of your own, set `provider: custom` and a `url` with `{q}` where the
 search terms go.
 
+`showSearchSuggestions: true` shows the search engine's suggestions while typing. The dashboard
+asks the engine for the page; for `provider: custom` give a `suggestionUrl` that answers in the
+OpenSearch format. Brave limits these requests and may answer none.
+
 ## Example
 
 ```yaml

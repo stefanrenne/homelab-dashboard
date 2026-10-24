@@ -14,6 +14,7 @@ import { withMountedSocket, DEFAULT_SOCKET } from './discovery/docker.js';
 import { buildState } from './layout.js';
 import { renderIndex, renderManifest, renderRobots } from './page.js';
 import { UpdateCheck, RELEASES_URL, isNewer } from './update.js';
+import { suggestUrl, fetchSuggestions } from './suggest.js';
 import { describeError, scrub } from './plugins/runtime.js';
 
 export const ACTION_TIMEOUT_MS = 30_000;
@@ -113,6 +114,36 @@ export async function createApp({
     return chain;
   }
 
+  /**
+   * Search suggestions for a search box: ?instance=<id> (a widget's own settings) or
+   * ?for=quicklaunch (quicklaunch's settings, else the search widget's). Never fails: a
+   * problem gives an empty list.
+   */
+  async function suggestions(params) {
+    const q = (params.get('q') ?? '').trim().slice(0, 200);
+    if (!q) return { suggestions: [] };
+    const widgetOptions = (id) => runtime.instances.get(id)?.options ?? {};
+    let source;
+    if (params.get('for') === 'quicklaunch') {
+      const ql = state.config.settings.quicklaunch ?? {};
+      const searchWidget = (state.layout?.header ?? []).find((w) => w.type === 'search');
+      const w = searchWidget ? widgetOptions(searchWidget.instanceId) : {};
+      source = {
+        showSearchSuggestions: ql.showSearchSuggestions ?? w.showSearchSuggestions,
+        provider: ql.provider ?? w.provider,
+        suggestionUrl: ql.provider ? ql.suggestionUrl : w.suggestionUrl,
+      };
+    } else source = widgetOptions(params.get('instance') ?? '');
+    const base = suggestUrl(source);
+    if (!base) return { suggestions: [] };
+    try {
+      return { suggestions: await fetchSuggestions(base, q) };
+    } catch (err) {
+      log.info(`suggestions: ${err.message}`);
+      return { suggestions: [] };
+    }
+  }
+
   function broadcast(event) {
     for (const res of sseClients) res.write(`event: ${event}\ndata: {}\n\n`);
   }
@@ -158,6 +189,7 @@ export async function createApp({
       }
       if (method === 'GET' && p === '/api/health') return send(res, 200, { ok: true, version: VERSION });
       if (method === 'GET' && p === '/api/layout') return send(res, 200, state.layout);
+      if (method === 'GET' && p === '/api/suggest') return send(res, 200, await suggestions(url.searchParams));
       if (method === 'GET' && p.startsWith('/api/widgets/')) {
         return send(res, 200, await runtime.get(p.slice('/api/widgets/'.length)));
       }

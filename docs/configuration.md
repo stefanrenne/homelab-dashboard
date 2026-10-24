@@ -108,6 +108,8 @@ quicklaunch:        # start typing anywhere on the page to find a service, bookm
                               # default: the search widget's provider; none: no web search
   # url: https://search.lan/?q=   # for custom: the query is appended, or put where {q} is
   target: _blank              # where the web search opens
+  showSearchSuggestions: true # suggestions from the search engine (default: the search widget's setting)
+  # suggestionUrl: https://ac.search.lan/?q=   # for custom: an OpenSearch suggestion URL
   hideInternetSearch: false   # true: no web search entry
   hideVisitURL: false         # true: no "open <url>" entry for typed addresses
   mobileButtonPosition: bottom-right   # a search button on phones: top-left, top-right, bottom-left, bottom-right
@@ -336,6 +338,7 @@ Icons, as in homepage:
     disk: ["/", "/mnt/data"]
 - search:
     provider: duckduckgo   # duckduckgo, google, bing, startpage, baidu, brave, custom (+ url: https://x/?q={q})
+    showSearchSuggestions: true   # suggestions while typing (google, duckduckgo, bing, baidu, brave; custom needs suggestionUrl)
 ```
 
 ## bookmarks.yaml

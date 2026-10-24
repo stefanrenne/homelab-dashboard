@@ -30,3 +30,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 1: `custom.css` and `custom.js`.
 - 2026-10-24: homepage parity, phase 1: twelve more languages (homepage's set), right-to-left for Hebrew.
 - 2026-10-24: homepage parity, phase 1: `logpath` and `LOG_TARGETS`.
+- 2026-10-24: homepage parity, phase 1: search suggestions (search widget and quick launch).

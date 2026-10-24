@@ -49,6 +49,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   traditional; `zh-CN` works too). Widgets of the collection fall back to English until translated.
 - `logpath` and `LOG_TARGETS`: a rotated log file (10 MiB, five files), as in homepage. Without
   `logpath` the log stays on stdout only.
+- Search suggestions (`showSearchSuggestions`, `suggestionUrl`) in the search widget and quick launch,
+  as in homepage; the server asks the search engine because of the page's CSP.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

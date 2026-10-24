@@ -631,3 +631,31 @@ test('custom.css and custom.js from the config folder are served and linked, onl
     await both.close();
   }
 });
+
+test('/api/suggest: a search widget\'s own settings, quicklaunch falling back to it, and never an error', async () => {
+  let fail = false;
+  const asked = [];
+  const ac = await serve((req, res) => {
+    asked.push(req.url);
+    if (fail) { res.statusCode = 500; return res.end(); }
+    res.end(JSON.stringify(['pl', ['plex', 'plex pass']]));
+  });
+  const t = await startApp({
+    'widgets.yaml': `- search:\n    provider: custom\n    url: https://search.lan/?q={q}\n    showSearchSuggestions: true\n    suggestionUrl: ${ac.url}/ac?q=\n`,
+    'settings.yaml': 'quicklaunch:\n  searchDescriptions: true\n',
+  });
+  try {
+    const layout = await (await t.get('/api/layout')).json();
+    const id = layout.header[0].instanceId;
+    assert.deepEqual(await (await t.get(`/api/suggest?instance=${id}&q=pl`)).json(), { suggestions: ['plex', 'plex pass'] });
+    assert.deepEqual(await (await t.get('/api/suggest?for=quicklaunch&q=pl')).json(), { suggestions: ['plex', 'plex pass'] });
+    assert.deepEqual(asked, ['/ac?q=pl', '/ac?q=pl']);
+    assert.deepEqual(await (await t.get('/api/suggest?instance=nope&q=pl')).json(), { suggestions: [] });
+    assert.deepEqual(await (await t.get(`/api/suggest?instance=${id}&q=`)).json(), { suggestions: [] });
+    fail = true;
+    assert.deepEqual(await (await t.get(`/api/suggest?instance=${id}&q=pl`)).json(), { suggestions: [] }, 'a broken engine gives no suggestions');
+  } finally {
+    await t.close();
+    await ac.close();
+  }
+});

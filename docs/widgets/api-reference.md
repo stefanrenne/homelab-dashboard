@@ -133,6 +133,7 @@ again after every refresh:
 | `t(key)` | Translation from `i18n.json` for the dashboard language, falling back to English, then the key. |
 | `data` | What `server.js` returned, or `null` (before the first result, or for a client-only widget). |
 | `error` | Error message of the last refresh, or `null`. |
+| `instanceId` | The id of this widget instance (for `api/suggest`). |
 
 Theme CSS variables inherit into the shadow root: `--hd-text`, `--hd-muted`, `--hd-accent`,
 `--hd-card`, `--hd-border`, `--hd-ok`, `--hd-warn`, `--hd-error`.
@@ -152,6 +153,14 @@ A `client.js` may talk to the dashboard through DOM events that bubble out of it
 
 The built-in `search` widget uses both.
 
+## Dashboard endpoints for client.js
+
+| Request | Answer |
+|---|---|
+| `GET api/suggest?instance=<instanceId>&q=<text>` | `{ suggestions: [...] }`: search suggestions for this instance, when its options have `showSearchSuggestions: true` and a `provider` (google, duckduckgo, bing, baidu, brave) or `provider: custom` with a `suggestionUrl`. The server asks the search engine; the URL never comes from the request. Empty on any problem. |
+
+Use relative URLs (`api/...`), so the widget also works under a sub path.
+
 ## i18n.json
 
 ```json
@@ -167,3 +176,4 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 | 1 | 0.1.0 | First version (including `vars`, row `status` and `defaultFields`). |
 | 1 | next | Blocks can carry `highlight: { level, valueOnly }`, added by the dashboard from the entry's `highlight:` rules. Widgets need no change. |
 | 1 | next | `provider: <name>` in an entry fills options from `settings.yaml` `providers`. Widgets need no change. |
+| 1 | next | `client.js` gets `instanceId`; `GET api/suggest` for search suggestions. |

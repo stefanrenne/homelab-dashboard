@@ -779,6 +779,7 @@ function mountWidget(instance, extraClass, name) {
     clientModules.get(instance.type).then(() => {
       custom = document.createElement(`hd-${instance.type}`);
       custom.options = instance.options;
+      custom.instanceId = instance.instanceId;
       custom.t = widgetT(instance.type);
       custom.error = null;
       custom.data = null;
@@ -1090,6 +1091,29 @@ const QL_NAMES = { google: 'Google', duckduckgo: 'DuckDuckGo', bing: 'Bing', bai
 let qlSettings = {};
 let qlItems = [];
 let qlIndex = 0;
+let qlSuggestions = { query: '', list: [] };
+let qlSuggestTimer = null;
+
+/** showSearchSuggestions: quicklaunch's, else the search widget's. */
+function qlSuggestionsOn() {
+  const widget = (layout?.header ?? []).find((w) => w.type === 'search')?.options ?? {};
+  return (qlSettings.showSearchSuggestions ?? widget.showSearchSuggestions) === true && !qlSettings.hideInternetSearch;
+}
+
+/** Asks api/suggest (debounced) and redraws when the answer still fits what is typed. */
+function qlSuggest(query) {
+  clearTimeout(qlSuggestTimer);
+  if (!qlSuggestionsOn() || !query.trim()) return;
+  qlSuggestTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`api/suggest?for=quicklaunch&q=${encodeURIComponent(query.trim())}`);
+      const { suggestions = [] } = await res.json();
+      if (document.getElementById('ql-input').value !== query) return;
+      qlSuggestions = { query, list: suggestions };
+      qlRender();
+    } catch { /* no suggestions this time */ }
+  }, 250);
+}
 
 /** The web search: quicklaunch.provider, else the search widget's, else none. */
 function qlProvider() {
@@ -1135,6 +1159,12 @@ function qlSearch(query) {
     const encoded = encodeURIComponent(query.trim());
     const href = provider.url.includes('{q}') ? provider.url.replace('{q}', encoded) : provider.url + encoded;
     items.push({ kind: 'web', name: translate('qlSearch', { name: provider.name, q: query.trim() }), href, target: provider.target });
+    if (qlSuggestions.query === query) {
+      for (const s of qlSuggestions.list.filter((x) => x.toLowerCase() !== query.trim().toLowerCase())) {
+        const u = provider.url.includes('{q}') ? provider.url.replace('{q}', encodeURIComponent(s)) : provider.url + encodeURIComponent(s);
+        items.push({ kind: 'web', name: translate('qlSearch', { name: provider.name, q: s }), href: u, target: provider.target });
+      }
+    }
   }
   return items;
 }
@@ -1175,6 +1205,7 @@ function qlShow(initial) {
   qlIndex = 0;
   input.focus();
   qlRender();
+  qlSuggest(input.value);
 }
 
 function qlClose() {
@@ -1203,7 +1234,7 @@ document.addEventListener('keydown', (e) => {
   e.preventDefault();
   qlShow(e.key);
 });
-document.getElementById('ql-input').addEventListener('input', () => { qlIndex = 0; qlRender(); });
+document.getElementById('ql-input').addEventListener('input', (e) => { qlIndex = 0; qlRender(); qlSuggest(e.target.value); });
 document.getElementById('ql-input').addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.preventDefault(); qlClose(); }
   else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {

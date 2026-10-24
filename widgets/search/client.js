@@ -31,7 +31,8 @@ class HdSearch extends HTMLElement {
           font: 700 .75rem/1 inherit; color: var(--hd-text); background: color-mix(in srgb, var(--hd-text) 12%, transparent); }
         button:focus-visible { outline: 2px solid var(--hd-accent); outline-offset: 1px; }
       </style>
-      <form role="search"><input type="search" autocomplete="off" enterkeyhint="search"><button type="submit"></button></form>`;
+      <form role="search"><input type="search" autocomplete="off" enterkeyhint="search" list="suggestions"><button type="submit"></button>
+        <datalist id="suggestions"></datalist></form>`;
     const input = root.querySelector('input');
     const button = root.querySelector('button');
     const hint = filter ? t('placeholderFilter') : t('placeholder');
@@ -43,6 +44,24 @@ class HdSearch extends HTMLElement {
     const send = (name, cancelable = false) =>
       this.dispatchEvent(new CustomEvent(name, { detail: { query: input.value.trim() }, bubbles: true, composed: true, cancelable }));
     if (filter) input.addEventListener('input', () => send('hd-search-input'));
+    // showSearchSuggestions: the dashboard's api/suggest asks the search engine (the page may not)
+    if (o.showSearchSuggestions && this.instanceId) {
+      const list = root.querySelector('datalist');
+      let timer = null;
+      input.addEventListener('input', () => {
+        clearTimeout(timer);
+        const q = input.value.trim();
+        if (!q) return list.replaceChildren();
+        timer = setTimeout(async () => {
+          try {
+            const res = await fetch(`api/suggest?instance=${encodeURIComponent(this.instanceId)}&q=${encodeURIComponent(q)}`);
+            const { suggestions = [] } = await res.json();
+            if (input.value.trim() !== q) return;
+            list.replaceChildren(...suggestions.map((s) => Object.assign(document.createElement('option'), { value: s })));
+          } catch { /* no suggestions this time */ }
+        }, 250);
+      });
+    } else input.removeAttribute('list');
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && input.value) {
         input.value = '';

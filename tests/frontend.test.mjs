@@ -625,3 +625,14 @@ test('17 languages: Hebrew turns the page right-to-left, the others left-to-righ
   assert.equal(r.document.getElementById('refresh-btn').getAttribute('aria-label'), 'רענון');
   assert.equal(w.document.documentElement.dir, 'ltr');
 });
+
+test('quicklaunch shows search suggestions with showSearchSuggestions', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.settings.quicklaunch = { provider: 'duckduckgo', showSearchSuggestions: true };
+  const w = await page({ ...RESULTS, '/api/layout': layout, '/api/suggest': { suggestions: ['zebra', 'zebra crossing'] } });
+  const doc = w.document;
+  doc.body.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'z', bubbles: true }));
+  await new Promise((r) => setTimeout(r, 400));
+  const names = [...doc.querySelectorAll('#ql-list .ql-name')].map((n) => n.textContent);
+  assert.deepEqual(names, ['Zoek “z” met DuckDuckGo', 'Zoek “zebra” met DuckDuckGo', 'Zoek “zebra crossing” met DuckDuckGo']);
+});

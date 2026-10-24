@@ -6,13 +6,14 @@
 import { validateOptions } from './plugins/options.js';
 import { DEFAULT_REFRESH_MS } from './plugins/loader.js';
 import { stableId, parseDuration, isPlainObject } from './util.js';
+import { DEFAULT_LEVELS } from './highlight.js';
 
 /**
  * Keys of a widget entry that belong to the dashboard, not to the widget (unless the
  * widget declares an option with that name): how often to refresh, which blocks to show
  * and whether to hide errors. `refreshInterval` (ms) and `hide_errors` are homepage's names.
  */
-export const INSTANCE_KEYS = ['refresh', 'refreshInterval', 'fields', 'hideErrors', 'hide_errors'];
+export const INSTANCE_KEYS = ['refresh', 'refreshInterval', 'fields', 'hideErrors', 'hide_errors', 'highlight'];
 export const MIN_REFRESH_MS = 1000;
 
 function splitInstanceKeys(schema, raw) {
@@ -93,7 +94,11 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     for (const [name, value] of Object.entries(options)) {
       if (!(name in widget.manifest.options)) secretValues.push(...stringsIn(value));
     }
-    instances.set(id, { type, options, secretValues, refreshMs, fields, errors: optionErrors });
+    if (own.highlight !== undefined && !isPlainObject(own.highlight)) {
+      errors.push({ ...where, message: `${type}: highlight: expected a map of block key to rules` });
+    }
+    const highlight = isPlainObject(own.highlight) ? own.highlight : null;
+    instances.set(id, { type, options, secretValues, refreshMs, fields, highlight, errors: optionErrors });
     return {
       instanceId: id,
       type,
@@ -214,6 +219,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       bookmarksStyle: config.settings.bookmarksStyle ?? null,
       iconStyle: config.settings.iconStyle ?? 'gradient',
       cardStyle: config.settings.cardStyle ?? null,
+      highlightLevels: { ...DEFAULT_LEVELS, ...(config.settings.blockHighlights?.levels ?? {}) },
       blockStyle: config.settings.blockStyle ?? null,
       font: config.settings.font ?? null,
       fullWidth: config.settings.fullWidth === true,

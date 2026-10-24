@@ -19,3 +19,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 1: group order from the layout block, mixed with bookmark groups.
 - 2026-10-24: homepage parity, phase 1: header styles, cardStyle, blockStyle, font.
 - 2026-10-24: homepage parity, phase 1: `statusStyle` (global and per service).
+- 2026-10-24: homepage parity, phase 1: block highlighting and `blockHighlights` levels.

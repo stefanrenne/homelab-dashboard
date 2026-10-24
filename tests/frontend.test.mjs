@@ -475,3 +475,21 @@ test('statusStyle dot shows a dot (with an accessible name), basic shows Online/
   assert.equal(site.textContent, 'Online', 'a check shows up/down');
   assert.equal(container.textContent, 'healthy', 'a container keeps its state');
 });
+
+test('highlighted blocks get a level class (block or value only), coloured from the levels', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.settings.highlightLevels = { good: 'bg-emerald-500/40 text-emerald-950 dark:text-emerald-400', warn: 'bg-nope-500 text-white', danger: '' };
+  const results = structuredClone(RESULTS);
+  results['/api/widgets/w-1'].data.blocks[0].highlight = { level: 'good', valueOnly: false };
+  results['/api/widgets/w-1'].data.blocks[1].highlight = { level: 'warn', valueOnly: true };
+  results['/api/layout'] = layout;
+  const w = await page(results);
+  const doc = w.document;
+  const [cpu, mem] = doc.querySelectorAll('[data-service="svc-1"] .widget .block');
+  assert.ok(cpu.classList.contains('hl-good'));
+  assert.ok(!mem.classList.contains('hl-warn') && mem.querySelector('.v').classList.contains('hl-warn'));
+  const css = doc.getElementById('hl-levels').textContent;
+  assert.match(css, /:root\[data-theme="dark"\] \.hl-good\{background:color-mix\(in srgb, #10b981 40%, transparent\);color:#34d399\}/);
+  assert.match(css, /:root\[data-theme="light"\] \.hl-warn\{color:#ffffff\}/, 'an unknown colour is dropped, the rest kept');
+  assert.ok(!css.includes('hl-danger'));
+});

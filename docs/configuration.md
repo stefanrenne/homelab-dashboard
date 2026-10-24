@@ -244,6 +244,42 @@ layout:
       columns: 2
 ```
 
+**Block highlighting**, as in homepage: `highlight:` on a widget entry colours blocks by their
+value. Keys are block keys (the names `fields:` uses). The first matching rule wins; numeric
+rules are tried before string rules.
+
+```yaml
+widget:
+  type: sonarr
+  url: http://sonarr.lan:8989
+  key: "{{HD_VAR_SONARR_KEY}}"
+  highlight:
+    queued:
+      valueOnly: true                # colour the value only, not the whole block
+      numeric:
+        - { level: danger, when: gte, value: 20 }
+        - { level: warn, when: between, min: 5, max: 19 }
+        - { level: good, when: eq, value: 0 }
+    status:
+      string:
+        - { level: danger, when: regex, value: "(failed|import) pending" }
+```
+
+Numeric `when`: `gt`, `gte`, `lt`, `lte`, `eq`, `ne` (with `value`), `between` and `outside`
+(with `min` and/or `max`); numbers are read from formatted values such as `1,234 GB`. String
+`when`: `equals`, `includes`, `startsWith`, `endsWith` (case-insensitive unless
+`caseSensitive: true`) and `regex` (`flags`, default `i`). Every rule takes `negate: true`.
+The colours per level can be changed in settings.yaml with homepage's Tailwind classes; colours
+outside the dashboard's palettes are ignored:
+
+```yaml
+blockHighlights:
+  levels:
+    good: "bg-emerald-500/40 text-emerald-950 dark:bg-emerald-900/60 dark:text-emerald-400"
+    warn: "bg-amber-300/30 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200"
+    danger: "bg-rose-700/45 text-rose-200 dark:bg-rose-950/70 dark:text-rose-400"
+```
+
 Every check that is set gets its own label in the card's top-right corner, as in homepage:
 the response time (or "down") for `siteMonitor` and `ping`, the container state for `container`.
 Click a container label to see the container's CPU and memory. `ping` also accepts a URL

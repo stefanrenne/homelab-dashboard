@@ -102,6 +102,7 @@ widget declares an option with the same name:
 | `refresh` | The same as a duration: `5s`, `1h`. |
 | `fields` | List of block keys to show, e.g. `[cpu, memoryPercent]`. The widget's order is kept. |
 | `hideErrors` / `hide_errors` | `true` hides the error box of this widget. |
+| `highlight` | Colours blocks by their value, as in homepage: block `key` (or `<type>.<key>`) → `numeric` / `string` rules with a `level` (`good`, `warn`, `danger`). The dashboard adds the result to the block as `highlight: { level, valueOnly }`; `client.js` sees it in `data.blocks` and may use or ignore it. See [Configuration](../configuration.md). |
 
 A thrown error (or a timeout) shows its message on the card. Secret values in it are replaced by `***`.
 
@@ -159,3 +160,4 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 | API | Dashboard | Change |
 |---|---|---|
 | 1 | 0.1.0 | First version (including `vars`, row `status` and `defaultFields`). |
+| 1 | next | Blocks can carry `highlight: { level, valueOnly }`, added by the dashboard from the entry's `highlight:` rules. Widgets need no change. |

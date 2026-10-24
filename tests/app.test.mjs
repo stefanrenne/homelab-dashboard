@@ -494,3 +494,28 @@ test('statusStyle: the service setting wins over the global one', async () => {
     await t.close();
   }
 });
+
+test('highlight rules on a widget entry reach the blocks through the runtime, not the widget', async () => {
+  const srv = await serve((req, res) => res.end(JSON.stringify({ count: 42 })));
+  const t = await startApp({
+    'settings.yaml': 'blockHighlights:\n  levels:\n    warn: bg-sky-500/30 text-sky-900\n    nope: x\n',
+    'services.yaml': [
+      '- G:', '    - App:', '        widget:', '          type: custom-api', `          url: ${srv.url}/`,
+      '          mappings: [{ field: count, label: Count }]', '          highlight:', '            Count:',
+      '              numeric:', '                - { level: warn, when: gt, value: 40 }', '',
+    ].join('\n'),
+  });
+  try {
+    const layout = await (await t.get('/api/layout')).json();
+    const w = layout.groups[0].services[0].widgets[0];
+    assert.equal(w.options.highlight, undefined, 'highlight is the dashboard\'s, not a widget option');
+    const result = await (await t.get(`/api/widgets/${w.instanceId}`)).json();
+    assert.deepEqual(result.data.blocks[0].highlight, { level: 'warn', valueOnly: false });
+    assert.equal(layout.settings.highlightLevels.warn, 'bg-sky-500/30 text-sky-900');
+    assert.match(layout.settings.highlightLevels.good, /emerald/, 'defaults for the levels not set');
+    assert.ok(layout.messages.warnings.some((m) => m.path === 'blockHighlights.levels.nope'));
+  } finally {
+    await t.close();
+    await srv.close();
+  }
+});

@@ -178,6 +178,7 @@
   .blocks { display: flex; flex-wrap: wrap; }
   .block { flex: 1 1 0; min-width: 64px; margin: 4px; padding: 4px; border-radius: 4px; background: var(--hd-block);
     display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 44px; }
+  .block .v.hl-good, .block .v.hl-warn, .block .v.hl-danger { border-radius: 3px; padding: 0 4px; }
   .block .v { font-size: .875rem; line-height: 1.25rem; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; font-variant-numeric: tabular-nums; }
   .block .l { font-size: .75rem; line-height: 1rem; font-weight: 700; text-transform: uppercase; max-width: 100%;
     /* wrap to two lines (hyphenated in the page language) rather than cut a label off */
@@ -649,8 +650,9 @@ function renderResult(container, instance, result, name) {
       // "22%" like homepage; other units get a space ("12 ms", "3 MB").
       const shown = b.unit && b.value !== null && b.value !== undefined ? `${value}${b.unit === '%' ? '' : ' '}${b.unit}` : value;
       const label = t(b.label, b.vars);
-      const v = el('div', { class: 'v' }, statusSymbol(b.status), shown);
-      grid.append(el('div', { class: 'block' + (b.status ? ' ' + b.status : ''), title: `${label}: ${shown}` },
+      const hl = b.highlight && HIGHLIGHT_LEVELS.includes(b.highlight.level) ? `hl-${b.highlight.level}` : '';
+      const v = el('div', { class: 'v' + (hl && b.highlight.valueOnly ? ' ' + hl : '') }, statusSymbol(b.status), shown);
+      grid.append(el('div', { class: 'block' + (b.status ? ' ' + b.status : '') + (hl && !b.highlight.valueOnly ? ' ' + hl : ''), title: `${label}: ${shown}` },
         v, el('div', { class: 'l', text: label })));
     }
     container.append(grid);
@@ -897,6 +899,41 @@ function renderService(service) {
   return card;
 }
 
+// ---------------------------------------------------------------- block highlighting
+const HIGHLIGHT_LEVELS = ['good', 'warn', 'danger'];
+
+/** A Tailwind colour token (bg-emerald-500/40, text-white) as a CSS colour from PALETTES, or null. */
+function tailwindColor(name, shade, opacity) {
+  let hex = { white: '#ffffff', black: '#000000' }[name];
+  if (!hex && PALETTES[name] && SHADES.includes(Number(shade))) hex = PALETTES[name].split(' ')[SHADES.indexOf(Number(shade))];
+  if (!hex) return null;
+  return opacity ? `color-mix(in srgb, ${hex} ${Number(opacity)}%, transparent)` : hex;
+}
+
+/**
+ * settings.highlightLevels (homepage's Tailwind classes per level) as a stylesheet for
+ * .hl-good / .hl-warn / .hl-danger in both appearances. Only palette colours get through.
+ */
+function applyHighlightLevels(levels) {
+  const rules = [];
+  for (const level of HIGHLIGHT_LEVELS) {
+    const by = { light: {}, dark: {} };
+    for (const token of String(levels?.[level] ?? '').split(/\s+/)) {
+      const m = /^(dark:)?(bg|text)-([a-z]+)(?:-(\d{2,3}))?(?:\/(\d{1,3}))?$/.exec(token);
+      const color = m && tailwindColor(m[3], m[4], m[5]);
+      if (color) by[m[1] ? 'dark' : 'light'][m[2] === 'bg' ? 'background' : 'color'] = color;
+    }
+    for (const theme of ['light', 'dark']) {
+      const props = { ...by.light, ...(theme === 'dark' ? by.dark : {}) };
+      const css = Object.entries(props).map(([k, v]) => `${k}:${v}`).join(';');
+      if (css) rules.push(`:root[data-theme="${theme}"] .hl-${level}{${css}}`);
+    }
+  }
+  let style = document.getElementById('hl-levels');
+  if (!style) document.head.append(style = el('style', { id: 'hl-levels' }));
+  style.textContent = rules.join('\n');
+}
+
 /** settings.background ({ image, blur, saturate, brightness, opacity }) and settings.cardBlur. */
 function applyBackground(s) {
   const bg = document.getElementById('bg');
@@ -978,6 +1015,7 @@ function render(data) {
   document.title = s.title;
   applyTheme(s);
   applyBackground(s);
+  applyHighlightLevels(s.highlightLevels);
   const title = document.getElementById('title');
   title.textContent = s.title;
   title.hidden = false;

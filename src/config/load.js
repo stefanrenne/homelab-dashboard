@@ -146,6 +146,15 @@ export function normalizeSettings(raw, ctx) {
       delete settings[key];
     } else settings[key] = n;
   }
+  if (settings.blockHighlights !== undefined) {
+    const levels = isPlainObject(settings.blockHighlights) && isPlainObject(settings.blockHighlights.levels) ? settings.blockHighlights.levels : null;
+    if (!levels) ctx.warn(file, 'blockHighlights', 'expected levels: { good, warn, danger }, ignored');
+    settings.blockHighlights = { levels: {} };
+    for (const [level, classes] of Object.entries(levels ?? {})) {
+      if (['good', 'warn', 'danger'].includes(level) && typeof classes === 'string') settings.blockHighlights.levels[level] = classes;
+      else ctx.warn(file, `blockHighlights.levels.${level}`, 'expected good, warn or danger with Tailwind classes, ignored');
+    }
+  }
   if (settings.statusStyle !== undefined && !STATUS_STYLES.includes(settings.statusStyle)) {
     ctx.warn(file, 'statusStyle', 'expected dot or basic (or leave it out), ignored');
     delete settings.statusStyle;

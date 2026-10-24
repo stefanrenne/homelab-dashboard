@@ -2,6 +2,7 @@
 // caches results per instance and keeps failures inside the widget (hard rule 4).
 
 import http from 'node:http';
+import { highlightBlocks } from '../highlight.js';
 
 export const DEFAULT_TIMEOUT_MS = 10_000;
 export const BLOCK_STATUSES = ['ok', 'warn', 'error', 'unknown'];
@@ -57,7 +58,8 @@ export class WidgetRuntime {
           Promise.resolve().then(() => widget.server.fetch(ctx)),
           new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(controller.signal.reason))),
         ]);
-        result = { ok: true, data: selectFields(checkData(data ?? {}), instance.fields), fetchedAt: this.now() };
+        const selected = selectFields(checkData(data ?? {}), instance.fields);
+        result = { ok: true, data: highlightBlocks(selected, instance.highlight, instance.type), fetchedAt: this.now() };
       } catch (err) {
         const message = scrub(describeError(err), instance.secretValues);
         this.log.warn(`widget ${instance.type} (${instanceId}): ${message}`);

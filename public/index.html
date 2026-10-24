@@ -122,7 +122,7 @@
   .full-width .wrap { max-width: none; }
   @media (min-width: 1536px) {
     .max-group-cols .group.layout-column:not(.nested) { flex-basis: calc(100% / var(--max-group-cols)); }
-    .max-bookmark-cols .bookmarks .group { flex-basis: calc(100% / var(--max-bookmark-cols)); }
+    .max-bookmark-cols .bookmark-group { flex-basis: calc(100% / var(--max-bookmark-cols)); }
   }
   .group.equal-heights > .cards { align-items: stretch; grid-template-rows: none; }
   .group.equal-heights > .cards > .card { height: calc(100% - 8px); }
@@ -145,7 +145,7 @@
     background: var(--fill, linear-gradient(180deg, var(--hd-icon-from), var(--hd-icon-to))); }
   .icon-style-theme .mask-icon { background: var(--fill, var(--hd-heading)); }
   .bm .abbr .mask-icon { width: 20px; height: 20px; }
-  .bookmarks .icons-only .bm .abbr .mask-icon { width: 24px; height: 24px; }
+  .bookmark-group.icons-only .bm .abbr .mask-icon { width: 24px; height: 24px; }
   .icon.letter span { width: 32px; height: 32px; border-radius: 6px; display: grid; place-items: center; font-weight: 700; font-size: .875rem;
     background: color-mix(in srgb, var(--hd-text) 12%, transparent); }
   .names { flex: 1; min-width: 0; padding: 8px; font-size: .875rem; line-height: 1.25rem; }
@@ -202,23 +202,23 @@
   .tabs a[aria-current="page"] { background: var(--hd-tab); font-weight: 700; }
   [data-tab][hidden] { display: none !important; }
   .bookmarks { display: flex; flex-wrap: wrap; margin: 8px -4px 0; }
-  .bookmarks .group { flex: 1 1 100%; }
-  @media (min-width: 768px) { .bookmarks .group { flex-basis: 50%; } }
-  @media (min-width: 1024px) { .bookmarks .group { flex-basis: 25%; } }
+  .bookmark-group { flex: 1 1 100%; }
+  @media (min-width: 768px) { .bookmark-group { flex-basis: 50%; } }
+  @media (min-width: 1024px) { .bookmark-group { flex-basis: 25%; } }
   .bm { display: flex; align-items: center; gap: 0; margin-bottom: 8px; border-radius: 6px; background: var(--hd-card); border: 1px solid var(--hd-card-border, transparent); color: inherit; text-decoration: none; font-size: .875rem; overflow: hidden; }
   .bm:hover { background: var(--hd-card-hover); }
   .bm .abbr { width: 40px; align-self: stretch; display: grid; place-items: center; font-weight: 700; font-size: .75rem; background: var(--hd-block); }
   .bm .abbr img { width: 20px; height: 20px; object-fit: contain; }
   .bm .bn { padding: 8px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* bookmarks as icons only (layout.<group>.iconsOnly, bookmarksStyle: icons) */
-  .bookmarks .icons-only .cards { display: flex; flex-wrap: wrap; gap: 8px; }
-  .bookmarks .icons-only .bm { margin: 0; }
-  .bookmarks .icons-only .bm .abbr { width: 44px; height: 44px; }
-  .bookmarks .icons-only .bm .abbr img { width: 24px; height: 24px; }
+  .bookmark-group.icons-only .cards { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bookmark-group.icons-only .bm { margin: 0; }
+  .bookmark-group.icons-only .bm .abbr { width: 44px; height: 44px; }
+  .bookmark-group.icons-only .bm .abbr img { width: 24px; height: 24px; }
   /* category icons (layout.<group>.icon) */
   .group-icon { width: 24px; height: 24px; object-fit: contain; flex: none; }
   .group h2 .group-icon, .group h3 .group-icon { margin-right: 2px; }
-  .bookmarks .group h2 { display: flex; align-items: center; gap: 6px; }
+  .bookmark-group h2 { display: flex; align-items: center; gap: 6px; }
 
   .empty { text-align: center; color: var(--hd-muted); padding: 64px 16px; border-radius: 6px; background: var(--hd-card); width: 100%; margin: 4px; }
 
@@ -836,6 +836,7 @@ function renderGroup(g, level) {
     class: 'group ' + (row ? 'layout-row' : 'layout-column') + (level > 2 ? ' nested' : '') + (equal ? ' equal-heights' : ''),
     'data-group': g.name,
     'data-tab': level === 2 ? g.layout.tab || null : null,
+    'data-order': level === 2 ? g.order ?? null : null,
   });
   const body = el('div', { class: 'cards', id: `cards-${groupCount++}` });
   const heading = `h${level}`;
@@ -900,6 +901,22 @@ function applyBackground(s) {
   document.body.style.setProperty('--hd-card-blur', s.cardBlur ? `${s.cardBlur}px` : '');
 }
 
+/**
+ * homepage mixes service and bookmark groups in the order of the layout block: a bookmark
+ * group listed before a service group moves in among the service groups, at its place.
+ */
+function placeBookmarkGroups() {
+  const services = [...document.querySelectorAll('#groups > .group[data-order]')];
+  if (!services.length) return;
+  const last = Math.max(...services.map((s) => Number(s.dataset.order)));
+  for (const bm of document.querySelectorAll('#bookmarks > .bookmark-group[data-order]')) {
+    const order = Number(bm.dataset.order);
+    if (order > last) continue;
+    const before = [...document.querySelectorAll('#groups > .group')].find((s) => s.dataset.order === undefined || Number(s.dataset.order) > order);
+    document.getElementById('groups').insertBefore(bm, before ?? null);
+  }
+}
+
 // ---------------------------------------------------------------- tabs
 /** The tab in the URL hash (#name, lowercase and URI-encoded, as in homepage), else the first. */
 function currentTab(tabs) {
@@ -957,7 +974,8 @@ function render(data) {
   const bookmarks = document.getElementById('bookmarks');
   bookmarks.replaceChildren(...data.bookmarks.map((g) => {
     const iconsOnly = g.layout?.iconsOnly === true || (s.bookmarksStyle === 'icons' && g.layout?.iconsOnly !== false);
-    const section = el('section', { class: 'group' + (iconsOnly ? ' icons-only' : ''), 'data-tab': g.layout?.tab || null },
+    const section = el('section', { class: 'group bookmark-group' + (iconsOnly ? ' icons-only' : ''), 'data-tab': g.layout?.tab || null,
+      'data-order': g.order ?? null },
       el('h2', null, groupIcon(g.layout), el('span', { text: g.name })));
     const list = el('div', { class: 'cards' });
     for (const b of g.bookmarks) {
@@ -974,6 +992,7 @@ function render(data) {
     return section;
   }));
 
+  placeBookmarkGroups();
   renderTabs(data.tabs ?? []);
 
   for (const [id, key] of [['refresh-btn', 'refresh'], ['color-btn', 'color'], ['toast-close', 'close']]) {

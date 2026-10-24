@@ -21,6 +21,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   and `si-` icons (`mdi-flask-#f0d453`), and `iconStyle: gradient|theme`, as in homepage.
 - `fullWidth`, `maxGroupColumns`, `maxBookmarkGroupColumns`, `useEqualHeights` (global and per
   group), `disableCollapse` and `groupsInitiallyCollapsed`, as in homepage.
+- Groups follow the order of the `layout` block (which may also be a list), with bookmark
+  groups placed between service groups where the block lists them, as in homepage.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

@@ -166,7 +166,16 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       };
     });
 
-  const layoutGroups = groups.map((group) => layoutGroup(group, config.settings.layout[group.name], group.name));
+  // Groups follow the order of the layout block (homepage's sorting); the others come after,
+  // in their own order. `order` lets the page put a bookmark group between service groups.
+  const layoutNames = Object.keys(config.settings.layout);
+  const orderOf = (name) => (layoutNames.includes(name) ? layoutNames.indexOf(name) : null);
+  const byLayout = (list) =>
+    list
+      .map((item, i) => ({ item, i, order: orderOf(item.name) }))
+      .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity) || a.i - b.i)
+      .map(({ item, order }) => ({ ...item, order }));
+  const layoutGroups = byLayout(groups.map((group) => layoutGroup(group, config.settings.layout[group.name], group.name)));
 
   const header = config.widgets.map((w, i) =>
     addInstance(stableId('h', String(i), w.type), w.type, w.options, { file: 'widgets.yaml', path: w.path }),
@@ -214,11 +223,11 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     },
     header,
     groups: layoutGroups,
-    bookmarks: config.bookmarks.map((g) => ({
+    bookmarks: byLayout(config.bookmarks.map((g) => ({
       name: g.name,
       layout: groupLayout(config.settings.layout[g.name]),
       bookmarks: g.bookmarks.map((b) => ({ ...b, icon: resolveIcon(b.icon) })),
-    })),
+    }))),
     widgetTypes,
     messages: { errors: scrubbed(errors), warnings: scrubbed(warnings) },
   };

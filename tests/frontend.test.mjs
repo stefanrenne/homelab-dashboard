@@ -424,3 +424,17 @@ test('fullWidth, maxGroupColumns, maxBookmarkGroupColumns, useEqualHeights, disa
   assert.equal(net.querySelector('h2.group-title').textContent, 'Network');
   assert.ok(!net.classList.contains('collapsed'));
 });
+
+test('a bookmark group listed between service groups in the layout block is shown there', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.groups[0].order = 0;   // Network
+  layout.groups[2].order = 2;   // Hidden title
+  layout.bookmarks[0].order = 1; // Dev
+  layout.bookmarks[0].layout = {};
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const doc = w.document;
+  const names = [...doc.querySelectorAll('#groups > .group')].map((s) => s.dataset.group ?? s.querySelector('h2').textContent);
+  assert.deepEqual(names, ['Network', 'Dev', 'Hidden title']);
+  assert.ok(doc.querySelector('#groups .bookmark-group .bm'), 'the bookmark group keeps its look');
+  assert.equal(doc.querySelectorAll('#bookmarks .group').length, 0);
+});

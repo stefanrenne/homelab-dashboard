@@ -463,3 +463,20 @@ test('category icons are resolved like service icons; bookmarksStyle reaches the
     await t.close();
   }
 });
+
+test('groups follow the order of the layout block, also as a list; bookmark groups get their place', async () => {
+  const t = await startApp({
+    'settings.yaml': 'layout:\n  - Media:\n  - Developer:\n  - Infra:\n      style: row\n',
+    'services.yaml': '- Infra:\n    - Router: { href: http://router.lan }\n- Extra:\n    - X: { href: http://x.lan }\n- Media:\n    - Plex: { href: http://plex.lan }\n',
+    'bookmarks.yaml': '- Docs:\n    - Wiki:\n        - href: http://wiki.lan\n- Developer:\n    - GitHub:\n        - href: https://github.com\n',
+  });
+  try {
+    const layout = await (await t.get('/api/layout')).json();
+    assert.deepEqual(layout.messages.warnings, []);
+    assert.deepEqual(layout.groups.map((g) => [g.name, g.order]), [['Media', 0], ['Infra', 2], ['Extra', null]]);
+    assert.deepEqual(layout.groups[1].layout, { style: 'row' });
+    assert.deepEqual(layout.bookmarks.map((g) => [g.name, g.order]), [['Developer', 1], ['Docs', null]]);
+  } finally {
+    await t.close();
+  }
+});

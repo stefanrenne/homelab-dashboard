@@ -149,10 +149,23 @@ export function normalizeSettings(raw, ctx) {
   }
   settings.background = normalizeBackground(settings.background, file, ctx);
   settings.cardBlur = blurPx(settings.cardBlur, file, 'cardBlur', ctx);
+  // homepage also takes the layout block as a list (- Group: {...}), to set the order
+  if (Array.isArray(settings.layout)) {
+    const map = {};
+    settings.layout.forEach((entry, i) => {
+      if (isPlainObject(entry) && Object.keys(entry).length === 1) {
+        const [name, value] = Object.entries(entry)[0];
+        map[name] = isPlainObject(value) ? value : {};
+      } else if (typeof entry === 'string') map[entry] = {};
+      else ctx.warn(file, `layout[${i}]`, 'expected an entry like "- Group name:", ignored');
+    });
+    settings.layout = map;
+  }
   if (!isPlainObject(settings.layout)) {
     ctx.error(file, 'layout', 'expected a map of group name to layout');
     settings.layout = {};
   }
+  for (const [name, value] of Object.entries(settings.layout)) if (value === null) settings.layout[name] = {};
   if (!Array.isArray(settings.plugins)) {
     ctx.error(file, 'plugins', 'expected a list');
     settings.plugins = [];

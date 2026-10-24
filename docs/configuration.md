@@ -154,6 +154,19 @@ fails (offline, a broken release) keeps the version that worked and says so in t
 A source without `widget.yaml` at its root is a **collection**: every folder with a
 `widget.yaml` directly in it, or in its `widgets/` folder, is installed.
 
+**Order**, as in homepage: groups appear in the order of the `layout` block, discovered
+groups too; groups that are not in it follow, in their own order. Service and bookmark groups
+can be mixed: a bookmark group listed between service groups is shown there. The `layout`
+block can also be a list, which reads more naturally when it is only about the order:
+
+```yaml
+layout:
+  - Media:
+  - Developer:        # a bookmark group, shown between Media and Infrastructure
+  - Infrastructure:
+      style: row
+```
+
 **Tabs**, as in homepage: give layout groups a `tab` and the page shows a tab bar. Tabs come
 in the order of the `layout` block. Service and bookmark groups without a `tab` show on every
 tab. Each tab has its own address: `#` plus its name in lowercase (`http://dashboard.lan/#media`).

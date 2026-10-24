@@ -232,3 +232,12 @@ test('nested groups: an entry whose value is a list is a group inside the group 
   assert.deepEqual(a.groups[0].services.map((s) => s.href), ['http://b.lan']);
   assert.equal(a.groups[0].groups[0].services[0].name, 'Service C');
 });
+
+test('width, column and collapse settings: types are checked', () => {
+  const good = loadConfig(configDir({ 'settings.yaml': 'fullWidth: true\nmaxGroupColumns: 6\nuseEqualHeights: true\ndisableCollapse: false\n' }));
+  assert.deepEqual(good.warnings, []);
+  assert.equal(good.settings.maxGroupColumns, 6);
+  const bad = loadConfig(configDir({ 'settings.yaml': 'fullWidth: yes please\nmaxGroupColumns: 12\nmaxBookmarkGroupColumns: two\ngroupsInitiallyCollapsed: 1\n' }));
+  assert.deepEqual(bad.warnings.map((w) => w.path).sort(), ['fullWidth', 'groupsInitiallyCollapsed', 'maxBookmarkGroupColumns', 'maxGroupColumns']);
+  assert.equal(bad.settings.maxGroupColumns, undefined);
+});

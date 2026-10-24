@@ -15,8 +15,6 @@ Already there: title, theme, color, language (5 of homepage's ±40), target, bac
 headerStyle, showTitle, layout per group (columns, row/column style, header, initiallyCollapsed),
 hideErrors, status labels, container stats on click, search widget, bookmarks.
 
-- [ ] `fullWidth`, `maxGroupColumns`, `maxBookmarkGroupColumns`, `useEqualHeights` (global and per group)
-- [ ] `disableCollapse`, global `groupsInitiallyCollapsed`
 - [ ] Group order from the order of the `layout` block (also for discovered and bookmark groups), `layout` as a list
 - [ ] `cardStyle`, `blockStyle`, `font`
 - [ ] Block highlighting: `highlight:` per widget (numeric gt/gte/lt/lte/eq/ne/between/outside, string equals/includes/startsWith/endsWith/regex, `negate`, `valueOnly`) and the `blockHighlights` level colours in settings

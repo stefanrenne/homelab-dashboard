@@ -400,3 +400,27 @@ test('single-colour icons are masks: their own colour, or iconStyle gradient/the
   assert.ok(doc.body.classList.contains('icon-style-theme'));
   assert.equal(doc.querySelector('[data-service="svc-2"] .icon img').getAttribute('src'), 'https://cdn.example.com/png/plex.png');
 });
+
+test('fullWidth, maxGroupColumns, maxBookmarkGroupColumns, useEqualHeights, disableCollapse, groupsInitiallyCollapsed', async () => {
+  const layout = structuredClone(LAYOUT);
+  Object.assign(layout.settings, { fullWidth: true, maxGroupColumns: 6, maxBookmarkGroupColumns: 8, useEqualHeights: true, groupsInitiallyCollapsed: true });
+  layout.groups[2].layout = { header: true, useEqualHeights: false, initiallyCollapsed: false };
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const doc = w.document;
+  assert.ok(doc.body.classList.contains('full-width'));
+  assert.equal(doc.body.style.getPropertyValue('--max-group-cols'), '6');
+  assert.equal(doc.body.style.getPropertyValue('--max-bookmark-cols'), '8');
+  const network = doc.querySelector('[data-group="Network"]');
+  const hidden = doc.querySelector('[data-group="Hidden title"]');
+  assert.ok(network.classList.contains('equal-heights'), 'the global setting');
+  assert.ok(!hidden.classList.contains('equal-heights'), 'a group can turn it off');
+  assert.ok(network.classList.contains('collapsed'), 'groupsInitiallyCollapsed');
+  assert.ok(!hidden.classList.contains('collapsed'), 'initiallyCollapsed on the group wins');
+
+  layout.settings.disableCollapse = true;
+  const fixed = await page({ ...RESULTS, '/api/layout': layout });
+  const net = fixed.document.querySelector('[data-group="Network"]');
+  assert.equal(net.querySelector('.group-toggle'), null);
+  assert.equal(net.querySelector('h2.group-title').textContent, 'Network');
+  assert.ok(!net.classList.contains('collapsed'));
+});

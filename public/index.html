@@ -110,6 +110,7 @@
   .group.nested h3 + .cards { margin-top: 8px; }
   .group.nested .cards:empty { display: none; }
   .group.collapsed .subgroups { display: none; }
+  .group-title { display: flex; align-items: center; gap: 6px; }
   .group-toggle { all: unset; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 4px; }
   .group-toggle:focus-visible { outline: 2px solid var(--hd-accent); outline-offset: 2px; }
   .group-toggle svg { width: 16px; height: 16px; opacity: .55; transition: transform .15s; }
@@ -117,6 +118,14 @@
   .group.collapsed .group-toggle svg { transform: rotate(-90deg); }
   .group.collapsed .cards { display: none; }
   #groups.searching .group.collapsed .cards { display: grid; } /* search looks inside folded groups */
+  /* settings: fullWidth, maxGroupColumns / maxBookmarkGroupColumns, useEqualHeights */
+  .full-width .wrap { max-width: none; }
+  @media (min-width: 1536px) {
+    .max-group-cols .group.layout-column:not(.nested) { flex-basis: calc(100% / var(--max-group-cols)); }
+    .max-bookmark-cols .bookmarks .group { flex-basis: calc(100% / var(--max-bookmark-cols)); }
+  }
+  .group.equal-heights > .cards { align-items: stretch; grid-template-rows: none; }
+  .group.equal-heights > .cards > .card { height: calc(100% - 8px); }
   .cards { display: grid; column-gap: 8px; grid-template-columns: 1fr; align-items: start; }
   @supports (grid-template-rows: masonry) { .cards { grid-template-rows: masonry; } } /* no holes; order kept */
   @media (min-width: 768px) { .group.layout-row .cards { grid-template-columns: repeat(min(2, var(--cols)), minmax(0, 1fr)); } }
@@ -793,7 +802,8 @@ function collapsedState() {
 
 function groupToggle(g, section, cardsId) {
   const saved = collapsedState();
-  const collapsed = g.name in saved ? saved[g.name] : g.layout.initiallyCollapsed === true;
+  const fallback = typeof g.layout.initiallyCollapsed === 'boolean' ? g.layout.initiallyCollapsed : layout?.settings?.groupsInitiallyCollapsed === true;
+  const collapsed = g.name in saved ? saved[g.name] : fallback;
   const button = el('button', { class: 'group-toggle', type: 'button', 'aria-controls': cardsId },
     groupIcon(g.layout), el('span', { text: g.name }));
   button.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
@@ -820,14 +830,17 @@ const groupIcon = (layoutOf) => (layoutOf?.icon ? iconImage(layoutOf.icon, 'grou
 function renderGroup(g, level) {
   const cols = Number(g.layout.columns) || 0;
   const row = g.layout.style === 'row' || cols > 0;
+  const s = layout?.settings ?? {};
+  const equal = typeof g.layout.useEqualHeights === 'boolean' ? g.layout.useEqualHeights : s.useEqualHeights === true;
   const section = el('section', {
-    class: 'group ' + (row ? 'layout-row' : 'layout-column') + (level > 2 ? ' nested' : ''),
+    class: 'group ' + (row ? 'layout-row' : 'layout-column') + (level > 2 ? ' nested' : '') + (equal ? ' equal-heights' : ''),
     'data-group': g.name,
     'data-tab': level === 2 ? g.layout.tab || null : null,
   });
   const body = el('div', { class: 'cards', id: `cards-${groupCount++}` });
   const heading = `h${level}`;
   if (g.layout.header === false) section.append(el(heading, { text: g.name, class: 'sr-only' }));
+  else if (s.disableCollapse) section.append(el(heading, { class: 'group-title' }, groupIcon(g.layout), el('span', { text: g.name })));
   else section.append(el(heading, null, groupToggle(g, section, body.id)));
   body.style.setProperty('--cols', cols || 4);
   for (const svc of g.services) body.append(renderService(svc));
@@ -879,6 +892,11 @@ function applyBackground(s) {
   bg.style.opacity = b?.opacity !== undefined ? String(b.opacity / 100) : '';
   document.body.classList.toggle('card-blur', Boolean(s.cardBlur));
   document.body.classList.toggle('icon-style-theme', s.iconStyle === 'theme');
+  document.body.classList.toggle('full-width', s.fullWidth === true);
+  document.body.classList.toggle('max-group-cols', Boolean(s.maxGroupColumns));
+  document.body.style.setProperty('--max-group-cols', s.maxGroupColumns || '');
+  document.body.classList.toggle('max-bookmark-cols', Boolean(s.maxBookmarkGroupColumns));
+  document.body.style.setProperty('--max-bookmark-cols', s.maxBookmarkGroupColumns || '');
   document.body.style.setProperty('--hd-card-blur', s.cardBlur ? `${s.cardBlur}px` : '');
 }
 

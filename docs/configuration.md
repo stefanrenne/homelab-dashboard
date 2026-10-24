@@ -109,12 +109,19 @@ background: https://example.com/wallpaper.jpg   # optional; or a map, as in home
 cardBlur: md        # frosted cards over the background: xs, sm, md, lg, xl, 2xl, 3xl
 bookmarksStyle: icons   # every bookmark group as icons only (a group can set iconsOnly: false)
 iconStyle: gradient # mdi- and si- icons: gradient (default) or theme (flat, in the theme colour)
+fullWidth: true     # use the whole window width (default: at most 1280px)
+maxGroupColumns: 6  # groups side by side on wide screens (1536px and up), up to 8
+maxBookmarkGroupColumns: 8   # the same for bookmark groups
+useEqualHeights: true        # cards in a row equally high; a group can override it
+disableCollapse: true        # group titles are plain titles, not fold buttons
+groupsInitiallyCollapsed: true   # every group starts folded; a group's initiallyCollapsed wins
 layout:
   Media:
     columns: 3      # cards per row (2 on tablets, 1 on phones); the group spans the full width
     header: false   # hide the group title
     initiallyCollapsed: true   # start folded; viewers fold and unfold groups by clicking the title
     icon: plex.svg  # category icon before the title: an icon name, /icons/..., or a URL
+    useEqualHeights: false   # overrides the global setting for this group
   Developer:        # a bookmark group
     iconsOnly: true # only the icons, the name as tooltip
   Tools:

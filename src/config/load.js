@@ -125,6 +125,20 @@ export function normalizeSettings(raw, ctx) {
     } else settings[key] = settings[key].trim();
   }
   settings.pwa = normalizePwa(settings.pwa, file, ctx);
+  for (const key of ['fullWidth', 'useEqualHeights', 'disableCollapse', 'groupsInitiallyCollapsed']) {
+    if (settings[key] !== undefined && typeof settings[key] !== 'boolean') {
+      ctx.warn(file, key, 'expected true or false, ignored');
+      delete settings[key];
+    }
+  }
+  for (const key of ['maxGroupColumns', 'maxBookmarkGroupColumns']) {
+    if (settings[key] === undefined) continue;
+    const n = Number(settings[key]);
+    if (!Number.isInteger(n) || n < 1 || n > 8) {
+      ctx.warn(file, key, 'expected a whole number up to 8, ignored');
+      delete settings[key];
+    } else settings[key] = n;
+  }
   if (settings.iconStyle !== undefined && !['gradient', 'theme'].includes(settings.iconStyle)) {
     ctx.warn(file, 'iconStyle', 'expected gradient or theme, using gradient');
     delete settings.iconStyle;

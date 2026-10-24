@@ -2,6 +2,7 @@
 // caches results per instance and keeps failures inside the widget (hard rule 4).
 
 import http from 'node:http';
+import https from 'node:https';
 import { highlightBlocks } from '../highlight.js';
 
 export const DEFAULT_TIMEOUT_MS = 10_000;
@@ -103,31 +104,55 @@ export function widgetFetch(input, init, baseUrl, signal) {
   const merged = init.signal ? AbortSignal.any([signal, init.signal]) : signal;
   if (init.socketPath) return unixSocketFetch(String(input), { ...init, signal: merged });
   const url = baseUrl && !/^[a-z][a-z0-9+.-]*:/i.test(String(input)) ? new URL(String(input), baseUrl) : input;
-  return fetch(url, { ...init, signal: merged });
+  // insecure: true accepts a self-signed certificate for this request (an option the user sets)
+  if (init.insecure && new URL(String(url)).protocol === 'https:') return insecureFetch(new URL(String(url)), { ...init, signal: merged });
+  const { insecure, ...rest } = init;
+  return fetch(url, { ...rest, signal: merged });
 }
 
-function unixSocketFetch(pathAndQuery, { socketPath, method = 'GET', headers = {}, body, signal }) {
+function insecureFetch(url, { method = 'GET', headers = {}, body, signal }) {
   return new Promise((resolve, reject) => {
-    const req = http.request({ socketPath, path: pathAndQuery, method, headers: { host: 'localhost', ...headers }, signal }, (res) => {
-      const chunks = [];
-      res.on('data', (c) => chunks.push(c));
-      res.on('end', () => {
-        const status = res.statusCode ?? 500;
-        const noBody = status === 204 || status === 304;
-        resolve(new Response(noBody ? null : Buffer.concat(chunks), { status, headers: flatHeaders(res.headers) }));
-      });
-      res.on('error', reject);
-    });
+    const req = https.request(url, { method, headers: plainHeaders(headers), signal, rejectUnauthorized: false }, (res) => resolve(collect(res)));
     req.on('error', reject);
     if (body) req.write(body);
     req.end();
   });
 }
 
-function flatHeaders(headers) {
-  const out = {};
-  for (const [k, v] of Object.entries(headers)) if (v !== undefined) out[k] = Array.isArray(v) ? v.join(', ') : String(v);
+function plainHeaders(headers) {
+  return headers instanceof Headers ? Object.fromEntries(headers.entries()) : headers;
+}
+
+/** A Node response as a fetch Response; Set-Cookie stays a list (headers.getSetCookie()). */
+function collect(res) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    res.on('data', (c) => chunks.push(c));
+    res.on('end', () => {
+      const status = res.statusCode ?? 500;
+      const noBody = status === 204 || status === 304;
+      resolve(new Response(noBody ? null : Buffer.concat(chunks), { status, headers: headerList(res.headers) }));
+    });
+    res.on('error', reject);
+  });
+}
+
+function headerList(headers) {
+  const out = [];
+  for (const [k, v] of Object.entries(headers)) {
+    if (v === undefined) continue;
+    for (const one of Array.isArray(v) ? v : [v]) out.push([k, String(one)]);
+  }
   return out;
+}
+
+function unixSocketFetch(pathAndQuery, { socketPath, method = 'GET', headers = {}, body, signal }) {
+  return new Promise((resolve, reject) => {
+    const req = http.request({ socketPath, path: pathAndQuery, method, headers: { host: 'localhost', ...plainHeaders(headers) }, signal }, (res) => resolve(collect(res)));
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
+  });
 }
 
 /** Validates what a widget returned; throws with a message meant for the widget author. */

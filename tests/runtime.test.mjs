@@ -167,3 +167,26 @@ test('registry: aliases point to the same widget, after every id, and never take
   assert.equal(widgets.get('ping').source, 'builtin', 'an alias never takes an id');
   assert.ok(errors.some((e) => /alias "ping" of "unifi" is already used by builtin/.test(e.message)));
 });
+
+test('ctx.fetch: insecure accepts a self-signed certificate; Set-Cookie stays a list', async () => {
+  const fs = await import('node:fs');
+  const https = await import('node:https');
+  const { widgetFetch } = await import('../src/plugins/runtime.js');
+  const server = https.createServer({ key: fs.readFileSync('tests/fixtures/tls/localhost.key'), cert: fs.readFileSync('tests/fixtures/tls/localhost.crt') }, (req, res) => {
+    res.setHeader('set-cookie', ['TOKEN=abc; Path=/; Expires=Wed, 21 Oct 2026 07:28:00 GMT', 'other=1; Path=/']);
+    res.setHeader('x-csrf-token', 'csrf');
+    res.end(JSON.stringify({ method: req.method, auth: req.headers.authorization ?? null }));
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const url = `https://localhost:${server.address().port}/api`;
+  try {
+    const signal = new AbortController().signal;
+    await assert.rejects(widgetFetch(url, {}, null, signal), 'a self-signed certificate is refused by default');
+    const res = await widgetFetch(url, { insecure: true, method: 'POST', headers: { authorization: 'Bearer x' }, body: '{}' }, null, signal);
+    assert.deepEqual(await res.json(), { method: 'POST', auth: 'Bearer x' });
+    assert.deepEqual(res.headers.getSetCookie(), ['TOKEN=abc; Path=/; Expires=Wed, 21 Oct 2026 07:28:00 GMT', 'other=1; Path=/']);
+    assert.equal(res.headers.get('x-csrf-token'), 'csrf');
+  } finally {
+    server.close();
+  }
+});

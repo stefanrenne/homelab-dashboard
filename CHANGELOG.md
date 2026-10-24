@@ -63,6 +63,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   optional colour, as in homepage.
 - Kubernetes widget: CPU and memory of the cluster and per node (metrics-server), as in homepage.
 - homepage's widget name `customapi` works (as `custom-api`); widgets can declare such `aliases`.
+- Widget API: `ctx.fetch(url, { insecure: true })` accepts a self-signed certificate (for an
+  option the user turns on), and cookies are kept apart (`headers.getSetCookie()`).
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

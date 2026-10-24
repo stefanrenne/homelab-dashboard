@@ -53,7 +53,7 @@ services:
 
 `docker compose up -d`, then `docker compose ps` shows `(healthy)` once `/api/health` answers.
 
-Images are built for amd64 and arm64: `latest` follows `main`, `0.3.0` / `0.3` are releases.
+Images are built for amd64 and arm64: `latest` follows `main`, `0.4.0` / `0.4` are releases.
 
 On first start an empty `config` folder is filled with the example config. Edit the YAML files
 and the open page updates by itself. See [docker-compose.example.yml](docker-compose.example.yml)

@@ -595,3 +595,19 @@ test('hideVersion: false shows the version and checks for updates; nothing is fe
     await gh.close();
   }
 });
+
+test('disableIndexing: a robots meta tag and a robots.txt that disallows everything', async () => {
+  const off = await startApp({});
+  const on = await startApp({ 'settings.yaml': 'disableIndexing: true\n' });
+  try {
+    assert.equal(await (await off.get('/robots.txt')).text(), 'User-agent: *\nAllow: /\n');
+    assert.ok(!(await (await off.get('/')).text()).includes('name="robots"'));
+    const robots = await on.get('/robots.txt');
+    assert.equal(robots.headers.get('content-type'), 'text/plain; charset=utf-8');
+    assert.equal(await robots.text(), 'User-agent: *\nDisallow: /\n');
+    assert.match(await (await on.get('/')).text(), /<meta name="robots" content="noindex, nofollow">/);
+  } finally {
+    await off.close();
+    await on.close();
+  }
+});

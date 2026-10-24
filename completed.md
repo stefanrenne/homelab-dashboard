@@ -25,3 +25,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 1: `providers`.
 - 2026-10-24: homepage parity, phase 1: `instanceName` and homepage's label notation for discovery.
 - 2026-10-24: homepage parity, phase 1: `hideVersion` and the update check.
+- 2026-10-24: homepage parity, phase 1: `disableIndexing`.

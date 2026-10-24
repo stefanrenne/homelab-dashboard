@@ -40,6 +40,7 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   dashboard with `instanceName` (`homelab.instance.<name>.href`), as in homepage.
 - `hideVersion: false` shows the version in the footer, with a daily check for a newer release
   (`disableUpdateCheck` turns that off). Hidden by default, unlike homepage.
+- `disableIndexing`: a robots meta tag and a `/robots.txt` that disallows crawlers, as in homepage.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

@@ -12,7 +12,7 @@ import { WidgetRuntime } from './plugins/runtime.js';
 import { Discovery, mergeDiscovered } from './discovery/index.js';
 import { withMountedSocket, DEFAULT_SOCKET } from './discovery/docker.js';
 import { buildState } from './layout.js';
-import { renderIndex, renderManifest } from './page.js';
+import { renderIndex, renderManifest, renderRobots } from './page.js';
 import { UpdateCheck, RELEASES_URL, isNewer } from './update.js';
 import { describeError, scrub } from './plugins/runtime.js';
 
@@ -149,6 +149,7 @@ export async function createApp({
         const html = await fs.promises.readFile(path.join(publicDir, 'index.html'), 'utf8');
         return send(res, 200, renderIndex(html, state.config.settings, state.config.secrets), 'text/html; charset=utf-8');
       }
+      if (method === 'GET' && p === '/robots.txt') return send(res, 200, renderRobots(state.config.settings), 'text/plain; charset=utf-8');
       if (method === 'GET' && p === '/site.webmanifest') {
         return send(res, 200, JSON.stringify(renderManifest(state.config.settings, state.config.secrets)), 'application/manifest+json');
       }

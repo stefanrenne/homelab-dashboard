@@ -27,6 +27,7 @@ const escapeHtml = (value) =>
 export function renderIndex(html, settings, secrets = new Set()) {
   const clean = (value) => escapeHtml(scrub(value, secrets));
   const head = ['<link rel="manifest" href="site.webmanifest">'];
+  if (settings.disableIndexing === true) head.push('<meta name="robots" content="noindex, nofollow">');
   if (settings.description) head.push(`<meta name="description" content="${clean(settings.description)}">`);
   const favicon = plainIcon(settings.favicon);
   if (favicon) head.push(`<link rel="icon" href="${clean(favicon)}">`);
@@ -56,4 +57,9 @@ export function renderManifest(settings, secrets = new Set()) {
       ? { shortcuts: settings.pwa.shortcuts.map((s) => Object.fromEntries(Object.entries(s).map(([k, v]) => [k, text(v)]))) }
       : {}),
   };
+}
+
+/** robots.txt: everything allowed, or nothing with disableIndexing (as in homepage). */
+export function renderRobots(settings) {
+  return settings.disableIndexing === true ? 'User-agent: *\nDisallow: /\n' : 'User-agent: *\nAllow: /\n';
 }

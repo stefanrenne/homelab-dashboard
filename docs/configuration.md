@@ -188,6 +188,31 @@ footer; that choice is remembered in their browser and overrides `theme` and `co
             fields: [latency]         # refresh (5s), fields (which blocks), hide_errors
 ```
 
+**Nested groups**, as in homepage: an entry whose value is a list (instead of a map) is a group
+inside the group. Its layout goes inside the parent's layout in settings.yaml, and it is on the
+parent's tab.
+
+```yaml
+# services.yaml
+- Infrastructure:
+    - Router:
+        href: http://router.lan
+    - Network:                  # a nested group
+        - Access point:
+            href: http://ap.lan
+        - Switch:
+            href: http://switch.lan
+```
+
+```yaml
+# settings.yaml
+layout:
+  Infrastructure:
+    style: row
+    Network:                    # the nested group's layout
+      columns: 2
+```
+
 Every check that is set gets its own label in the card's top-right corner, as in homepage:
 the response time (or "down") for `siteMonitor` and `ping`, the container state for `container`.
 Click a container label to see the container's CPU and memory. `ping` also accepts a URL

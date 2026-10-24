@@ -77,14 +77,14 @@ export class Discovery {
  * the same group and name as a YAML service is skipped. Returns { groups, warnings }.
  */
 export function mergeDiscovered(yamlGroups, found) {
-  const groups = yamlGroups.map((g) => ({ ...g, services: [...g.services] }));
+  const groups = yamlGroups.map((g) => ({ ...g, services: [...g.services], groups: g.groups ?? [] }));
   const warnings = [];
   const ctx = { error: (file, p, message) => warnings.push({ file, path: p, message }), warn: () => {} };
   const sorted = [...found].sort((a, b) => a.weight - b.weight || a.name.localeCompare(b.name));
   for (const svc of sorted) {
     let group = groups.find((g) => g.name === svc.group);
     if (!group) {
-      group = { name: svc.group, services: [] };
+      group = { name: svc.group, services: [], groups: [] };
       groups.push(group);
     }
     if (group.services.some((s) => s.name === svc.name)) continue;

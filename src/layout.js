@@ -5,7 +5,7 @@
 
 import { validateOptions } from './plugins/options.js';
 import { DEFAULT_REFRESH_MS } from './plugins/loader.js';
-import { stableId, parseDuration } from './util.js';
+import { stableId, parseDuration, isPlainObject } from './util.js';
 
 /**
  * Keys of a widget entry that belong to the dashboard, not to the widget (unless the
@@ -110,10 +110,22 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     return out;
   };
 
-  const layoutGroups = groups.map((group) => ({
-    name: group.name,
-    layout: config.settings.layout[group.name] ?? {},
-    services: group.services.map((service) => {
+  // `key` is the group's path ("Parent/Nested") for ids; top-level ids stay as they were.
+  // A nested group's layout sits inside its parent's (homepage's format) and inherits its tab.
+  const layoutGroup = (group, groupLayout, key, parentTab) => {
+    const own = isPlainObject(groupLayout) ? groupLayout : {};
+    const layout = Object.fromEntries(Object.entries(own).filter(([, v]) => !isPlainObject(v)));
+    if (parentTab && !layout.tab) layout.tab = parentTab;
+    return {
+      name: group.name,
+      layout,
+      services: layoutServices({ ...group, name: key }),
+      groups: (group.groups ?? []).map((g) => layoutGroup(g, own[g.name], `${key}/${g.name}`, layout.tab)),
+    };
+  };
+
+  const layoutServices = (group) =>
+    group.services.map((service) => {
       const where = { file: service.discovered ?? 'services.yaml', path: `${group.name}.${service.name}` };
       const id = stableId('svc', group.name, service.name);
       // homepage's `target: hidden-iframe` (a webhook): the server calls it and reports back.
@@ -135,8 +147,9 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
           }),
         ),
       };
-    }),
-  }));
+    });
+
+  const layoutGroups = groups.map((group) => layoutGroup(group, config.settings.layout[group.name], group.name));
 
   const header = config.widgets.map((w, i) =>
     addInstance(stableId('h', String(i), w.type), w.type, w.options, { file: 'widgets.yaml', path: w.path }),

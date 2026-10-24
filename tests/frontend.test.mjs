@@ -338,3 +338,23 @@ test('tabs: a tab bar, groups without a tab on every tab, the hash picks the tab
   assert.equal(none.document.getElementById('tabs').hidden, true);
   assert.ok([...none.document.querySelectorAll('#groups .group')].every((s) => !s.hidden));
 });
+
+test('nested groups render inside their parent with an h3, and search finds their services', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.groups[0].groups = [{ name: 'Wireless', layout: { columns: 2 }, groups: [], services: [
+    { id: 'svc-9', name: 'Access point', href: 'http://ap.lan', target: '_blank', icon: null, description: null, discovered: null, statuses: [], widgets: [] },
+  ] }];
+  const w = await page({ ...RESULTS, '/api/layout': layout });
+  const doc = w.document;
+  const network = doc.querySelector('[data-group="Network"]');
+  const nested = network.querySelector('.subgroups [data-group="Wireless"]');
+  assert.ok(nested.classList.contains('nested'));
+  assert.equal(nested.querySelector('h3').textContent, 'Wireless');
+  assert.equal(nested.querySelector('[data-service="svc-9"] a').getAttribute('href'), 'http://ap.lan');
+  assert.equal(nested.dataset.tab, undefined, 'tabs are decided on the top-level group');
+
+  const matches = w.HD.filterServices('access');
+  assert.equal(matches.length, 1);
+  assert.equal(network.hidden, false);
+  assert.equal(nested.hidden, false);
+});

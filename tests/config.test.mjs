@@ -219,3 +219,16 @@ test('background: a URL as before, or homepage\'s map with filters; cardBlur in 
   assert.equal(bad.settings.cardBlur, null);
   assert.deepEqual(bad.warnings.map((w) => w.path).sort(), ['background', 'cardBlur']);
 });
+
+test('nested groups: an entry whose value is a list is a group inside the group (homepage format)', () => {
+  const cfg = loadConfig(configDir({ 'services.yaml': [
+    '- Group A:', '    - Service A:', '        href: http://a.lan', '    - Group B:', '        - Service B:', '            href: http://b.lan',
+    '        - Group C:', '            - Service C: { href: http://c.lan }', '',
+  ].join('\n') }));
+  assert.deepEqual(cfg.errors, []);
+  const a = cfg.services[0];
+  assert.deepEqual(a.services.map((s) => s.name), ['Service A']);
+  assert.equal(a.groups[0].name, 'Group B');
+  assert.deepEqual(a.groups[0].services.map((s) => s.href), ['http://b.lan']);
+  assert.equal(a.groups[0].groups[0].services[0].name, 'Service C');
+});

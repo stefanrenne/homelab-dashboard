@@ -13,6 +13,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   as in homepage. `background: <url>` keeps working.
 - Tabs: `layout.<group>.tab` for service and bookmark groups, as in homepage, with a tab bar and
   an address per tab (`#media`). Groups without a tab show on every tab.
+- Nested groups in services.yaml (an entry whose value is a list), as in homepage, with their
+  layout inside the parent's layout.
 
 ## [0.4.0] - 2026-10-24
 

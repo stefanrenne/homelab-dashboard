@@ -102,6 +102,12 @@
   @media (min-width: 1280px) { .group.layout-column { flex-basis: 25%; } }
   .group h2 { margin: 0; font-size: 1.25rem; line-height: 1.75rem; font-weight: 500; color: var(--hd-heading); }
   .group h2 + .cards { margin-top: 12px; }
+  /* nested groups (homepage's format) */
+  .subgroups { display: flex; flex-wrap: wrap; margin: 4px -4px 0; }
+  .group.nested h3 { margin: 0; font-size: 1rem; line-height: 1.5rem; font-weight: 500; color: var(--hd-heading); }
+  .group.nested h3 + .cards { margin-top: 8px; }
+  .group.nested .cards:empty { display: none; }
+  .group.collapsed .subgroups { display: none; }
   .group-toggle { all: unset; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 4px; }
   .group-toggle:focus-visible { outline: 2px solid var(--hd-accent); outline-offset: 2px; }
   .group-toggle svg { width: 16px; height: 16px; opacity: .55; transition: transform .15s; }
@@ -774,6 +780,34 @@ function groupToggle(g, section, cardsId) {
   return button;
 }
 
+const hasServices = (g) => g.services.length > 0 || (g.groups ?? []).some(hasServices);
+let groupCount = 0;
+
+/** A group section: its title (h2, or h3 for a nested group), its cards and its nested groups. */
+function renderGroup(g, level) {
+  const cols = Number(g.layout.columns) || 0;
+  const row = g.layout.style === 'row' || cols > 0;
+  const section = el('section', {
+    class: 'group ' + (row ? 'layout-row' : 'layout-column') + (level > 2 ? ' nested' : ''),
+    'data-group': g.name,
+    'data-tab': level === 2 ? g.layout.tab || null : null,
+  });
+  const body = el('div', { class: 'cards', id: `cards-${groupCount++}` });
+  const heading = `h${level}`;
+  if (g.layout.header === false) section.append(el(heading, { text: g.name, class: 'sr-only' }));
+  else section.append(el(heading, null, groupToggle(g, section, body.id)));
+  body.style.setProperty('--cols', cols || 4);
+  for (const svc of g.services) body.append(renderService(svc));
+  section.append(body);
+  const nested = (g.groups ?? []).filter(hasServices);
+  if (nested.length) {
+    const sub = el('div', { class: 'subgroups' });
+    for (const child of nested) sub.append(renderGroup(child, Math.min(level + 1, 6)));
+    section.append(sub);
+  }
+  return section;
+}
+
 function renderService(service) {
   const href = safeHref(service.href);
   const hidden = service.target === 'hidden-iframe';
@@ -862,22 +896,11 @@ function render(data) {
 
   const groups = document.getElementById('groups');
   groups.replaceChildren();
-  const visible = data.groups.filter((g) => g.services.length);
+  const visible = data.groups.filter(hasServices);
   if (!visible.length) {
     groups.append(el('div', { class: 'empty' }, el('p', { text: translate('empty') }), el('p', { text: translate('emptyHint') })));
   }
-  for (const g of visible) {
-    const cols = Number(g.layout.columns) || 0;
-    const row = g.layout.style === 'row' || cols > 0;
-    const section = el('section', { class: 'group ' + (row ? 'layout-row' : 'layout-column'), 'data-group': g.name, 'data-tab': g.layout.tab || null });
-    const cards = el('div', { class: 'cards', id: `cards-${groups.children.length}` });
-    if (g.layout.header === false) section.append(el('h2', { text: g.name, class: 'sr-only' }));
-    else section.append(el('h2', null, groupToggle(g, section, cards.id)));
-    cards.style.setProperty('--cols', cols || 4);
-    for (const svc of g.services) cards.append(renderService(svc));
-    section.append(cards);
-    groups.append(section);
-  }
+  for (const g of visible) groups.append(renderGroup(g, 2));
 
   const bookmarks = document.getElementById('bookmarks');
   bookmarks.replaceChildren(...data.bookmarks.map((g) => {
@@ -933,19 +956,23 @@ function connectEvents() {
 function filterServices(query) {
   const words = String(query || '').toLowerCase().split(/\s+/).filter(Boolean);
   const matches = [];
-  for (const section of document.querySelectorAll('#groups .group, #bookmarks .group')) {
+  // children before parents, so a parent stays visible when only a nested group matches
+  const sections = [...document.querySelectorAll('#groups .group, #bookmarks .group')].reverse();
+  for (const section of sections) {
     const group = (section.dataset.group || '').toLowerCase();
     let visible = 0;
     for (const item of section.querySelectorAll('.card, .bm')) {
+      if (item.closest('.group') !== section) continue; // a nested group's cards are its own
       const text = `${item.dataset.search || item.textContent.toLowerCase()} ${group}`;
       const hit = words.every((w) => text.includes(w));
       item.hidden = !hit;
       if (hit) {
         visible++;
-        if (item.classList.contains('card')) matches.push(item);
+        if (item.classList.contains('card')) matches.unshift(item);
       }
     }
-    section.hidden = visible === 0;
+    const nestedHit = [...section.querySelectorAll(':scope > .subgroups > .group')].some((s) => !s.hidden);
+    section.hidden = visible === 0 && !nestedHit;
   }
   document.getElementById('groups').classList.toggle('searching', words.length > 0);
   const status = document.getElementById('search-status');

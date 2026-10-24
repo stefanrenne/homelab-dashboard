@@ -202,17 +202,23 @@ function normalizePwa(raw, file, ctx) {
 
 export function normalizeServices(raw, ctx) {
   const file = 'services.yaml';
-  const groups = [];
-  for (const [groupName, list, gi] of singleKeyEntries(raw, file, '', ctx)) {
-    const group = { name: String(groupName), services: [] };
-    for (const [serviceName, def, si] of singleKeyEntries(list, file, `[${gi}].${groupName}`, ctx)) {
-      const p = `[${gi}].${groupName}[${si}].${serviceName}`;
-      const service = normalizeService(serviceName, def ?? {}, file, p, ctx);
+  return singleKeyEntries(raw, file, '', ctx).map(([name, list, gi]) => normalizeGroup(name, list, file, `[${gi}].${name}`, ctx));
+}
+
+/**
+ * A group: its services, and nested groups (homepage's format: an entry whose value is a list
+ * instead of a map), in { name, services, groups }.
+ */
+function normalizeGroup(name, list, file, p, ctx) {
+  const group = { name: String(name), services: [], groups: [] };
+  for (const [itemName, def, i] of singleKeyEntries(list, file, p, ctx)) {
+    if (Array.isArray(def)) group.groups.push(normalizeGroup(itemName, def, file, `${p}[${i}].${itemName}`, ctx));
+    else {
+      const service = normalizeService(itemName, def ?? {}, file, `${p}[${i}].${itemName}`, ctx);
       if (service) group.services.push(service);
     }
-    groups.push(group);
   }
-  return groups;
+  return group;
 }
 
 export function normalizeService(name, def, file, p, ctx) {

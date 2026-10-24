@@ -430,3 +430,20 @@ test('tabs come from layout.<group>.tab in the order of the layout block; bookma
     await t.close();
   }
 });
+
+test('nested groups get their layout from inside the parent layout, and the parent tab', async () => {
+  const t = await startApp({
+    'settings.yaml': 'layout:\n  Group A:\n    tab: Home\n    style: row\n    Group B:\n      columns: 2\n',
+    'services.yaml': '- Group A:\n    - Service A: { href: http://a.lan }\n    - Group B:\n        - Service B: { href: http://b.lan }\n',
+  });
+  try {
+    const layout = await (await t.get('/api/layout')).json();
+    const a = layout.groups[0];
+    assert.deepEqual(a.layout, { tab: 'Home', style: 'row' }, 'the nested layout is not part of the parent layout');
+    assert.deepEqual(a.groups[0].layout, { columns: 2, tab: 'Home' });
+    assert.equal(a.groups[0].services[0].name, 'Service B');
+    assert.notEqual(a.groups[0].services[0].id, a.services[0].id);
+  } finally {
+    await t.close();
+  }
+});

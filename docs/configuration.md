@@ -27,6 +27,15 @@ secret). homepage's `{{HOMEPAGE_VAR_*}}` and `{{HOMEPAGE_FILE_*}}` work the same
 existing homepage environment can be reused. Substituted values are treated as secrets: they
 never reach the browser.
 
+## Allowed hosts
+
+`HD_ALLOWED_HOSTS` (or homepage's `HOMEPAGE_ALLOWED_HOSTS`) lists the host names the dashboard
+answers to, comma-separated, e.g. `HD_ALLOWED_HOSTS=dash.lan,dash.example.com:8443`. Any other
+`Host` header gets a 403, which stops DNS rebinding: a web page that points its own domain at
+your network cannot read the dashboard through your browser. An entry without a port allows any
+port; `localhost` and `127.0.0.1` always work (the image's health check uses them). Unset, or
+`*`, answers every host, as before. Unlike homepage the check is off until you set it.
+
 ## Including other files
 
 A long `services.yaml` can be split up. `!include <file>` puts the YAML of another file at that

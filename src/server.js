@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Entry point: `node src/server.js [--config <dir>] [--port <n>] [--host <addr>]`.
-// Environment: HD_CONFIG_DIR, PORT, HOST, LOG_TARGETS (both, stdout or file; see src/log.js).
+// Environment: HD_CONFIG_DIR, PORT, HOST, LOG_TARGETS (both, stdout or file; see src/log.js),
+// HD_ALLOWED_HOSTS (see src/app.js).
 
 import http from 'node:http';
 import path from 'node:path';

@@ -55,6 +55,26 @@ export function securityHeaders(frames = []) {
 }
 const SECURITY_HEADERS = securityHeaders();
 
+/**
+ * HD_ALLOWED_HOSTS (or homepage's HOMEPAGE_ALLOWED_HOSTS): the Host headers the dashboard answers,
+ * comma-separated, against DNS rebinding. An entry without a port allows every port. Unset or
+ * `*`: every host, as before. Loopback addresses are always allowed (the image's health check).
+ */
+export function allowedHosts(env = process.env) {
+  const raw = env.HD_ALLOWED_HOSTS ?? env.HOMEPAGE_ALLOWED_HOSTS;
+  if (raw === undefined || raw.trim() === '') return null;
+  const list = raw.split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
+  return list.includes('*') ? null : list;
+}
+
+const LOOPBACK = ['localhost', '127.0.0.1', '[::1]'];
+export function hostAllowed(header, list) {
+  if (!list) return true;
+  const host = String(header ?? '').trim().toLowerCase();
+  const name = host.replace(/:\d+$/, '');
+  return LOOPBACK.includes(name) || list.includes(host) || list.includes(name);
+}
+
 export async function createApp({
   configDir,
   builtinDir = BUILTIN_WIDGETS,
@@ -177,7 +197,13 @@ export async function createApp({
     });
   }
 
+  const hosts = allowedHosts(env);
+
   async function handler(req, res) {
+    if (!hostAllowed(req.headers.host, hosts)) {
+      log.warn(`refused a request for host "${String(req.headers.host ?? '').slice(0, 100)}" (not in HD_ALLOWED_HOSTS)`);
+      return send(res, 403, 'Host not allowed; add it to HD_ALLOWED_HOSTS', 'text/plain; charset=utf-8');
+    }
     const url = new URL(req.url, 'http://localhost');
     const p = decodeURIComponent(url.pathname);
     // HEAD is answered like GET (status checks of this dashboard use it); Node drops the body.

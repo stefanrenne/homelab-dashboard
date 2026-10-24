@@ -342,6 +342,27 @@ test('the iframe widget: its origin, and only that, in frame-src', async () => {
   }
 });
 
+test('HD_ALLOWED_HOSTS: only the listed Host headers (and loopback) get an answer', async () => {
+  const { allowedHosts, hostAllowed } = await import('../src/app.js');
+  assert.equal(allowedHosts({}), null);
+  assert.equal(allowedHosts({ HD_ALLOWED_HOSTS: 'a.lan, *' }), null);
+  assert.deepEqual(allowedHosts({ HOMEPAGE_ALLOWED_HOSTS: 'Dash.lan:3000' }), ['dash.lan:3000'], 'homepage\'s name works too');
+  const list = ['dash.lan', 'dash.example.com:8443'];
+  assert.deepEqual(['dash.lan:3000', 'DASH.lan', 'dash.example.com:8443', 'dash.example.com:443', 'evil.example', '127.0.0.1:3000', '[::1]:3000', undefined].map((h) => hostAllowed(h, list)),
+    [true, true, true, false, false, true, true, false]);
+  const t = await startApp({}, { HD_ALLOWED_HOSTS: 'dash.lan' });
+  const get = (host) => new Promise((resolve, reject) => {
+    const req = http.request(`${t.base}/api/health`, { headers: { host } }, (res) => { res.resume(); resolve(res.statusCode); });
+    req.on('error', reject);
+    req.end();
+  });
+  try {
+    assert.deepEqual([await get('dash.lan:3000'), await get('rebind.example.com'), await get('localhost:3000')], [200, 403, 200]);
+  } finally {
+    await t.close();
+  }
+});
+
 test('static files: index, client.js, assets, icons, and no path traversal', async () => {
   const t = await startApp({
     'settings.yaml': `plugins:\n  - path: ${path.resolve('examples/widget-template')}\n`,

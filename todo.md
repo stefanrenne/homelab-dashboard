@@ -16,30 +16,6 @@ Phases 1 to 3 (settings and layout, info widgets, integrations) are done; see `c
 Each with a fixture, a test and a README (its CLAUDE.md). homepage's field names, so `fields:`
 carries over.
 
-Batch 1, the most used (39; 18 done):
-
-- [ ] Nextcloud
-- [ ] Immich
-- [ ] Paperless-ngx
-- [ ] Uptime Kuma
-- [ ] Traefik
-- [ ] Nginx Proxy Manager
-- [ ] TrueNas
-- [ ] Synology Disk Station
-- [ ] OpenMediaVault
-- [ ] Speedtest Tracker
-- [ ] Gitea
-- [ ] Grafana
-- [ ] Tailscale
-- [ ] Authentik
-- [ ] Audiobookshelf
-- [ ] Navidrome
-- [ ] Frigate
-- [ ] Scrutiny
-- [ ] Watchtower
-- [ ] Syncthing
-- [ ] Calendar
-
 Batch 2, the rest (112):
 
 - [ ] APC UPS Monitoring

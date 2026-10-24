@@ -27,6 +27,7 @@ test('widgetPage: info line, options table before the example', () => {
   const options = page.markdown.indexOf('## Options');
   assert.ok(options > page.markdown.indexOf('## Fields') && options < page.markdown.indexOf('## Example'));
   assert.match(page.markdown, /\| `container` \| string \| yes \|/);
+  assert.match(widgetPage(path.resolve('widgets/custom-api'), { kind: 'builtin' }).markdown, /`type: custom-api` \(or `customapi`\) · version/, 'aliases are named');
 });
 
 test('writeWidgetPages: a section per source, menu front matter, examples kept literal', () => {

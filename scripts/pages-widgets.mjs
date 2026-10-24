@@ -65,7 +65,8 @@ export function widgetPage(dir, source) {
   const where = source.kind === 'builtin'
     ? `Built in · [source](${REPO}/tree/main/widgets/${id})`
     : `[Widget collection](${COLLECTION}) ${source.tag} · [source](${COLLECTION}/tree/${source.tag}/widgets/${id})`;
-  const info = `\`type: ${id}\` · version ${manifest.version} · widget API ${manifest.apiVersion} · ${where}\n{: .fs-3 .text-grey-dk-000 }\n`;
+  const also = (manifest.aliases ?? []).map((a) => ` (or \`${a}\`)`).join('');
+  const info = `\`type: ${id}\`${also} · version ${manifest.version} · widget API ${manifest.apiVersion} · ${where}\n{: .fs-3 .text-grey-dk-000 }\n`;
   const options = `## Options\n\n${optionsTable(optionRows(yamlText))}\nEvery widget also takes \`refresh\` (or \`refreshInterval\` in ms), \`fields\` and \`hideErrors\`; see [services.yaml](../../configuration.html#servicesyaml).\n`;
 
   // the title, then the info line; the options table goes before ## Example, or at the end

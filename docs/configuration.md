@@ -449,9 +449,6 @@ collection's widgets under [Widget collection](https://stefanrenne.github.io/hom
 | `datetime` | `locale`, `dateStyle`, `timeStyle` |
 | `greeting` | `text` (required), `text_size` (`xs` … `4xl`) |
 | `logo` | `icon` (optional; the dashboard's own mark without it) |
-| `openmeteo` | `latitude`, `longitude` (required), `label`, `timezone`, `units` (`metric`/`imperial`), `cache` (minutes), `format` |
-| `openweathermap` | `latitude`, `longitude`, `apiKey` (secret; or `provider: openweathermap`), `label`, `units`, `cache`, `format` |
-| `stocks` | `watchlist` (up to 8 symbols), `apiKey` (secret; or `provider: finnhub`), `color`, `cache` |
 | `kubernetes` | `cluster` (`show`, `cpu`, `memory`, `showLabel`, `label`), `nodes` (`show`, `cpu`, `memory`, `showLabel`); needs metrics-server and RBAC on nodes |
 | `search` | `provider`, `url`, `target`, `filter` (default true: typing filters the services, Enter opens the only match) |
 | `resources` | `cpu`, `memory` (both off by default), `disk` (list of mount points), `label` |
@@ -462,8 +459,8 @@ collection's widgets under [Widget collection](https://stefanrenne.github.io/hom
 | `proxmoxvm` | `node`, `vmid` (required), `type` (`qemu`/`lxc`), and `url`, `token`, `secret` (secret), `insecure` from proxmox.yaml when left out |
 | `custom-api` | `url` (required), `method`, `headers` (secret), `body`, `display` (`block`/`list`), `mappings` (required: `field`, `label`, `format` (`number`/`percent`/`bytes`/`text`), `scale`, `prefix`, `suffix`, `remap: [{ value, to }, { any: true, to }]`) |
 
-Widgets for radarr, sonarr, bazarr, prowlarr, sabnzbd, seerr, stash, tautulli, tdarr, What's
-up Docker, Portainer and Unraid are in the separate
+Widgets for the weather (openmeteo, openweathermap), stocks, radarr, sonarr, bazarr, prowlarr, sabnzbd, seerr, stash, tautulli, tdarr, What's
+up Docker, Portainer, Unraid, Glances, Longhorn and UniFi are in the separate
 [homelab-dashboard-widgets](https://github.com/stefanrenne/homelab-dashboard-widgets) collection.
 
 ## Migration

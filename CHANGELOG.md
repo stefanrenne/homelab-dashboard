@@ -57,10 +57,10 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Greeting widget: a line of text in the header (`text`, `text_size`), as in homepage.
 - Logo widget: the dashboard's own mark or any icon, as in homepage. Widgets can declare
   `type: icon` options, resolved like service icons.
-- Open-Meteo weather widget: the current temperature and weather, no key needed, as in homepage.
-- OpenWeatherMap weather widget, with `apiKey` or `provider: openweathermap`, as in homepage.
-- Stocks widget: price and day change of up to eight symbols from Finnhub, with ▲/▼ and
-  optional colour, as in homepage.
+- Weather (`openmeteo`, `openweathermap`) and `stocks` (Finnhub) header widgets, as in homepage.
+  They are in the [widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets),
+  which the dashboard installs by default: widgets for an outside service live there, not
+  among the built-in ones.
 - Kubernetes widget: CPU and memory of the cluster and per node (metrics-server), as in homepage.
 - homepage's widget name `customapi` works (as `custom-api`); widgets can declare such `aliases`.
 - Weather widgets without `latitude`/`longitude` use the viewer's location (HTTPS), as in homepage.

@@ -47,3 +47,4 @@ Finished work, newest first.
 - 2026-10-24: homepage parity, phase 3: Kubernetes outside the cluster (`mode: default`, a kubeconfig without dependencies; tested against local API servers, not a live cluster).
 - 2026-10-24: homepage parity, phase 3: Kubernetes discovery of Traefik IngressRoutes and Gateway API HTTPRoutes (tested against a fake API).
 - 2026-10-24: homepage parity, phase 3: Kubernetes pod status and stats per service (`app`, `namespace`, `podSelector`, built-in `kubernetes-pods`; tested against a fake API). Phase 3 done.
+- 2026-10-24: openmeteo, openweathermap and stocks moved from the built-in widgets to the widgets collection (they need a collection release before this dashboard release).

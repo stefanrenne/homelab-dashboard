@@ -158,10 +158,10 @@ A `client.js` may talk to the dashboard through DOM events that bubble out of it
 |---|---|---|
 | `hd-search-input` | `{ query }` | Shows only the services and bookmarks that match every word; empty shows all. |
 | `hd-search-submit` | `{ query }` | Send it `cancelable: true`. With exactly one match the dashboard opens it and cancels the event; otherwise the widget may search elsewhere. |
-
 | `hd-widget-params` | `{ name: value, ... }` | Fetches the widget again with these values (text) for `server.js`, and keeps sending them on every refresh. Only the names in widget.yaml `params` arrive. |
 
-The built-in `search` widget uses the first two. The weather widgets send `hd-widget-params`
+The built-in `search` widget uses the first two. The weather widgets of the
+[collection](https://github.com/stefanrenne/homelab-dashboard-widgets) send `hd-widget-params`
 with the viewer's location (`navigator.geolocation`, HTTPS only, rounded to two decimals) when
 their options have no coordinates.
 

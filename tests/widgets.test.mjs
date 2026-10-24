@@ -13,9 +13,6 @@ import docker, { cpuPercent } from '../widgets/docker/server.js';
 import proxmoxvm, { memoryBlock } from '../widgets/proxmoxvm/server.js';
 import kubernetesPods from '../widgets/kubernetes-pods/server.js';
 import kubernetes, { PATHS as K8S, cores, bytes as k8sBytes } from '../widgets/kubernetes/server.js';
-import stocks, { API as FINNHUB } from '../widgets/stocks/server.js';
-import openweathermap, { API as OWM, condition as owmCondition } from '../widgets/openweathermap/server.js';
-import openmeteo, { API as OPEN_METEO, condition as wmoCondition } from '../widgets/openmeteo/server.js';
 import resources, { PATHS as RESOURCE_PATHS, formatUptime, formatBytes } from '../widgets/resources/server.js';
 import { parseLatency } from '../widgets/ping/server.js';
 
@@ -471,125 +468,6 @@ test('logo: its own mark, an image, or a single-colour icon as a mask', async ()
 });
 
 
-test('openmeteo: the current weather, units, the cache in minutes, and errors', async () => {
-  const asked = [];
-  let status = 200;
-  const srv = await serve((req, res) => {
-    asked.push(new URL(req.url, 'http://x').searchParams);
-    res.statusCode = status;
-    res.end(JSON.stringify({ current: { temperature_2m: 10.3, weather_code: 53, is_day: 0 } }));
-  });
-  const saved = OPEN_METEO.url;
-  OPEN_METEO.url = `${srv.url}/v1/forecast`;
-  try {
-    const ctx = fakeCtx({ latitude: 52.37, longitude: 4.89, label: 'Amsterdam', units: 'metric', cache: 5 });
-    const out = await openmeteo.fetch(ctx);
-    assert.deepEqual(out.blocks, [{ key: 'temperature', label: 'temperature', value: 10.3, unit: '°C' }, { key: 'condition', label: 'condition', value: 'drizzle' }]);
-    assert.deepEqual(out.weather, { temperature: 10.3, unit: '°C', condition: 'drizzle', day: false, label: 'Amsterdam', format: null });
-    assert.equal(asked[0].get('latitude'), '52.37');
-    assert.equal(asked[0].get('timezone'), 'auto');
-    assert.equal(asked[0].get('temperature_unit'), null);
-    await openmeteo.fetch(ctx);
-    assert.equal(asked.length, 1, 'within cache minutes no new call');
-    await openmeteo.fetch(fakeCtx({ latitude: 1, longitude: 2, units: 'imperial', cache: 5, timezone: 'Europe/Amsterdam' }));
-    assert.equal(asked[1].get('temperature_unit'), 'fahrenheit');
-    assert.equal(asked[1].get('timezone'), 'Europe/Amsterdam');
-    status = 429;
-    await assert.rejects(openmeteo.fetch(fakeCtx({ latitude: 1, longitude: 2, units: 'metric', cache: 5 })), /Open-Meteo answered 429/);
-  } finally {
-    OPEN_METEO.url = saved;
-    await srv.close();
-  }
-  assert.deepEqual([0, 2, 3, 45, 51, 63, 81, 73, 95, 7].map(wmoCondition),
-    ['clear', 'partlyCloudy', 'cloudy', 'fog', 'drizzle', 'rain', 'showers', 'snow', 'thunderstorm', 'unknown']);
-});
-
-test('openmeteo client: an icon, the temperature in the page language, label and condition', async () => {
-  const { el, window } = await renderClient('openmeteo', {});
-  window.document.documentElement.lang = 'nl';
-  el.t = (k) => ({ drizzle: 'Motregen' })[k] ?? k;
-  el.data = { weather: { temperature: 10.35, unit: '°C', condition: 'drizzle', day: false, label: 'Amsterdam', format: null } };
-  const root = el.shadowRoot;
-  assert.equal(root.querySelector('.temp').textContent, '10,4°C');
-  assert.equal(root.querySelector('.cond').textContent, 'Amsterdam · Motregen');
-  assert.ok(root.querySelector('svg'));
-  assert.equal(root.querySelector('.w').getAttribute('aria-label'), 'Amsterdam, 10,4°C, Motregen');
-});
-
-
-test('openweathermap: the current weather with the key on the server, night icons, cache and errors', async () => {
-  const asked = [];
-  let status = 200;
-  const srv = await serve((req, res) => {
-    asked.push(new URL(req.url, 'http://x').searchParams);
-    res.statusCode = status;
-    res.end(JSON.stringify(status === 200 ? { main: { temp: 12.6 }, weather: [{ id: 803, icon: '04n' }] } : { message: 'Invalid API key' }));
-  });
-  const saved = OWM.url;
-  OWM.url = `${srv.url}/data/2.5/weather`;
-  try {
-    const ctx = fakeCtx({ latitude: 52.37, longitude: 4.89, apiKey: 'k3y', units: 'imperial', cache: 5, label: 'Amsterdam' });
-    const out = await openweathermap.fetch(ctx);
-    assert.deepEqual(out.weather, { temperature: 12.6, unit: '°F', condition: 'cloudy', day: false, label: 'Amsterdam', format: null });
-    assert.deepEqual([asked[0].get('lat'), asked[0].get('lon'), asked[0].get('units'), asked[0].get('appid')], ['52.37', '4.89', 'imperial', 'k3y']);
-    await openweathermap.fetch(ctx);
-    assert.equal(asked.length, 1, 'cached for `cache` minutes');
-    status = 401;
-    await assert.rejects(openweathermap.fetch(fakeCtx({ latitude: 1, longitude: 2, apiKey: 'bad', units: 'metric', cache: 5 })), /OpenWeatherMap answered 401/);
-  } finally {
-    OWM.url = saved;
-    await srv.close();
-  }
-  assert.deepEqual([211, 301, 501, 521, 601, 741, 800, 802, 804, 900].map(owmCondition),
-    ['thunderstorm', 'drizzle', 'rain', 'showers', 'snow', 'fog', 'clear', 'partlyCloudy', 'cloudy', 'unknown']);
-});
-
-
-test('stocks: Finnhub quotes for up to eight symbols, unknown ones, the cache and errors', async () => {
-  const asked = [];
-  let status = 200;
-  const srv = await serve((req, res) => {
-    const q = new URL(req.url, 'http://x').searchParams;
-    asked.push([q.get('symbol'), q.get('token')]);
-    res.statusCode = status;
-    const quote = { AAPL: { c: 231.5, dp: 1.234 }, MSFT: { c: 410, dp: -0.5 }, NOPE: { c: 0, dp: null } }[q.get('symbol')] ?? { c: 10, dp: 0 };
-    res.end(JSON.stringify(quote));
-  });
-  const saved = FINNHUB.url;
-  FINNHUB.url = `${srv.url}/api/v1/quote`;
-  try {
-    const ctx = fakeCtx({ watchlist: ['aapl', 'MSFT', 'nope', 'A', 'B', 'C', 'D', 'E', 'F'], apiKey: 'k3y', color: true, cache: 1 });
-    const out = await stocks.fetch(ctx);
-    assert.equal(asked.length, 8, 'at most eight symbols');
-    assert.deepEqual(asked[0], ['AAPL', 'k3y']);
-    assert.deepEqual(out.quotes.slice(0, 3), [
-      { symbol: 'AAPL', price: 231.5, change: 1.23 }, { symbol: 'MSFT', price: 410, change: -0.5 }, { symbol: 'NOPE', price: null, change: null },
-    ]);
-    assert.deepEqual(out.blocks[0], { key: 'AAPL', label: 'AAPL', value: 231.5 });
-    await stocks.fetch(ctx);
-    assert.equal(asked.length, 8, 'cached');
-    status = 403;
-    await assert.rejects(stocks.fetch(fakeCtx({ watchlist: ['AAPL'], apiKey: 'bad', color: true, cache: 1 })), /Finnhub answered 403/);
-  } finally {
-    FINNHUB.url = saved;
-    await srv.close();
-  }
-});
-
-test('stocks client: price, arrow and change; colour can be turned off', async () => {
-  const { el } = await renderClient('stocks', {});
-  el.t = (k) => ({ up: 'up', down: 'down', unknownSymbol: 'Unknown symbol' })[k] ?? k;
-  el.data = { color: true, quotes: [{ symbol: 'AAPL', price: 231.5, change: 1.23 }, { symbol: 'MSFT', price: 410, change: -0.5 }, { symbol: 'NOPE', price: null, change: null }] };
-  const items = [...el.shadowRoot.querySelectorAll('li')];
-  assert.deepEqual(items.map((li) => li.textContent), ['AAPL231.50 ▲+1.23%', 'MSFT410.00 ▼-0.50%', 'NOPEUnknown symbol']);
-  assert.equal(items[0].getAttribute('aria-label'), 'AAPL: 231.50, up 1.23%');
-  assert.ok(items[1].querySelector('.chg').classList.contains('down'));
-  assert.equal(el.shadowRoot.querySelector('ul').className, 'color');
-  el.data = { color: false, quotes: [] };
-  assert.equal(el.shadowRoot.querySelector('ul').className, '');
-});
-
-
 test('kubernetes: quantities, cluster totals and per node from nodes and metrics, without metrics-server too', async () => {
   assert.equal(cores('250m'), 0.25);
   assert.ok(Math.abs(cores('123456789n') - 0.123456789) < 1e-12);
@@ -651,34 +529,3 @@ test('kubernetes client: cluster meters and a line per node, a node that is not 
 });
 
 
-test('weather widgets: no coordinates ask for the viewer\'s location, then use it', async () => {
-  const asked = [];
-  const srv = await serve((req, res) => {
-    asked.push(new URL(req.url, 'http://x').searchParams);
-    res.end(JSON.stringify({ current: { temperature_2m: 8, weather_code: 0, is_day: 1 } }));
-  });
-  const saved = OPEN_METEO.url;
-  OPEN_METEO.url = `${srv.url}/v1/forecast`;
-  try {
-    assert.deepEqual(await openmeteo.fetch(fakeCtx({ units: 'metric', cache: 5 })), { blocks: [], weather: null, needsLocation: true });
-    const out = await openmeteo.fetch(fakeCtx({ units: 'metric', cache: 5 }, { params: { latitude: '52.37', longitude: '4.89' } }));
-    assert.equal(out.weather.temperature, 8);
-    assert.deepEqual([asked[0].get('latitude'), asked[0].get('longitude')], ['52.37', '4.89']);
-  } finally {
-    OPEN_METEO.url = saved;
-    await srv.close();
-  }
-
-  const secure = await renderClient('openmeteo', {});
-  Object.defineProperty(secure.window, 'isSecureContext', { value: true });
-  Object.defineProperty(secure.window.navigator, 'geolocation', { value: { getCurrentPosition: (ok) => ok({ coords: { latitude: 52.3676, longitude: 4.9041 } }) } });
-  const events = [];
-  secure.el.addEventListener('hd-widget-params', (e) => events.push(e.detail));
-  secure.el.t = (k) => k;
-  secure.el.data = { blocks: [], weather: null, needsLocation: true };
-  assert.deepEqual({ ...events[0] }, { latitude: '52.37', longitude: '4.90' }, 'rounded to two decimals'); // detail comes from the page's realm
-  const plain = await renderClient('openmeteo', {});
-  plain.el.t = (k) => ({ noLocation: 'Set latitude and longitude' })[k] ?? k;
-  plain.el.data = { blocks: [], weather: null, needsLocation: true };
-  assert.equal(plain.el.shadowRoot.querySelector('.cond').textContent, 'Set latitude and longitude', 'no HTTPS: an explanation');
-});

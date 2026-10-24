@@ -1,7 +1,7 @@
 {
-  "en": { "placeholder": "Search…", "engine": "Search engine" },
-  "nl": { "placeholder": "Zoeken…", "engine": "Zoekmachine" },
-  "fr": { "placeholder": "Rechercher…", "engine": "Moteur de recherche" },
-  "de": { "placeholder": "Suchen…", "engine": "Suchmaschine" },
-  "es": { "placeholder": "Buscar…", "engine": "Buscador" }
+  "en": { "placeholder": "Search the web…", "placeholderFilter": "Search services or the web…", "engine": "Search engine" },
+  "nl": { "placeholder": "Zoek op het web…", "placeholderFilter": "Zoek services of op het web…", "engine": "Zoekmachine" },
+  "fr": { "placeholder": "Rechercher sur le web…", "placeholderFilter": "Rechercher des services ou sur le web…", "engine": "Moteur de recherche" },
+  "de": { "placeholder": "Im Web suchen…", "placeholderFilter": "Dienste oder im Web suchen…", "engine": "Suchmaschine" },
+  "es": { "placeholder": "Buscar en la web…", "placeholderFilter": "Buscar servicios o en la web…", "engine": "Buscador" }
 }

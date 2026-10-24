@@ -18,4 +18,12 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   `{{HOMEPAGE_VAR_*}}`, bare icon names, `ping` with a URL, `target: hidden-iframe`, and per
   widget `refreshInterval`, `fields` and `hide_errors`.
 - custom-api: `display: list`, `remap`, `prefix`, `suffix`, `format`, `body`.
+- Accessibility (Apple HIG audit): status labels 11px instead of 8px, status colours at 4.5:1 or
+  more in both appearances, no thin weights, all text in rem so it follows the browser text
+  size, larger targets for labels and footer buttons, Reduce Motion and Increase Contrast,
+  meters exposed to screen readers, and headings kept for screen readers when hidden.
+- The search box filters services as you type; Enter opens the only match or searches the web.
+- Appearance can go back to following the system (light / auto / dark).
+- Widget errors say what to check ("the API key was refused", "unreachable"), with the raw
+  message as detail; network errors include their cause (`fetch failed (ECONNREFUSED)`).
 - Plugin collections: one source installs every widget in a repository (or `only:` some).

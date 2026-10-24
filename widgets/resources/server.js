@@ -59,7 +59,7 @@ export default {
       } catch (err) {
         ctx.log.warn(`cannot read ${mount}: ${err.code || err.message}`);
         blocks.push({ key: label, label, value: null, status: 'unknown' });
-        meters.push({ kind: 'disk', text: '–', caption: 'free', percent: 0, mount });
+        meters.push({ kind: 'disk', text: mount, caption: 'notFound', percent: 0, mount, missing: true });
       }
     }
     return { blocks, meters };

@@ -174,3 +174,57 @@ test('resources: meters with free space for the homepage look', async () => {
   assert.deepEqual(out.meters.map((m) => [m.kind, m.caption]), [['memory', 'free'], ['disk', 'free']]);
   assert.match(out.meters[1].text, /^\d+(\.\d)? (B|KB|MB|GB|TB|PB)$/);
 });
+
+// ---- browser parts of built-in widgets, in jsdom
+async function clientPage(file) {
+  const { JSDOM } = await import('jsdom');
+  const dom = new JSDOM('<!doctype html><body></body>', { runScripts: 'outside-only', url: 'http://localhost/' });
+  dom.window.eval(fs.readFileSync(path.resolve(file), 'utf8'));
+  return dom.window;
+}
+
+test('search widget: filter events while typing, web search only when the page lets it', async () => {
+  const w = await clientPage('widgets/search/client.js');
+  const opened = [];
+  w.open = (url) => opened.push(url);
+  const events = [];
+  w.document.addEventListener('hd-search-input', (e) => events.push(['input', e.detail.query]));
+  let handled = true;
+  w.document.addEventListener('hd-search-submit', (e) => { events.push(['submit', e.detail.query]); if (handled) e.preventDefault(); });
+  const el = w.document.createElement('hd-search');
+  el.options = { provider: 'google' };
+  el.t = (k) => k;
+  w.document.body.append(el);
+  const input = el.shadowRoot.querySelector('input');
+  const form = el.shadowRoot.querySelector('form');
+  assert.equal(input.getAttribute('aria-label'), 'placeholderFilter');
+  input.value = 'radarr';
+  input.dispatchEvent(new w.Event('input'));
+  form.dispatchEvent(new w.Event('submit', { cancelable: true }));
+  assert.deepEqual(events, [['input', 'radarr'], ['submit', 'radarr']]);
+  assert.deepEqual(opened, [], 'the page opened the match');
+  handled = false;
+  form.dispatchEvent(new w.Event('submit', { cancelable: true }));
+  assert.deepEqual(opened, ['https://www.google.com/search?q=radarr']);
+  input.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape' }));
+  assert.deepEqual(events.at(-1), ['input', '']);
+  w.close();
+});
+
+test('resources widget: meters are exposed with role, value and a spoken label', async () => {
+  const w = await clientPage('widgets/resources/client.js');
+  const el = w.document.createElement('hd-resources');
+  el.options = { label: 'Media' };
+  el.t = (k) => ({ free: 'Free', used: 'used', disk: 'Disk', notFound: 'not found' })[k] ?? k;
+  w.document.body.append(el);
+  el.data = { meters: [
+    { kind: 'disk', text: '25.7 TB', caption: 'free', percent: 60.4, mount: '/media' },
+    { kind: 'disk', text: '/gone', caption: 'notFound', percent: 0, mount: '/gone', missing: true },
+  ] };
+  const [ok, missing] = el.shadowRoot.querySelectorAll('[role="meter"]');
+  assert.equal(ok.getAttribute('aria-valuenow'), '60');
+  assert.equal(ok.getAttribute('aria-label'), 'Media Disk: 25.7 TB Free, 60% used');
+  assert.equal(missing.getAttribute('aria-label'), 'Media Disk: /gone not found');
+  assert.ok(missing.classList.contains('missing'));
+  w.close();
+});

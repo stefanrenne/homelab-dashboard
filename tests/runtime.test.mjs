@@ -118,3 +118,16 @@ test('result: rows, statusText and block keys are validated', () => {
   assert.throws(() => checkData({ rows: [{ label: 'x', progress: 140 }] }), /progress must be 0-100/);
   assert.throws(() => checkData({ statusText: 3 }), /statusText must be text/);
 });
+
+test('error messages carry the network cause hidden behind "fetch failed"', async () => {
+  const { describeError } = await import('../src/plugins/runtime.js');
+  const err = new TypeError('fetch failed', { cause: Object.assign(new Error('connect'), { code: 'ECONNREFUSED' }) });
+  assert.equal(describeError(err), 'fetch failed (ECONNREFUSED)');
+  assert.equal(describeError(new Error('Radarr movie answered 401')), 'Radarr movie answered 401');
+  // a port that was free a moment ago: nothing listens there
+  const probe = await serve((req, res) => res.end());
+  const closed = probe.url;
+  await probe.close();
+  const real = await widgetFetch(closed, {}, undefined, new AbortController().signal).catch((e) => e);
+  assert.equal(describeError(real), 'fetch failed (ECONNREFUSED)');
+});

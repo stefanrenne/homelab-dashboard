@@ -13,12 +13,13 @@ class HdResources extends HTMLElement {
         .meters { display: flex; gap: 12px; flex-wrap: wrap; }
         .meter { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
         svg { width: 20px; height: 20px; flex: none; color: var(--hd-text); }
-        .txt { min-width: 85px; font-size: 12px; line-height: 16px; }
+        .txt { min-width: 85px; font-size: .75rem; line-height: 1rem; }
         .row { display: flex; justify-content: space-between; gap: 8px; }
         .bar { margin-top: 2px; height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--hd-text) 20%, transparent); overflow: hidden; }
         .fill { height: 100%; border-radius: 999px; background: color-mix(in srgb, var(--hd-text) 50%, transparent); transition: width 1s; }
-        .label { font-size: 12px; text-align: center; color: var(--hd-text); margin-top: 2px; }
-        .error { font-size: 12px; color: var(--hd-error); }
+        .label { font-size: .75rem; text-align: center; color: var(--hd-text); margin-top: 2px; }
+        .error, .missing .v { font-size: .75rem; color: var(--hd-error); }
+        @media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
       </style>
       <div class="meters"></div><div class="label"></div>`;
     this.render();
@@ -50,10 +51,20 @@ class HdResources extends HTMLElement {
       el.className = 'meter';
       el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[m.kind] ?? ICONS.disk}</svg>
         <div class="txt"><div class="row"><span class="v"></span><span class="c"></span></div><div class="bar"><div class="fill"></div></div></div>`;
+      const pct = Math.round(Math.max(0, Math.min(100, m.percent)));
       el.querySelector('.v').textContent = m.text;
       el.querySelector('.c').textContent = t(m.caption);
-      el.querySelector('.fill').style.width = `${Math.max(0, Math.min(100, m.percent))}%`;
+      el.querySelector('.fill').style.width = `${pct}%`;
+      if (m.missing) el.classList.add('missing');
       if (m.mount) el.title = m.mount;
+      // The bar is drawn for the eye; screen readers get the same as a meter.
+      const name = [this.options?.label, t(m.kind)].filter(Boolean).join(' ');
+      el.setAttribute('role', 'meter');
+      el.setAttribute('aria-valuemin', '0');
+      el.setAttribute('aria-valuemax', '100');
+      el.setAttribute('aria-valuenow', String(pct));
+      el.setAttribute('aria-label', m.missing ? `${name}: ${m.text} ${t(m.caption)}` : `${name}: ${m.text} ${t(m.caption)}, ${pct}% ${t('used')}`);
+      el.querySelector('svg').setAttribute('aria-hidden', 'true');
       box.append(el);
     }
     root.querySelector('.label').textContent = this.options?.label ?? '';

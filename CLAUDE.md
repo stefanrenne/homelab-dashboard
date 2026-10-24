@@ -86,6 +86,9 @@ the image and smoke-tests it.
 - Small, focused changes. New logic gets a test. Bugs get a test that fails without the fix.
 - Frontend: no frameworks, no build step, no external assets except Google Fonts (with a system
   fallback) and the icon CDN for icons the user names. All text goes in through `textContent`.
+- **Design minimums are tested** (`tests/design.test.mjs`): text in rem, status colours ≥ 4.5:1 in
+  both appearances, no weight below 400 for content, labels ≥ 11px, targets ≥ 28px (touch) and
+  32px footer buttons, Reduce Motion and Increase Contrast handled. Change the test only with a reason.
 - **README screenshots must match the current dashboard.** A visible UI change refreshes
   `docs/images/` and the alt texts in the README in the same commit (`node scripts/screenshots.mjs`).
 - New widget API features are shown in `examples/widget-template` when they are useful to authors.

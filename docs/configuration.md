@@ -57,8 +57,8 @@ plugins:
 A source without `widget.yaml` at its root is a **collection**: every folder with a
 `widget.yaml` directly in it, or in its `widgets/` folder, is installed.
 
-Viewers can switch dark/light and pick another colour with the buttons in the footer; that choice
-is remembered in their browser and overrides `theme` and `color`.
+Viewers can pick light, dark or "follow the system" and another colour with the buttons in the
+footer; that choice is remembered in their browser and overrides `theme` and `color`.
 
 ## services.yaml
 
@@ -144,7 +144,7 @@ mode: cluster   # or disabled (default)
 | Type | Options |
 |---|---|
 | `datetime` | `locale`, `dateStyle`, `timeStyle` |
-| `search` | `provider`, `url`, `target` |
+| `search` | `provider`, `url`, `target`, `filter` (default true: typing filters the services, Enter opens the only match) |
 | `resources` | `cpu`, `memory` (both off by default), `disk` (list of mount points), `label` |
 | `http-status` | `url` (required), `method` (`HEAD`/`GET`) |
 | `ping` | `host` (required; a name, IP or URL) |

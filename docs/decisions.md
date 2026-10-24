@@ -2,6 +2,13 @@
 
 Why things are the way they are. Newest first.
 
+## Accessibility over a pixel-exact homepage copy (2026-10-24)
+An audit against Apple's HIG found homepage's 8px status labels, 80%-opacity status colours
+(2.8:1) and thin weights below the minimums. The look stays homepage's; the sizes, weights and
+colours follow the minimums, and `tests/design.test.mjs` checks them from the CSS. The
+appearance switch got an "auto" position because a two-way switch could never return to
+following the system.
+
 ## homepage compatibility as a migration path (2026-10-23)
 The first real installation replaces a homepage. Reading `homepage.*` labels,
 `{{HOMEPAGE_VAR_*}}`, homepage's widget keys (`refreshInterval`, `fields`, `hide_errors`) and

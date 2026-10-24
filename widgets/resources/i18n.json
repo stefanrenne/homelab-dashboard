@@ -1,7 +1,42 @@
 {
-  "en": { "cpu": "CPU", "memory": "Memory", "disk": "Disk", "free": "Free" },
-  "nl": { "cpu": "CPU", "memory": "Geheugen", "disk": "Schijf", "free": "Vrij" },
-  "fr": { "cpu": "CPU", "memory": "Mémoire", "disk": "Disque", "free": "Libre" },
-  "de": { "cpu": "CPU", "memory": "Speicher", "disk": "Festplatte", "free": "Frei" },
-  "es": { "cpu": "CPU", "memory": "Memoria", "disk": "Disco", "free": "Libre" }
+  "en": {
+    "cpu": "CPU",
+    "memory": "Memory",
+    "disk": "Disk",
+    "free": "Free",
+    "used": "used",
+    "notFound": "not found"
+  },
+  "nl": {
+    "cpu": "CPU",
+    "memory": "Geheugen",
+    "disk": "Schijf",
+    "free": "Vrij",
+    "used": "gebruikt",
+    "notFound": "niet gevonden"
+  },
+  "fr": {
+    "cpu": "CPU",
+    "memory": "Mémoire",
+    "disk": "Disque",
+    "free": "Libre",
+    "used": "utilisé",
+    "notFound": "introuvable"
+  },
+  "de": {
+    "cpu": "CPU",
+    "memory": "Speicher",
+    "disk": "Festplatte",
+    "free": "Frei",
+    "used": "belegt",
+    "notFound": "nicht gefunden"
+  },
+  "es": {
+    "cpu": "CPU",
+    "memory": "Memoria",
+    "disk": "Disco",
+    "free": "Libre",
+    "used": "usado",
+    "notFound": "no encontrado"
+  }
 }

@@ -83,11 +83,12 @@ test('renders groups, cards, status labels, blocks, rows and bookmarks in the co
   const w = await page();
   const doc = w.document;
   assert.equal(doc.title, 'My Lab');
-  assert.equal(doc.getElementById('title').hidden, true);
+  assert.ok(doc.getElementById('title').classList.contains('sr-only'), 'title hidden visually, kept for screen readers');
   assert.equal(doc.documentElement.lang, 'nl');
   assert.equal(doc.documentElement.dataset.theme, 'dark');
   assert.equal(doc.documentElement.style.getPropertyValue('--t800'), '#065f46', 'emerald palette');
-  assert.deepEqual([...doc.querySelectorAll('#groups .group h2')].map((h) => h.textContent), ['Network']);
+  assert.deepEqual([...doc.querySelectorAll('#groups .group h2:not(.sr-only)')].map((h) => h.textContent), ['Network']);
+  assert.deepEqual([...doc.querySelectorAll('#groups .group h2.sr-only')].map((h) => h.textContent), ['Hidden title']);
   assert.equal(doc.querySelector('[data-group="Network"]').className, 'group layout-row');
   const router = doc.querySelector('[data-service="svc-1"]');
   assert.equal(router.querySelector('a').getAttribute('href'), 'http://router.lan');
@@ -101,7 +102,8 @@ test('renders groups, cards, status labels, blocks, rows and bookmarks in the co
   ]);
   assert.equal(radarr.querySelector('.row .progress').style.width, '40%');
   assert.equal(radarr.querySelectorAll('.api-error').length, 1, 'hideErrors hides one of the two failures');
-  assert.match(radarr.querySelector('.api-error').textContent, /API-foutinformatie.*ECONNREFUSED/);
+  assert.equal(radarr.querySelector('.api-error summary').textContent, 'Radarr is niet bereikbaar. Draait het, en klopt "url"?');
+  assert.match(radarr.querySelector('.api-error div').textContent, /ECONNREFUSED/);
   assert.equal(doc.querySelector('.bm .bn').textContent, 'GitHub');
   assert.match(doc.querySelector('.msg').textContent, /Fouten in de configuratie \(1\)/);
   w.close();
@@ -128,13 +130,51 @@ test('hidden-iframe services call their URL without leaving the page', async () 
   w.close();
 });
 
-test('theme toggle and colour choice are remembered per viewer', async () => {
+test('appearance: light, dark and back to following the system; colour remembered', async () => {
   const w = await page();
-  w.document.getElementById('theme-btn').click();
-  assert.equal(w.document.documentElement.dataset.theme, 'light');
-  w.document.querySelector('.swatch[title="rose"]').click();
-  assert.equal(w.document.documentElement.style.getPropertyValue('--t800'), '#9f1239');
+  const doc = w.document;
+  const pressed = () => [...doc.querySelectorAll('[data-appearance]')].filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => b.dataset.appearance);
+  assert.deepEqual(pressed(), ['dark'], 'settings.yaml says dark');
+  doc.querySelector('[data-appearance="light"]').click();
+  assert.equal(doc.documentElement.dataset.theme, 'light');
   assert.equal(w.localStorage.getItem('hd-theme'), 'light');
+  doc.querySelector('[data-appearance="auto"]').click();
+  assert.deepEqual(pressed(), ['auto']);
+  assert.equal(doc.documentElement.dataset.theme, 'dark', 'jsdom has no light system preference');
+  for (const b of doc.querySelectorAll('[data-appearance]')) assert.ok(b.getAttribute('aria-label'), 'icon-only buttons are labelled');
+  doc.querySelector('.swatch[title="rose"]').click();
+  assert.equal(doc.documentElement.style.getPropertyValue('--t800'), '#9f1239');
+  w.close();
+});
+
+test('search events filter services, and Enter with one match opens it', async () => {
+  const w = await page();
+  const doc = w.document;
+  const send = (name, query) => doc.dispatchEvent(new w.CustomEvent(name, { detail: { query }, cancelable: true }));
+  send('hd-search-input', 'rout');
+  const visible = () => [...doc.querySelectorAll('.card')].filter((c) => !c.hidden).map((c) => c.dataset.name);
+  assert.deepEqual(visible(), ['Router']);
+  assert.equal(doc.querySelector('[data-group="Hidden title"]').hidden, true, 'groups without matches disappear');
+  assert.equal(doc.getElementById('search-status').textContent, '1 services gevonden');
+  let opened = null;
+  doc.querySelector('[data-service="svc-1"] a').addEventListener('click', (e) => { e.preventDefault(); opened = 'router'; });
+  assert.equal(send('hd-search-submit', 'rout'), false, 'the dashboard handled it');
+  assert.equal(opened, 'router');
+  assert.equal(send('hd-search-submit', 'zzz'), true, 'no match: the widget searches the web');
+  assert.equal(doc.getElementById('search-status').textContent, 'Geen services gevonden');
+  send('hd-search-input', '');
+  assert.equal(visible().length, 4);
+  w.close();
+});
+
+test('error summaries say what to check', async () => {
+  const w = await page();
+  const { explainError } = w.HD;
+  assert.equal(explainError('Radarr', 'Radarr movie answered 401'), 'Radarr: de API-key is geweigerd. Controleer "key".');
+  assert.equal(explainError('Radarr', 'fetch failed (ENOTFOUND)'), 'Radarr is niet bereikbaar. Draait het, en klopt "url"?');
+  assert.equal(explainError('Portainer', 'Portainer has no environment 9'), 'Portainer: adres niet gevonden. Controleer "url".');
+  assert.equal(explainError('X', 'invalid options: url: required'), 'X: de configuratie bevat een fout.');
+  assert.equal(explainError('X', 'something odd'), 'X: gegevens konden niet geladen worden.');
   w.close();
 });
 
@@ -142,7 +182,8 @@ test('unsafe links are dropped and unknown widgets explain themselves', async ()
   const w = await page();
   const evil = w.document.querySelector('[data-service="svc-2"]');
   assert.equal(evil.querySelector('a'), null);
-  assert.match(evil.querySelector('.api-error').textContent, /Onbekend widgettype: missing/);
+  assert.equal(evil.querySelector('.api-error summary').textContent, 'Evil: de configuratie bevat een fout.');
+  assert.match(evil.querySelector('.api-error div').textContent, /unknown widget type "missing"/);
   assert.match(evil.querySelector('.name').title, /gevonden via: docker:local/);
   w.close();
 });

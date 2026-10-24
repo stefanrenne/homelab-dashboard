@@ -58,7 +58,7 @@ export class WidgetRuntime {
         ]);
         result = { ok: true, data: selectFields(checkData(data ?? {}), instance.fields), fetchedAt: this.now() };
       } catch (err) {
-        const message = scrub(err?.message ?? String(err), instance.secretValues);
+        const message = scrub(describeError(err), instance.secretValues);
         this.log.warn(`widget ${instance.type} (${instanceId}): ${message}`);
         result = { ok: false, error: message, fetchedAt: this.now() };
       } finally {
@@ -158,6 +158,16 @@ export function checkData(data) {
 export function selectFields(data, fields) {
   if (!fields || !Array.isArray(data.blocks)) return data;
   return { ...data, blocks: data.blocks.filter((b) => fields.includes(b.key ?? b.label)) };
+}
+
+/**
+ * The message of an error plus the low-level cause Node hides behind "fetch failed"
+ * ("fetch failed (ECONNREFUSED)"), so the dashboard can tell "unreachable" from "wrong key".
+ */
+export function describeError(err) {
+  const message = err?.message ?? String(err);
+  const cause = err?.cause?.code ?? err?.cause?.errors?.[0]?.code ?? err?.cause?.message;
+  return cause && !message.includes(cause) ? `${message} (${cause})` : message;
 }
 
 /** Removes secret values from a message before it is logged or sent to the browser. */

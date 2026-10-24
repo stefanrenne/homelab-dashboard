@@ -125,6 +125,18 @@ Theme CSS variables inherit into the shadow root: `--hd-text`, `--hd-muted`, `--
 The page's Content-Security-Policy allows `connect-src 'self'`: get data through `server.js`, not
 from the browser. Images may come from anywhere.
 
+## Page events
+
+A `client.js` may talk to the dashboard through DOM events that bubble out of its shadow root
+(`bubbles: true, composed: true`):
+
+| Event | `detail` | What the dashboard does |
+|---|---|---|
+| `hd-search-input` | `{ query }` | Shows only the services and bookmarks that match every word; empty shows all. |
+| `hd-search-submit` | `{ query }` | Send it `cancelable: true`. With exactly one match the dashboard opens it and cancels the event; otherwise the widget may search elsewhere. |
+
+The built-in `search` widget uses both.
+
 ## i18n.json
 
 ```json

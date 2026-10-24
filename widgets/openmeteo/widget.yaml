@@ -1,0 +1,14 @@
+id: openmeteo
+name: Open-Meteo
+version: 1.0.0
+apiVersion: 1
+description: The current weather from Open-Meteo, no account needed (homepage's recommended weather widget).
+refresh: 5m
+options:
+  latitude: { type: number, required: true }
+  longitude: { type: number, required: true }
+  label: { type: string }                                     # e.g. the city
+  timezone: { type: string }                                  # e.g. Europe/Amsterdam; default: the location's own
+  units: { type: enum, values: [metric, imperial], default: metric }
+  cache: { type: number, default: 5 }                         # minutes between calls to Open-Meteo
+  format: { type: object }                                    # Intl.NumberFormat options, e.g. { maximumFractionDigits: 1 }

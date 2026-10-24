@@ -20,9 +20,9 @@ hideErrors, status labels, container stats on click, search widget, bookmarks.
 
 Generic ones built in, service-specific ones in the widgets collection.
 
-- [ ] Open-Meteo weather (built in, no key)
 - [ ] OpenWeatherMap (built in, key through `providers`)
 - [ ] Stocks (Finnhub, key through `providers`)
+- [ ] Weather without coordinates: the browser's location (homepage, needs HTTPS), passed to the server for that request
 - [ ] Glances (collection)
 - [ ] Kubernetes cluster and nodes (built in, uses the service account)
 - [ ] Longhorn (collection)

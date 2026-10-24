@@ -10,6 +10,7 @@ import { loadRegistry } from '../src/plugins/loader.js';
 import httpStatus from '../widgets/http-status/server.js';
 import customApi, { pick } from '../widgets/custom-api/server.js';
 import docker, { cpuPercent } from '../widgets/docker/server.js';
+import openmeteo, { API as OPEN_METEO, condition as wmoCondition } from '../widgets/openmeteo/server.js';
 import resources, { PATHS as RESOURCE_PATHS, formatUptime, formatBytes } from '../widgets/resources/server.js';
 import { parseLatency } from '../widgets/ping/server.js';
 
@@ -326,4 +327,50 @@ test('logo: its own mark, an image, or a single-colour icon as a mask', async ()
   const span = mask.el.shadowRoot.querySelector('.logo.mask');
   assert.equal(span.style.getPropertyValue('--mask'), 'url("https://cdn.example.com/home.svg")');
   assert.equal(span.style.getPropertyValue('--fill'), '#38bdf8');
+});
+
+
+test('openmeteo: the current weather, units, the cache in minutes, and errors', async () => {
+  const asked = [];
+  let status = 200;
+  const srv = await serve((req, res) => {
+    asked.push(new URL(req.url, 'http://x').searchParams);
+    res.statusCode = status;
+    res.end(JSON.stringify({ current: { temperature_2m: 10.3, weather_code: 53, is_day: 0 } }));
+  });
+  const saved = OPEN_METEO.url;
+  OPEN_METEO.url = `${srv.url}/v1/forecast`;
+  try {
+    const ctx = fakeCtx({ latitude: 52.37, longitude: 4.89, label: 'Amsterdam', units: 'metric', cache: 5 });
+    const out = await openmeteo.fetch(ctx);
+    assert.deepEqual(out.blocks, [{ key: 'temperature', label: 'temperature', value: 10.3, unit: '°C' }, { key: 'condition', label: 'condition', value: 'drizzle' }]);
+    assert.deepEqual(out.weather, { temperature: 10.3, unit: '°C', condition: 'drizzle', day: false, label: 'Amsterdam', format: null });
+    assert.equal(asked[0].get('latitude'), '52.37');
+    assert.equal(asked[0].get('timezone'), 'auto');
+    assert.equal(asked[0].get('temperature_unit'), null);
+    await openmeteo.fetch(ctx);
+    assert.equal(asked.length, 1, 'within cache minutes no new call');
+    await openmeteo.fetch(fakeCtx({ latitude: 1, longitude: 2, units: 'imperial', cache: 5, timezone: 'Europe/Amsterdam' }));
+    assert.equal(asked[1].get('temperature_unit'), 'fahrenheit');
+    assert.equal(asked[1].get('timezone'), 'Europe/Amsterdam');
+    status = 429;
+    await assert.rejects(openmeteo.fetch(fakeCtx({ latitude: 1, longitude: 2, units: 'metric', cache: 5 })), /Open-Meteo answered 429/);
+  } finally {
+    OPEN_METEO.url = saved;
+    await srv.close();
+  }
+  assert.deepEqual([0, 2, 3, 45, 51, 63, 81, 73, 95, 7].map(wmoCondition),
+    ['clear', 'partlyCloudy', 'cloudy', 'fog', 'drizzle', 'rain', 'showers', 'snow', 'thunderstorm', 'unknown']);
+});
+
+test('openmeteo client: an icon, the temperature in the page language, label and condition', async () => {
+  const { el, window } = await renderClient('openmeteo', {});
+  window.document.documentElement.lang = 'nl';
+  el.t = (k) => ({ drizzle: 'Motregen' })[k] ?? k;
+  el.data = { weather: { temperature: 10.35, unit: '°C', condition: 'drizzle', day: false, label: 'Amsterdam', format: null } };
+  const root = el.shadowRoot;
+  assert.equal(root.querySelector('.temp').textContent, '10,4°C');
+  assert.equal(root.querySelector('.cond').textContent, 'Amsterdam · Motregen');
+  assert.ok(root.querySelector('svg'));
+  assert.equal(root.querySelector('.w').getAttribute('aria-label'), 'Amsterdam, 10,4°C, Motregen');
 });

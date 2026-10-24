@@ -5,7 +5,9 @@ import path from 'node:path';
 import http from 'node:http';
 import { createApp } from '../src/app.js';
 import { watchConfig } from '../src/config/watch.js';
+import { execFileSync } from 'node:child_process';
 import { tmpDir, serve, silentLog } from './helpers.mjs';
+import { readLock } from '../src/plugins/installer.js';
 
 const SECRET = 'super-secret-api-key-123';
 
@@ -15,7 +17,7 @@ async function startApp(files, env = {}) {
     fs.mkdirSync(path.dirname(path.join(configDir, name)), { recursive: true });
     fs.writeFileSync(path.join(configDir, name), text);
   }
-  const app = await createApp({ configDir, env, log: silentLog });
+  const app = await createApp({ configDir, env, log: silentLog, defaultPlugins: [] });
   const server = http.createServer(app.handler);
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -148,6 +150,7 @@ test('secrets from discovered labels stay out of the layout', async () => {
     configDir,
     env: { HOMEPAGE_VAR_KEY: SECRET },
     log: silentLog,
+    defaultPlugins: [],
     discovery: {
       docker: async () => [{ group: 'G', name: 'S', weight: 0,
         def: { href: 'http://s.lan', widget: { type: 'custom-api', url: 'http://s.lan/', mappings: [{ field: 'a' }], extra: '{{HOMEPAGE_VAR_KEY}}' } } }],
@@ -291,4 +294,46 @@ test('HEAD is answered like GET', async () => {
   } finally {
     await t.close();
   }
+});
+
+test('the default plugins are installed without settings.yaml, and settings.yaml extends them', async () => {
+  const repo = path.join(tmpDir('hd-repo-'), 'widget');
+  fs.cpSync(path.resolve('examples/widget-template'), repo, { recursive: true });
+  const git = (...args) => execFileSync('git', ['-C', repo, ...args], { stdio: 'pipe' });
+  git('init', '-q', '-b', 'main');
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'add', '.');
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'v1');
+  git('tag', 'v1.0.0');
+  const defaultPlugins = [{ source: `git+file://${repo}#latest` }];
+
+  const configDir = tmpDir('hd-app-');
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins });
+  assert.deepEqual(Object.keys(readLock(configDir)), [defaultPlugins[0].source]);
+  assert.deepEqual(app.layout.messages.errors, []);
+  app.close();
+
+  fs.writeFileSync(path.join(configDir, 'settings.yaml'), 'plugins:\n  - path: ./missing\n');
+  const extended = await createApp({ configDir, log: silentLog, defaultPlugins });
+  assert.deepEqual(Object.keys(readLock(configDir)), [defaultPlugins[0].source]);
+  assert.ok(extended.layout.messages.errors.some((e) => e.path === 'plugins: ./missing'), JSON.stringify(extended.layout.messages.errors));
+  extended.close();
+});
+
+test('a widget of your own wins over the same id in the default plugins, without an error', async () => {
+  const repo = path.join(tmpDir('hd-repo-'), 'widget');
+  fs.cpSync(path.resolve('examples/widget-template'), repo, { recursive: true });
+  const git = (...args) => execFileSync('git', ['-C', repo, ...args], { stdio: 'pipe' });
+  git('init', '-q', '-b', 'main');
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'add', '.');
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'v1');
+  git('tag', 'v1.0.0');
+
+  const configDir = tmpDir('hd-app-');
+  const local = path.join(configDir, 'local-counter');
+  fs.cpSync(path.resolve('examples/widget-template'), local, { recursive: true });
+  fs.writeFileSync(path.join(configDir, 'settings.yaml'), 'plugins:\n  - path: ./local-counter\n');
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [{ source: `git+file://${repo}#latest` }] });
+  assert.deepEqual(app.layout.messages.errors, []);
+  assert.equal(app.runtime.registry.get('example-counter').source, './local-counter');
+  app.close();
 });

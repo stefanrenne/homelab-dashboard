@@ -102,7 +102,8 @@ export function widgetDirs(root) {
 
 /**
  * Builds the registry from built-in widgets and external packages. The first widget with
- * an id wins, so an external package can never replace a built-in one.
+ * an id wins, so an external package can never replace a built-in one. A package with
+ * `yields` (a default plugin) quietly gives way to a widget id that is already there.
  * Returns { widgets: Map<id, widget>, errors: [{ source, message }] }.
  */
 export async function loadRegistry({ builtinDir, external = [] }) {
@@ -112,9 +113,10 @@ export async function loadRegistry({ builtinDir, external = [] }) {
     ...widgetDirs(builtinDir).map((dir) => ({ dir, source: 'builtin' })),
     ...external,
   ];
-  for (const { dir, source } of candidates) {
+  for (const { dir, source, yields } of candidates) {
     try {
       const widget = await loadWidget(dir, { source });
+      if (widgets.has(widget.id) && yields) continue;
       if (widgets.has(widget.id)) {
         errors.push({ source, message: `widget id "${widget.id}" is already used by ${widgets.get(widget.id).source}` });
         continue;

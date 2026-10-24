@@ -56,13 +56,13 @@ for Docker discovery through a read-only socket proxy.
 ## Third-party widgets
 
 Ready-made widgets for Radarr, Sonarr, Bazarr, Prowlarr, SABnzbd, Seerr, Stash, Tautulli,
-Tdarr, What's up Docker, Portainer and Unraid are in
-[homelab-dashboard-widgets](https://github.com/stefanrenne/homelab-dashboard-widgets):
+Tdarr, What's up Docker, Portainer and Unraid come from
+[homelab-dashboard-widgets](https://github.com/stefanrenne/homelab-dashboard-widgets), which is
+always installed (its newest release). Other widgets are added under `plugins:`:
 
 ```yaml
 # settings.yaml
 plugins:
-  - source: git+https://github.com/stefanrenne/homelab-dashboard-widgets#latest
   - source: git+https://github.com/someone/hd-widget-pihole#v1.2.0
   - source: npm:hd-widget-adguard@2.0.1
   - path: ./my-widgets/garage-door

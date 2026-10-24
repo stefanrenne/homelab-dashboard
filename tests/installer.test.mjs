@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import YAML from 'yaml';
-import { syncPlugins, parseSource, readLock, latestTag } from '../src/plugins/installer.js';
+import { syncPlugins, parseSource, readLock, latestTag, withDefaultPlugins, DEFAULT_PLUGINS } from '../src/plugins/installer.js';
 import { loadWidget } from '../src/plugins/loader.js';
 import { WidgetRuntime } from '../src/plugins/runtime.js';
 import { validateOptions } from '../src/plugins/options.js';
@@ -118,6 +118,19 @@ test('#latest without a release tag is an error on the widget, not a crash', asy
   const out = await syncPlugins({ configDir: tmpDir(), entries: [{ source: `git+${url}#latest` }], log: silentLog });
   assert.equal(out.installed.length, 0);
   assert.match(out.errors[0].message, /no release tag/);
+});
+
+test('withDefaultPlugins: own entries come first, an entry for the same repository replaces a default', () => {
+  const def = [{ source: 'git+https://github.com/a/widgets#latest' }];
+  const yielding = [{ ...def[0], yields: true }];
+  const own = { source: 'npm:hd-widget-y@2.0.1' };
+  assert.deepEqual(withDefaultPlugins([], def), yielding);
+  assert.deepEqual(withDefaultPlugins([own, { path: './x' }], def), [own, { path: './x' }, ...yielding]);
+  for (const source of ['git+https://github.com/a/widgets#v0.2.0', 'git+https://GitHub.com/a/widgets.git', 'git+git@github.com:a/widgets.git#latest']) {
+    const pinned = { source, only: ['radarr'] };
+    assert.deepEqual(withDefaultPlugins([pinned], def), [pinned], source);
+  }
+  assert.equal(DEFAULT_PLUGINS[0].source, 'git+https://github.com/stefanrenne/homelab-dashboard-widgets#latest');
 });
 
 test('a locked source needs no network on the next start', async () => {

@@ -6,6 +6,10 @@
 //   - path: ./my-widgets/z                                        (relative to the config dir)
 //   any of them with `subdir: widgets/x` for one widget out of a repository.
 //
+// DEFAULT_PLUGINS are always installed; the entries in settings.yaml extend them. An entry
+// for the same git repository (another ref, `only`, `subdir`) takes the default's place, and a
+// widget id the user's own sources already provide is skipped from the defaults (`yields`).
+//
 // A source without widget.yaml at its root is a collection: every folder with a
 // widget.yaml directly inside it (or inside its widgets/ folder) is installed, or only
 // the folders named in `only: [radarr, sonarr]`.
@@ -31,6 +35,7 @@ const PINNED_REF = /^([0-9a-f]{40}|v?\d+\.\d+\.\d+([-+][\w.-]+)?)$/;
 const PINNED_VERSION = /^\d+\.\d+\.\d+([-+][\w.-]+)?$/;
 const RELEASE_TAG = /^v?(\d+)\.(\d+)\.(\d+)$/;
 export const LATEST_REF = 'latest';
+export const DEFAULT_PLUGINS = [{ source: 'git+https://github.com/stefanrenne/homelab-dashboard-widgets#latest' }];
 
 /** Parses a plugin entry from settings.yaml. Throws on anything unsafe or unknown. */
 export function parseSource(entry) {
@@ -60,6 +65,20 @@ export function parseSource(entry) {
     return { kind: 'npm', key: source + (subdir ? `:${subdir}` : ''), name, version, subdir, floating: !PINNED_VERSION.test(version) };
   }
   throw new Error(`"${source}": a source starts with "git+" or "npm:"`);
+}
+
+/** A git URL without scheme noise, for comparing two sources of the same repository. */
+function repoOf(entry) {
+  const source = typeof entry.source === 'string' ? entry.source : '';
+  if (!source.startsWith('git+')) return null;
+  return source.slice(4).split('#')[0].toLowerCase().replace(/^(https?|ssh|git):\/\/(git@)?/, '').replace(/^git@/, '')
+    .replace(':', '/').replace(/\.git$/, '').replace(/\/+$/, '');
+}
+
+/** The user's entries followed by the defaults; a user entry for a default's repository replaces it. */
+export function withDefaultPlugins(entries, defaults = DEFAULT_PLUGINS) {
+  const own = new Set(entries.map(repoOf).filter(Boolean));
+  return [...entries, ...defaults.filter((d) => !own.has(repoOf(d))).map((d) => ({ ...d, yields: true }))];
 }
 
 function defaultRun(cmd, args, opts = {}) {
@@ -111,7 +130,7 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
       const src = parseSource(entry);
       if (src.kind === 'path') {
         const dir = path.resolve(configDir, src.path.replace(/^~(?=\/)/, process.env.HOME ?? '~'), src.subdir);
-        for (const d of packageDirs(dir, Boolean(src.subdir), entry.only, label, warnings)) installed.push({ dir: d, source: label });
+        for (const d of packageDirs(dir, Boolean(src.subdir), entry.only, label, warnings)) installed.push({ dir: d, source: label, yields: Boolean(entry.yields) });
         continue;
       }
       if (src.floating) {
@@ -132,7 +151,7 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
       }
       nextLock[src.key] = record;
       const root = path.join(pluginsRoot, record.dir, src.subdir);
-      for (const d of packageDirs(root, Boolean(src.subdir), entry.only, label, warnings)) installed.push({ dir: d, source: label });
+      for (const d of packageDirs(root, Boolean(src.subdir), entry.only, label, warnings)) installed.push({ dir: d, source: label, yields: Boolean(entry.yields) });
     } catch (err) {
       errors.push({ source: label, message: err.message });
     }

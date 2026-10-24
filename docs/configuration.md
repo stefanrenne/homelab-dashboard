@@ -56,6 +56,12 @@ plugins:
     only: [radarr, sonarr]                                      # or only these folders
 ```
 
+The [widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets) is always
+installed, as `git+https://github.com/stefanrenne/homelab-dashboard-widgets#latest`; the entries
+under `plugins:` extend it. To pin it or take only some of its widgets, list that repository
+yourself (with a tag, `only:` or `subdir:`): your entry then takes its place. A widget of your
+own with the same id as one in the collection (for example a local checkout under `path:`) wins.
+
 `#latest` installs the highest release tag (`v1.2.3` or `1.2.3`; pre-releases such as
 `v2.0.0-beta.1` are skipped) and records it in `plugins/plugins.lock.yaml`. A restart keeps
 that release; `POST /api/plugins/sync?update=1` (or deleting its entry from the lock file) moves

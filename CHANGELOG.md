@@ -4,6 +4,11 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+- The [widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets) is always
+  installed at its newest release; sources under `plugins:` extend it. Listing that repository
+  yourself (pinned, or with `only:`) replaces the default.
+
 ## [0.2.0] - 2026-10-24
 
 ### Added

@@ -6,8 +6,9 @@ A widget's `server.js` runs **inside the dashboard process with the same rights*
 in the container, environment variables. Installing a widget means trusting its author, like
 choosing a Docker image. The dashboard limits the damage where it can:
 
-- Plugins come **only from sources listed in `settings.yaml`**. The page cannot add a source;
-  `POST /api/plugins/sync` only re-reads the config.
+- Plugins come **only from sources listed in `settings.yaml`**, plus the project's own
+  [widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets) (`#latest`), which
+  is always installed. The page cannot add a source; `POST /api/plugins/sync` only re-reads the config.
 - Sources are **pinned**. A git tag or commit, `#latest` (the newest release tag at install
   time), or an exact npm version, is recommended; a branch or range gives a warning. `plugins/plugins.lock.yaml` records the commit or the npm tarball
   integrity, so a restart installs exactly the same code without network access. A changed npm

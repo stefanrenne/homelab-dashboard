@@ -44,6 +44,13 @@ and every call has a timeout. Workers are on the to-do list for resource isolati
 The status dot and widgets then share one runtime, cache and error handling, and a third-party
 widget can serve as a status check by returning `status`.
 
+## The widgets collection is always installed (2026-10-24)
+Radarr, Sonarr, Unraid and the rest should work without first finding and adding a plugin
+source. The collection stays a separate repository (its own releases, the same contract as any
+third-party package), but `DEFAULT_PLUGINS` installs it at `#latest`, locked like any source.
+Listing the repository in `settings.yaml` replaces the default, to pin it or use `only:`.
+Bundling it in the image was rejected: every widget release would need a new image.
+
 ## Lock file instead of always fetching (2026-10-23)
 A start must not depend on GitHub or npm being reachable, and must not silently pick up new
 code. `plugins.lock.yaml` records the commit or integrity; `?update=1` moves floating refs.

@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config/load.js';
 import { watchConfig } from './config/watch.js';
 import { loadRegistry } from './plugins/loader.js';
-import { syncPlugins } from './plugins/installer.js';
+import { syncPlugins, withDefaultPlugins, DEFAULT_PLUGINS } from './plugins/installer.js';
 import { WidgetRuntime } from './plugins/runtime.js';
 import { Discovery, mergeDiscovered } from './discovery/index.js';
 import { buildState } from './layout.js';
@@ -55,6 +55,7 @@ export async function createApp({
   watch = false,
   discovery: discoveryOptions = {},
   timeoutMs,
+  defaultPlugins = DEFAULT_PLUGINS,
 } = {}) {
   const sseClients = new Set();
   const runtime = new WidgetRuntime({ registry: new Map(), log, timeoutMs });
@@ -84,7 +85,8 @@ export async function createApp({
   function reload({ update = false } = {}) {
     chain = chain.then(async () => {
       const config = loadConfig(configDir, { env });
-      const pluginResult = await syncPlugins({ configDir, entries: config.settings.plugins, update, log });
+      const entries = withDefaultPlugins(config.settings.plugins, defaultPlugins);
+      const pluginResult = await syncPlugins({ configDir, entries, update, log });
       const { widgets, errors } = await loadRegistry({ builtinDir, external: pluginResult.installed });
       Object.assign(state, { config, registry: widgets, pluginResult, registryErrors: errors });
       for (const e of [...config.errors, ...pluginResult.errors, ...errors]) {

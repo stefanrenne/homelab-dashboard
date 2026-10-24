@@ -70,7 +70,7 @@ the image and smoke-tests it.
    `K8S_SA_DIR`, `configDir`, ...) so tests can replace them.
 9. **Docker is read-only.** Only GET calls on the Docker API. Recommend a socket proxy in the docs.
 10. **External code is run, never fetched implicitly.** Plugins are installed only from sources the
-    user listed, are pinned through the lock file, and arguments to `git`/`npm`/`ping` are
+    user listed plus `DEFAULT_PLUGINS` (the project's own widgets collection, `#latest`), are pinned through the lock file, and arguments to `git`/`npm`/`ping` are
     validated and passed without a shell.
 11. **Nothing installation-specific outside `deploy/`.** No host names, IP addresses, user names
     or personal config in `src/`, `public/`, `widgets/`, `docs/`, tests or examples; use

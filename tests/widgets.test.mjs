@@ -10,6 +10,7 @@ import { loadRegistry } from '../src/plugins/loader.js';
 import httpStatus from '../widgets/http-status/server.js';
 import customApi, { pick } from '../widgets/custom-api/server.js';
 import docker, { cpuPercent } from '../widgets/docker/server.js';
+import openweathermap, { API as OWM, condition as owmCondition } from '../widgets/openweathermap/server.js';
 import openmeteo, { API as OPEN_METEO, condition as wmoCondition } from '../widgets/openmeteo/server.js';
 import resources, { PATHS as RESOURCE_PATHS, formatUptime, formatBytes } from '../widgets/resources/server.js';
 import { parseLatency } from '../widgets/ping/server.js';
@@ -373,4 +374,32 @@ test('openmeteo client: an icon, the temperature in the page language, label and
   assert.equal(root.querySelector('.cond').textContent, 'Amsterdam · Motregen');
   assert.ok(root.querySelector('svg'));
   assert.equal(root.querySelector('.w').getAttribute('aria-label'), 'Amsterdam, 10,4°C, Motregen');
+});
+
+
+test('openweathermap: the current weather with the key on the server, night icons, cache and errors', async () => {
+  const asked = [];
+  let status = 200;
+  const srv = await serve((req, res) => {
+    asked.push(new URL(req.url, 'http://x').searchParams);
+    res.statusCode = status;
+    res.end(JSON.stringify(status === 200 ? { main: { temp: 12.6 }, weather: [{ id: 803, icon: '04n' }] } : { message: 'Invalid API key' }));
+  });
+  const saved = OWM.url;
+  OWM.url = `${srv.url}/data/2.5/weather`;
+  try {
+    const ctx = fakeCtx({ latitude: 52.37, longitude: 4.89, apiKey: 'k3y', units: 'imperial', cache: 5, label: 'Amsterdam' });
+    const out = await openweathermap.fetch(ctx);
+    assert.deepEqual(out.weather, { temperature: 12.6, unit: '°F', condition: 'cloudy', day: false, label: 'Amsterdam', format: null });
+    assert.deepEqual([asked[0].get('lat'), asked[0].get('lon'), asked[0].get('units'), asked[0].get('appid')], ['52.37', '4.89', 'imperial', 'k3y']);
+    await openweathermap.fetch(ctx);
+    assert.equal(asked.length, 1, 'cached for `cache` minutes');
+    status = 401;
+    await assert.rejects(openweathermap.fetch(fakeCtx({ latitude: 1, longitude: 2, apiKey: 'bad', units: 'metric', cache: 5 })), /OpenWeatherMap answered 401/);
+  } finally {
+    OWM.url = saved;
+    await srv.close();
+  }
+  assert.deepEqual([211, 301, 501, 521, 601, 741, 800, 802, 804, 900].map(owmCondition),
+    ['thunderstorm', 'drizzle', 'rain', 'showers', 'snow', 'fog', 'clear', 'partlyCloudy', 'cloudy', 'unknown']);
 });

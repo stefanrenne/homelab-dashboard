@@ -406,6 +406,7 @@ collection's widgets under [Widget collection](https://stefanrenne.github.io/hom
 | `greeting` | `text` (required), `text_size` (`xs` … `4xl`) |
 | `logo` | `icon` (optional; the dashboard's own mark without it) |
 | `openmeteo` | `latitude`, `longitude` (required), `label`, `timezone`, `units` (`metric`/`imperial`), `cache` (minutes), `format` |
+| `openweathermap` | `latitude`, `longitude`, `apiKey` (secret; or `provider: openweathermap`), `label`, `units`, `cache`, `format` |
 | `search` | `provider`, `url`, `target`, `filter` (default true: typing filters the services, Enter opens the only match) |
 | `resources` | `cpu`, `memory` (both off by default), `disk` (list of mount points), `label` |
 | `http-status` | `url` (required), `method` (`HEAD`/`GET`) |

@@ -58,6 +58,7 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Logo widget: the dashboard's own mark or any icon, as in homepage. Widgets can declare
   `type: icon` options, resolved like service icons.
 - Open-Meteo weather widget: the current temperature and weather, no key needed, as in homepage.
+- OpenWeatherMap weather widget, with `apiKey` or `provider: openweathermap`, as in homepage.
 
 ### Changed
 - `si-…` icons follow the theme instead of showing in black (invisible on the dark theme).

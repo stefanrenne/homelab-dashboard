@@ -448,6 +448,7 @@ collection's widgets under [Widget collection](https://stefanrenne.github.io/hom
 |---|---|
 | `datetime` | `locale`, `dateStyle`, `timeStyle` |
 | `greeting` | `text` (required), `text_size` (`xs` … `4xl`) |
+| `iframe` | `src` (required; its origin is allowed in the page's CSP), `name`, `height` or homepage's `classes`, `referrerPolicy`, `allowPolicy`, `allowFullscreen`, `loadingStrategy`, `allowScrolling`, `refreshInterval` |
 | `logo` | `icon` (optional; the dashboard's own mark without it) |
 | `kubernetes` | `cluster` (`show`, `cpu`, `memory`, `showLabel`, `label`), `nodes` (`show`, `cpu`, `memory`, `showLabel`); needs metrics-server and RBAC on nodes |
 | `search` | `provider`, `url`, `target`, `filter` (default true: typing filters the services, Enter opens the only match) |

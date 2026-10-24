@@ -447,6 +447,23 @@ async function renderClient(id, options, props = {}) {
   return { el, window: dom.window };
 }
 
+test('iframe: the page in a frame with homepage\'s options, and reloading', async () => {
+  const { el, window } = await renderClient('iframe', { src: 'https://grafana.lan/d-solo/x?panelId=2', name: 'Power', classes: 'h-60 sm:h-60 2xl:h-72', allowScrolling: 'no', referrerPolicy: 'same-origin', allowPolicy: 'fullscreen', allowfullscreen: false, loadingStrategy: 'lazy' });
+  const f = el.shadowRoot.querySelector('iframe');
+  assert.deepEqual([f.src, f.title, f.name, f.style.height, f.getAttribute('scrolling'), f.className, f.referrerPolicy, f.allow, f.allowFullscreen, f.getAttribute('loading')],
+    ['https://grafana.lan/d-solo/x?panelId=2', 'Power', 'Power', '18rem', 'no', 'noscroll', 'same-origin', 'fullscreen', false, 'lazy']);
+  assert.equal((await renderClient('iframe', { src: 'https://a.lan/', height: '20rem' })).el.shadowRoot.querySelector('iframe').style.height, '20rem');
+  assert.equal((await renderClient('iframe', { src: 'https://a.lan/', height: 'calc(1px);x' })).el.shadowRoot.querySelector('iframe').style.height, '15rem');
+  assert.equal((await renderClient('iframe', { src: 'javascript:alert(1)' })).el.shadowRoot.querySelector('iframe'), null);
+  const timers = [];
+  window.setInterval = (fn, ms) => { timers.push(ms); return 1; };
+  const r = await renderClient('iframe', { src: 'https://a.lan/', refreshInterval: 200 });
+  r.window.setInterval = window.setInterval;
+  r.el.render();
+  assert.deepEqual(timers, [1000], 'at least a second');
+  window.close();
+});
+
 test('greeting: the text, in homepage\'s sizes', async () => {
   const { el } = await renderClient('greeting', { text: 'Welcome <home>', text_size: '3xl' });
   const box = el.shadowRoot.querySelector('.text');

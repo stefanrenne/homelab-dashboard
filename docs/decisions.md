@@ -2,6 +2,12 @@
 
 Why things are the way they are. Newest first.
 
+## Frames only for the configured origins (2026-10-24)
+homepage's iframe widget needs `frame-src` to allow the framed page. A blanket `frame-src *`
+would let any injected markup frame anything; instead widget.yaml names the options that hold a
+framed URL (`frames: [src]`), and the page's CSP lists only the origins of their public values.
+Without an iframe widget the page keeps `frame-src 'none'`; API responses always do.
+
 ## Webhooks through the server, not a hidden frame (2026-10-24)
 homepage's `target: hidden-iframe` loads a webhook in an invisible frame, which can never tell
 whether it worked, and needs a permissive `frame-src`. The dashboard server now calls the URL

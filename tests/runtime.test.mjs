@@ -13,6 +13,13 @@ test('a broken manifest names every problem', () => {
   assert.throws(() => readManifest(dir), /id:.*name: required.*version: required.*apiVersion.*options\.x/);
 });
 
+test('frames: only url options of the widget', () => {
+  const dir = writeWidget(tmpDir(), { ...base, id: 'framer', frames: ['page', 'count'], options: { page: { type: 'url' }, count: { type: 'number' } } });
+  assert.throws(() => readManifest(dir), /frames: a list of url options/);
+  const ok = writeWidget(tmpDir(), { ...base, id: 'framer', frames: ['page'], options: { page: { type: 'url' } } });
+  assert.deepEqual(readManifest(ok).frames, ['page']);
+});
+
 test('an unsupported apiVersion is refused with a clear message', async () => {
   const dir = writeWidget(tmpDir(), { ...base, id: 'future', apiVersion: 99 });
   await assert.rejects(loadWidget(dir), /needs widget API 99, this dashboard supports 1/);

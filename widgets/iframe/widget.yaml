@@ -1,0 +1,18 @@
+id: iframe
+name: iFrame
+version: 1.0.0
+apiVersion: 1
+description: Another page in a frame on the card (homepage's iframe widget).
+frames: [src]
+options:
+  src: { type: url, required: true }       # the page, e.g. https://grafana.lan/d-solo/abc?panelId=2
+  name: { type: string }                   # the frame's title for screen readers
+  height: { type: string }                 # a CSS height, e.g. 20rem (default 15rem)
+  classes: { type: string }                # homepage's Tailwind height classes; the h-<n> of the largest screen is used
+  referrerPolicy: { type: string }         # e.g. same-origin
+  allowPolicy: { type: string }            # the frame's allow attribute, e.g. autoplay; fullscreen
+  allowFullscreen: { type: boolean, default: true }
+  allowfullscreen: { type: boolean }       # homepage's spelling of allowFullscreen
+  loadingStrategy: { type: enum, values: [eager, lazy], default: eager }
+  allowScrolling: { type: enum, values: ['yes', 'no'], default: 'yes' }   # no: the page cannot be scrolled or clicked
+  refreshInterval: { type: number }        # reload the page every this many milliseconds (at least 1000)

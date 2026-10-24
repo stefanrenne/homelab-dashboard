@@ -87,6 +87,9 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Kubernetes pod status per service: `app`, `namespace` and `podSelector` (and `external`), as in
   homepage, with the pods' state, CPU and memory on a click; discovered Ingresses and routes get
   it too. Built-in `kubernetes-pods` widget.
+- Built-in `iframe` widget, as in homepage: another page in a frame on a card. Only the origins
+  of configured frames are allowed in the page's Content-Security-Policy. For widget authors:
+  `frames` in widget.yaml.
 
 ### Changed
 - A group with `header: false` follows the previous group at card spacing, as in homepage, and

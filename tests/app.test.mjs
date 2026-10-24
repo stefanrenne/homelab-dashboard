@@ -318,6 +318,30 @@ test('config problems show up as messages, never as a crash', async () => {
   }
 });
 
+test('the iframe widget: its origin, and only that, in frame-src', async () => {
+  const t = await startApp({
+    'services.yaml': [
+      '- Monitoring:',
+      '    - Power:',
+      '        widget: { type: iframe, src: "https://grafana.lan:3000/d-solo/power?panelId=2" }',
+      '    - Hidden:',
+      '        widget: { type: iframe, src: "{{HD_VAR_PAGE}}" }',
+      '    - Broken:',
+      '        widget: { type: iframe, src: "javascript:alert(1)" }',
+    ].join('\n') + '\n',
+  }, { HD_VAR_PAGE: 'https://secret.lan/page' });
+  try {
+    const csp = (await t.get('/')).headers.get('content-security-policy');
+    assert.match(csp, /frame-src https:\/\/grafana\.lan:3000; frame-ancestors 'self'/);
+    assert.ok(!csp.includes('secret.lan'), 'a src from a variable is never public, so never framed');
+    assert.match((await t.get('/api/layout')).headers.get('content-security-policy'), /frame-src 'none'/, 'only the page frames');
+    const layout = await t.json('/api/layout');
+    assert.ok(layout.messages.errors.some((e) => /src:/.test(e.message) && e.path.includes('Broken')), JSON.stringify(layout.messages.errors));
+  } finally {
+    await t.close();
+  }
+});
+
 test('static files: index, client.js, assets, icons, and no path traversal', async () => {
   const t = await startApp({
     'settings.yaml': `plugins:\n  - path: ${path.resolve('examples/widget-template')}\n`,

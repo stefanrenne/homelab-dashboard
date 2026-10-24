@@ -57,12 +57,23 @@ export function resolveIcon(icon) {
   return `${DASHBOARD_ICONS}/${ext}/${match[1]}.${ext}`;
 }
 
+/** The origin of an http(s) URL, as a CSP source ("https://example.com:8443"), or null. */
+export function frameOrigin(value) {
+  try {
+    const u = new URL(String(value));
+    return u.protocol === 'http:' || u.protocol === 'https:' ? u.origin : null;
+  } catch {
+    return null;
+  }
+}
+
 export function buildState({ config, registry, groups, extraErrors = [], extraWarnings = [], secrets: knownSecrets = config.secrets }) {
   // every value under settings.providers is a secret, also when written there literally
   const providers = isPlainObject(config.settings.providers) ? config.settings.providers : {};
   const secrets = new Set([...knownSecrets, ...stringsIn(providers).filter((s) => s.length >= 4)]);
   const instances = new Map();
   const actions = new Map(); // serviceId -> { name, href }: services the dashboard calls for the viewer
+  const frames = new Set(); // origins the page may show in a frame (widget.yaml `frames`)
   const errors = [...config.errors, ...extraErrors];
   const warnings = [...config.warnings, ...extraWarnings];
   const usedTypes = new Set();
@@ -144,6 +155,12 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
         options[name] = url;
         if (name in publicOptions) publicOptions[name] = url;
       }
+    }
+    // widget.yaml `frames`: the origins of these (public) options are allowed in frame-src
+    for (const name of widget.manifest.frames ?? []) {
+      const origin = frameOrigin(publicOptions[name]);
+      if (origin) frames.add(origin);
+      else if (options[name] !== undefined) optionErrors.push(`${name}: "${options[name]}" is not an http(s) URL`);
     }
     let refreshMs = widget.manifest.refreshMs;
     try {
@@ -353,7 +370,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     widgetTypes,
     messages: { errors: scrubbed(errors), warnings: scrubbed(warnings) },
   };
-  return { instances, layout, actions };
+  return { instances, layout, actions, frames: [...frames] };
 }
 
 function stringsIn(value) {

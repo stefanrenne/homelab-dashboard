@@ -16,24 +16,8 @@ Phases 1 to 3 (settings and layout, info widgets, integrations) are done; see `c
 Each with a fixture, a test and a README (its CLAUDE.md). homepage's field names, so `fields:`
 carries over.
 
-Batch 2, the rest (79):
+Batch 2, the rest (63):
 
-- [ ] GameDig
-- [ ] Gatus
-- [ ] Ghostfolio
-- [ ] Gitlab
-- [ ] Gluetun
-- [ ] Gotify
-- [ ] HDHomerun
-- [ ] Headscale
-- [ ] Health checks
-- [ ] Karakeep
-- [ ] Homebox
-- [ ] Homebridge
-- [ ] iFrame
-- [ ] JDownloader
-- [ ] Jellystat
-- [ ] Kavita
 - [ ] Komga
 - [ ] Komodo
 - [ ] Kopia

@@ -35,6 +35,7 @@ without `client.js` is rendered by the dashboard from `blocks`.
 | `options` | no | Map of option name to schema (below). |
 | `aliases` | no | Other names the widget answers to in `type:`, e.g. homepage's (`[customapi]`). Added after every real id, only where still free; the widget's `id` stays the one the page uses. |
 | `defaultFields` | no | Block keys shown when the entry has no `fields`, e.g. `[cpu, memoryPercent]`. Without it every block shows. |
+| `frames` | no | `url` options whose page the `client.js` shows in an `<iframe>`, e.g. `[src]`. The page's CSP allows the origin of each one's value (`frame-src`); only public options count, so a URL from a variable or a secret option is never framed. |
 | `params` | no | Names a `client.js` may send its `server.js` through the `hd-widget-params` page event, e.g. `[latitude, longitude]`. They reach `ctx.params`; anything else is dropped. |
 
 ### Option schema
@@ -201,3 +202,4 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 | 1 | next | `ctx.fetch(url, { tls: { ca, cert, key } })` for a CA and client certificate. |
 | 1 | next | Options with `service_group` and `service_name` get the referenced widget's options. |
 | 1 | next | `params` in widget.yaml, the `hd-widget-params` page event and `ctx.params`. |
+| 1 | next | `frames` in widget.yaml: the page may frame the origin of these options. |

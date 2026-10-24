@@ -42,14 +42,18 @@ const TYPES = {
   '.woff2': 'font/woff2',
 };
 
-const SECURITY_HEADERS = {
-  'x-content-type-options': 'nosniff',
-  'referrer-policy': 'no-referrer',
-  'content-security-policy':
-    "default-src 'self'; img-src * data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; " +
-    "frame-src 'none'; frame-ancestors 'self'",
-};
+/** The security headers; `frames` are the origins the page may frame (the iframe widget's src). */
+export function securityHeaders(frames = []) {
+  return {
+    'x-content-type-options': 'nosniff',
+    'referrer-policy': 'no-referrer',
+    'content-security-policy':
+      "default-src 'self'; img-src * data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+      "font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; " +
+      `frame-src ${frames.length ? frames.join(' ') : "'none'"}; frame-ancestors 'self'`,
+  };
+}
+const SECURITY_HEADERS = securityHeaders();
 
 export async function createApp({
   configDir,
@@ -66,7 +70,7 @@ export async function createApp({
 } = {}) {
   const sseClients = new Set();
   const runtime = new WidgetRuntime({ registry: new Map(), log, timeoutMs });
-  const state = { config: null, registry: new Map(), pluginResult: { errors: [], warnings: [] }, registryErrors: [], layout: null, actions: new Map() };
+  const state = { config: null, registry: new Map(), pluginResult: { errors: [], warnings: [] }, registryErrors: [], layout: null, actions: new Map(), frames: [] };
   const updates = new UpdateCheck({ url: releasesUrl, log, onChange: () => state.config && rebuild() });
   const discovery = new Discovery({ log, env, onChange: () => state.config && rebuild(), ...discoveryOptions });
   let chain = Promise.resolve();
@@ -75,7 +79,7 @@ export async function createApp({
     const merged = mergeDiscovered(state.config.services, discovery.found);
     const pluginMessages = (list) =>
       list.map((e) => ({ file: 'settings.yaml', path: `plugins: ${e.source}`, message: e.message }));
-    const { instances, layout, actions } = buildState({
+    const { instances, layout, actions, frames } = buildState({
       config: state.config,
       registry: state.registry,
       groups: merged.groups,
@@ -85,6 +89,7 @@ export async function createApp({
     });
     runtime.setInstances(instances, state.registry);
     state.actions = actions;
+    state.frames = frames;
     // hideVersion: false shows the version (homepage shows it by default; this dashboard does not)
     const showVersion = state.config.settings.hideVersion === false;
     if (showVersion && !state.config.settings.disableUpdateCheck) updates.start();
@@ -154,9 +159,9 @@ export async function createApp({
     for (const res of sseClients) res.write(': ping\n\n');
   }, 25_000).unref();
 
-  function send(res, status, body, type = 'application/json') {
+  function send(res, status, body, type = 'application/json', headers = SECURITY_HEADERS) {
     const data = type === 'application/json' ? JSON.stringify(body) : body;
-    res.writeHead(status, { 'content-type': type, 'cache-control': 'no-store', ...SECURITY_HEADERS });
+    res.writeHead(status, { 'content-type': type, 'cache-control': 'no-store', ...headers });
     res.end(data);
   }
 
@@ -181,7 +186,7 @@ export async function createApp({
       if (method === 'GET' && (p === '/' || p === '/index.html')) {
         const html = await fs.promises.readFile(path.join(publicDir, 'index.html'), 'utf8');
         const custom = CUSTOM_FILES.filter((f) => fs.existsSync(path.join(configDir, f)));
-        return send(res, 200, renderIndex(html, state.config.settings, state.config.secrets, custom), 'text/html; charset=utf-8');
+        return send(res, 200, renderIndex(html, state.config.settings, state.config.secrets, custom), 'text/html; charset=utf-8', securityHeaders(state.frames));
       }
       if (method === 'GET' && p === '/robots.txt') return send(res, 200, renderRobots(state.config.settings), 'text/plain; charset=utf-8');
       if (method === 'GET' && p === '/site.webmanifest') {

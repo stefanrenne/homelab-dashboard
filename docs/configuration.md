@@ -13,6 +13,7 @@ skipped and the rest keeps working.
 | `bookmarks.yaml` | Groups of links |
 | `docker.yaml` | Docker servers (status and discovery) |
 | `kubernetes.yaml` | Kubernetes discovery |
+| other `.yaml` files | Pulled in with `!include` (see [Including other files](#including-other-files)) |
 | `icons/` | Your own icons, used as `icon: /icons/name.svg` |
 | `plugins/` | Managed by the dashboard: downloaded widgets and `plugins.lock.yaml`. Older versions and removed sources are deleted after each sync |
 
@@ -23,6 +24,60 @@ Any value can contain `{{HD_VAR_NAME}}` (the environment variable `HD_VAR_NAME`)
 secret). homepage's `{{HOMEPAGE_VAR_*}}` and `{{HOMEPAGE_FILE_*}}` work the same, so an
 existing homepage environment can be reused. Substituted values are treated as secrets: they
 never reach the browser.
+
+## Including other files
+
+A long `services.yaml` can be split up. `!include <file>` puts the YAML of another file at that
+spot, as if it were written there:
+
+```yaml
+# services.yaml
+- Infrastructure:
+    - Router:
+        href: http://router.lan
+- Media: !include services/media.yaml      # the services of one group
+- !include services/home-automation.yaml   # whole groups
+```
+
+```yaml
+# services/media.yaml: what would otherwise follow "- Media:"
+- Plex:
+    href: http://plex.lan:32400
+    icon: plex
+- Radarr: !include radarr.yaml             # relative to this file: services/radarr.yaml
+```
+
+```yaml
+# services/home-automation.yaml: one or more groups, as in services.yaml
+- Home automation:
+    - Home Assistant:
+        href: http://homeassistant.lan:8123
+- Cameras: []
+```
+
+The rules:
+
+- **Where**: as the value of a key (`- Media: !include ...`, `widget: !include ...`), as an item
+  in a list, or as a whole file. It works in every config file, also `widgets.yaml` and
+  `bookmarks.yaml`.
+- **Lists are joined**: an include that is a list item and whose file holds a list adds those
+  items in its place. That is how `- !include services/home-automation.yaml` adds two groups. A
+  file that holds a map (one service, one widget) is added as one item.
+- **Paths** are relative to the file with the `!include`, use `/`, and must stay inside the config
+  folder. Only `.yaml` and `.yml` files can be included. Keep included files out of `plugins/`.
+- **Nesting**: an included file can include others, up to 8 levels deep. A file that ends up
+  including itself is reported.
+- **Variables and secrets**: `{{HD_VAR_*}}` and `{{HD_FILE_*}}` work in included files, and
+  their values stay secret, as in the main files.
+- **Reloading**: saving an included file reloads the page, also in a subfolder.
+- **Problems** never stop the dashboard. A missing file, a path outside the config folder, a
+  YAML error or a loop is shown with the file and path of the `!include`
+  (`services.yaml › [1].Media: !include services/media.yaml: file not found`); that spot stays
+  empty and the rest works. A mistake *inside* the included services is shown with the path
+  in the file that includes it.
+
+Files are only read where an `!include` names them: a `media.yaml` next to `services.yaml` does
+nothing by itself. `!include` is this dashboard's own; homepage does not read it.
 
 ## settings.yaml
 

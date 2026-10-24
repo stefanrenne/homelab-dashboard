@@ -9,7 +9,10 @@ import { parseDuration, safeJoin } from '../src/util.js';
 
 function configDir(files) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hd-config-'));
-  for (const [name, text] of Object.entries(files)) fs.writeFileSync(path.join(dir, name), text);
+  for (const [name, text] of Object.entries(files)) {
+    fs.mkdirSync(path.dirname(path.join(dir, name)), { recursive: true });
+    fs.writeFileSync(path.join(dir, name), text);
+  }
   return dir;
 }
 
@@ -137,4 +140,68 @@ test('homepage placeholders work like HD_ ones', () => {
   const out = substitute({ a: '{{HOMEPAGE_VAR_KEY}}' }, { env: { HOMEPAGE_VAR_KEY: 'pk' } });
   assert.equal(out.value.a, 'pk');
   assert.ok(out.secrets.has('pk'));
+});
+
+test('!include: the services of a group from another file, groups spliced into the list', () => {
+  const cfg = loadConfig(configDir({
+    'services.yaml': '- Media: !include services/media.yaml\n- !include services/more-groups.yaml\n',
+    'services/media.yaml': '- Plex:\n    href: http://plex.lan\n- Radarr:\n    href: http://radarr.lan\n',
+    'services/more-groups.yaml': '- Network:\n    - Router:\n        href: http://router.lan\n- Tools: []\n',
+  }));
+  assert.deepEqual(cfg.errors, []);
+  assert.deepEqual(cfg.services.map((g) => g.name), ['Media', 'Network', 'Tools']);
+  assert.deepEqual(cfg.services[0].services.map((s) => s.name), ['Plex', 'Radarr']);
+  assert.equal(cfg.services[1].services[0].href, 'http://router.lan');
+});
+
+test('!include: relative to the including file, nested, and variables become secrets', () => {
+  const cfg = loadConfig(configDir({
+    'services.yaml': '- Media: !include groups/media.yaml\n',
+    'groups/media.yaml': '- Radarr: !include radarr.yaml\n',
+    'groups/radarr.yaml': 'href: http://radarr.lan\nwidget:\n  type: radarr\n  key: "{{HD_VAR_RADARR}}"\n',
+  }), { env: { HD_VAR_RADARR: 'k3y' } });
+  assert.deepEqual(cfg.errors, []);
+  assert.equal(cfg.services[0].services[0].widgets[0].options.key, 'k3y');
+  assert.ok(cfg.secrets.has('k3y'));
+});
+
+test('!include: missing, outside, wrong type, cycles and YAML errors are messages, not crashes', () => {
+  const cfg = loadConfig(configDir({
+    'services.yaml': [
+      '- Missing: !include nope.yaml',
+      '- Outside: !include ../../etc/passwd.yaml',
+      '- Absolute: !include /etc/hosts.yaml',
+      '- Keys: !include keys/token.txt',
+      '- Loop: !include loop-a.yaml',
+      '- Broken: !include broken.yaml',
+      '- Fine:',
+      '    - App: { href: http://app.lan }',
+      '',
+    ].join('\n'),
+    'loop-a.yaml': '- B: !include loop-b.yaml\n',
+    'loop-b.yaml': '- A: !include loop-a.yaml\n',
+    'broken.yaml': '- [unclosed\n',
+  }));
+  const messages = cfg.errors.map((e) => `${e.file} › ${e.path}: ${e.message}`);
+  const has = (re) => assert.ok(messages.some((m) => re.test(m)), `${re} in\n${messages.join('\n')}`);
+  has(/^services\.yaml › \[0\]\.Missing: !include nope\.yaml: file not found$/);
+  has(/^services\.yaml › \[1\]\.Outside: .*outside the config folder$/);
+  has(/^services\.yaml › \[2\]\.Absolute: .*relative to this file/);
+  has(/^services\.yaml › \[3\]\.Keys: .*only \.yaml and \.yml/);
+  has(/^loop-b\.yaml › \[0\]\.A: !include loop-a\.yaml: includes itself \(services\.yaml → loop-a\.yaml → loop-b\.yaml → loop-a\.yaml\)$/);
+  has(/^broken\.yaml › line \d+: /);
+  has(/^services\.yaml › \[5\]\.Broken: .*YAML error$/);
+  assert.equal(cfg.services.find((g) => g.name === 'Fine').services[0].name, 'App');
+});
+
+test('!include works in the other files too, and a whole file can be one include', () => {
+  const cfg = loadConfig(configDir({
+    'bookmarks.yaml': '!include shared/bookmarks.yaml\n',
+    'shared/bookmarks.yaml': '- Developer:\n    - GitHub:\n        - href: https://github.com\n',
+    'widgets.yaml': '- datetime: !include shared/clock.yaml\n',
+    'shared/clock.yaml': 'dateStyle: full\n',
+  }));
+  assert.deepEqual(cfg.errors, []);
+  assert.equal(cfg.bookmarks[0].bookmarks[0].href, 'https://github.com');
+  assert.equal(cfg.widgets[0].options.dateStyle, 'full');
 });

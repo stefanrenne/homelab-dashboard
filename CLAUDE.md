@@ -16,7 +16,7 @@ pulled in through `plugins:` in `settings.yaml`. A single Docker container, Node
 |---|---|
 | `src/server.js` | Entry point: arguments, listen, signals. |
 | `src/app.js` | Application state (config → plugins → registry → discovery → layout), HTTP routes, SSE reload. |
-| `src/config/` | `load.js` (YAML files → normalized config, errors with file + path), `vars.js` (`{{HD_VAR_*}}`/`{{HD_FILE_*}}`), `watch.js`. |
+| `src/config/` | `load.js` (YAML files → normalized config, errors with file + path), `vars.js` (`{{HD_VAR_*}}`/`{{HD_FILE_*}}`), `include.js` (`!include`), `watch.js` (recursive, skips `plugins/`). |
 | `src/plugins/` | `loader.js` (widget.yaml + server.js → registry), `options.js` (option schema, public/secret split), `runtime.js` (ctx, timeout, cache), `installer.js` (git/npm/path sources + lock file). |
 | `src/discovery/` | `docker.js` (labels), `kubernetes.js` (Ingress annotations), `labels.js`, `index.js` (polling + merge with YAML). |
 | `src/layout.js` | Widget instances (server side) and the layout JSON (browser side). |

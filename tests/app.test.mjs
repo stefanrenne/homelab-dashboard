@@ -358,3 +358,23 @@ test('a mounted Docker socket is discovered without docker.yaml', async () => {
     await srv.close();
   }
 });
+
+test('watchConfig: YAML in subfolders reloads (includes), plugins/ does not', async () => {
+  const { isConfigChange } = await import('../src/config/watch.js');
+  assert.equal(isConfigChange('services.yaml'), true);
+  assert.equal(isConfigChange('services/media.yaml'), true);
+  assert.equal(isConfigChange('services\\media.yml'), true);
+  assert.equal(isConfigChange('plugins/plugins.lock.yaml'), false);
+  assert.equal(isConfigChange('plugins/x@1.0.0/widget.yaml'), false);
+  assert.equal(isConfigChange('keys/token.txt'), false);
+
+  const dir = tmpDir();
+  fs.mkdirSync(path.join(dir, 'services'));
+  let calls = 0;
+  const w = watchConfig(dir, () => calls++, { debounceMs: 30, log: silentLog });
+  await new Promise((r) => setTimeout(r, 100));
+  fs.writeFileSync(path.join(dir, 'services', 'media.yaml'), '[]');
+  await new Promise((r) => setTimeout(r, 400));
+  w.close();
+  assert.ok(calls >= 1);
+});

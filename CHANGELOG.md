@@ -4,6 +4,12 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+- `!include <file>` in the config files: `- Media: !include services/media.yaml` puts the YAML
+  of another file at that spot. Lists are joined, includes nest, saving an included file
+  reloads the page, and problems are shown with the file and path. See
+  [Including other files](docs/configuration.md#including-other-files).
+
 ### Fixed
 - Old plugin versions piled up in `plugins/`: after each sync the folders the lock file no
   longer points at (older versions, removed sources) are deleted.

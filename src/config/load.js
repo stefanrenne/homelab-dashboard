@@ -7,8 +7,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import YAML from 'yaml';
 import { substitute } from './vars.js';
+import { parseConfigYaml, resolveIncludes } from './include.js';
 import { isPlainObject } from '../util.js';
 
 export const CONFIG_FILES = ['settings', 'services', 'widgets', 'bookmarks', 'docker', 'kubernetes'];
@@ -48,12 +48,14 @@ export function loadConfig(dir, opts = {}) {
     }
     let parsed;
     try {
-      parsed = YAML.parse(text, { prettyErrors: true });
+      parsed = parseConfigYaml(text);
     } catch (err) {
       const line = err.linePos?.[0]?.line;
       errors.push({ file, path: line ? `line ${line}` : '', message: err.message.split('\n')[0] });
       continue;
     }
+    // includes first, so variables and secrets in included files are handled the same way
+    parsed = resolveIncludes(parsed, { configDir: dir, file, errors });
     const sub = substitute(parsed, opts);
     for (const s of sub.secrets) secrets.add(s);
     for (const w of sub.warnings) warnings.push({ file, path: '', message: w });

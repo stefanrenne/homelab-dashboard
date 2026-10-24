@@ -26,7 +26,6 @@ Generic ones built in, service-specific ones in the widgets collection.
 
 ### Phase 4: service widgets (homelab-dashboard-widgets)
 
-- [ ] The twelve new languages (ca, he, hr, hu, it, nb-NO, pt, ru, sv, vi, zh-Hans, zh-Hant) for the existing collection widgets, within the label length rules
 
 Each with a fixture, a test and a README (its CLAUDE.md). homepage's field names, so `fields:`
 carries over.

@@ -11,7 +11,9 @@
     "showers": "Showers",
     "snow": "Snow",
     "thunderstorm": "Thunderstorm",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "locating": "Locating…",
+    "noLocation": "Set latitude and longitude, or open the page over HTTPS and allow your location"
   },
   "nl": {
     "temperature": "Temperatuur",
@@ -25,7 +27,9 @@
     "showers": "Buien",
     "snow": "Sneeuw",
     "thunderstorm": "Onweer",
-    "unknown": "Onbekend"
+    "unknown": "Onbekend",
+    "locating": "Locatie bepalen…",
+    "noLocation": "Stel latitude en longitude in, of open de pagina via HTTPS en sta je locatie toe"
   },
   "fr": {
     "temperature": "Température",
@@ -39,7 +43,9 @@
     "showers": "Averses",
     "snow": "Neige",
     "thunderstorm": "Orage",
-    "unknown": "Inconnu"
+    "unknown": "Inconnu",
+    "locating": "Localisation…",
+    "noLocation": "Indiquez latitude et longitude, ou ouvrez la page en HTTPS et autorisez votre position"
   },
   "de": {
     "temperature": "Temperatur",
@@ -53,7 +59,9 @@
     "showers": "Schauer",
     "snow": "Schnee",
     "thunderstorm": "Gewitter",
-    "unknown": "Unbekannt"
+    "unknown": "Unbekannt",
+    "locating": "Standort wird ermittelt…",
+    "noLocation": "Latitude und Longitude angeben oder die Seite über HTTPS öffnen und den Standort erlauben"
   },
   "es": {
     "temperature": "Temperatura",
@@ -67,7 +75,9 @@
     "showers": "Chubascos",
     "snow": "Nieve",
     "thunderstorm": "Tormenta",
-    "unknown": "Desconocido"
+    "unknown": "Desconocido",
+    "locating": "Localizando…",
+    "noLocation": "Indica latitude y longitude, o abre la página por HTTPS y permite tu ubicación"
   },
   "ca": {
     "temperature": "Temperatura",
@@ -81,7 +91,9 @@
     "showers": "Ruixats",
     "snow": "Neu",
     "thunderstorm": "Tempesta",
-    "unknown": "Desconegut"
+    "unknown": "Desconegut",
+    "locating": "Localitzant…",
+    "noLocation": "Indica latitude i longitude, o obre la pàgina per HTTPS i permet la teva ubicació"
   },
   "he": {
     "temperature": "טמפרטורה",
@@ -95,7 +107,9 @@
     "showers": "ממטרים",
     "snow": "שלג",
     "thunderstorm": "סופת רעמים",
-    "unknown": "לא ידוע"
+    "unknown": "לא ידוע",
+    "locating": "מאתר מיקום…",
+    "noLocation": "הגדירו latitude ו־longitude, או פתחו את הדף ב־HTTPS ואשרו את המיקום"
   },
   "hr": {
     "temperature": "Temperatura",
@@ -109,7 +123,9 @@
     "showers": "Pljuskovi",
     "snow": "Snijeg",
     "thunderstorm": "Grmljavina",
-    "unknown": "Nepoznato"
+    "unknown": "Nepoznato",
+    "locating": "Određivanje lokacije…",
+    "noLocation": "Postavite latitude i longitude ili otvorite stranicu preko HTTPS-a i dopustite lokaciju"
   },
   "hu": {
     "temperature": "Hőmérséklet",
@@ -123,7 +139,9 @@
     "showers": "Zápor",
     "snow": "Hó",
     "thunderstorm": "Zivatar",
-    "unknown": "Ismeretlen"
+    "unknown": "Ismeretlen",
+    "locating": "Helymeghatározás…",
+    "noLocation": "Add meg a latitude és longitude értékét, vagy nyisd meg az oldalt HTTPS-en és engedélyezd a helyet"
   },
   "it": {
     "temperature": "Temperatura",
@@ -137,7 +155,9 @@
     "showers": "Rovesci",
     "snow": "Neve",
     "thunderstorm": "Temporale",
-    "unknown": "Sconosciuto"
+    "unknown": "Sconosciuto",
+    "locating": "Localizzazione…",
+    "noLocation": "Imposta latitude e longitude, oppure apri la pagina in HTTPS e consenti la posizione"
   },
   "nb-NO": {
     "temperature": "Temperatur",
@@ -151,7 +171,9 @@
     "showers": "Byger",
     "snow": "Snø",
     "thunderstorm": "Tordenvær",
-    "unknown": "Ukjent"
+    "unknown": "Ukjent",
+    "locating": "Finner posisjon…",
+    "noLocation": "Angi latitude og longitude, eller åpne siden over HTTPS og tillat posisjonen din"
   },
   "pt": {
     "temperature": "Temperatura",
@@ -165,7 +187,9 @@
     "showers": "Aguaceiros",
     "snow": "Neve",
     "thunderstorm": "Trovoada",
-    "unknown": "Desconhecido"
+    "unknown": "Desconhecido",
+    "locating": "A localizar…",
+    "noLocation": "Defina latitude e longitude, ou abra a página por HTTPS e permita a localização"
   },
   "ru": {
     "temperature": "Температура",
@@ -179,7 +203,9 @@
     "showers": "Ливни",
     "snow": "Снег",
     "thunderstorm": "Гроза",
-    "unknown": "Неизвестно"
+    "unknown": "Неизвестно",
+    "locating": "Определение местоположения…",
+    "noLocation": "Укажите latitude и longitude или откройте страницу по HTTPS и разрешите доступ к местоположению"
   },
   "sv": {
     "temperature": "Temperatur",
@@ -193,7 +219,9 @@
     "showers": "Skurar",
     "snow": "Snö",
     "thunderstorm": "Åska",
-    "unknown": "Okänt"
+    "unknown": "Okänt",
+    "locating": "Hittar plats…",
+    "noLocation": "Ange latitude och longitude, eller öppna sidan över HTTPS och tillåt din plats"
   },
   "vi": {
     "temperature": "Nhiệt độ",
@@ -207,7 +235,9 @@
     "showers": "Mưa rào",
     "snow": "Tuyết",
     "thunderstorm": "Dông",
-    "unknown": "Không rõ"
+    "unknown": "Không rõ",
+    "locating": "Đang xác định vị trí…",
+    "noLocation": "Đặt latitude và longitude, hoặc mở trang qua HTTPS và cho phép vị trí"
   },
   "zh-Hans": {
     "temperature": "温度",
@@ -221,7 +251,9 @@
     "showers": "阵雨",
     "snow": "雪",
     "thunderstorm": "雷暴",
-    "unknown": "未知"
+    "unknown": "未知",
+    "locating": "正在定位…",
+    "noLocation": "请设置 latitude 和 longitude，或通过 HTTPS 打开页面并允许定位"
   },
   "zh-Hant": {
     "temperature": "溫度",
@@ -235,6 +267,8 @@
     "showers": "陣雨",
     "snow": "雪",
     "thunderstorm": "雷雨",
-    "unknown": "未知"
+    "unknown": "未知",
+    "locating": "正在定位…",
+    "noLocation": "請設定 latitude 和 longitude，或透過 HTTPS 開啟頁面並允許定位"
   }
 }

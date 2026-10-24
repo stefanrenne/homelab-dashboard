@@ -511,3 +511,36 @@ test('kubernetes client: cluster meters and a line per node, a node that is not 
   assert.deepEqual([...root.querySelectorAll('.meter')].map((m) => m.getAttribute('aria-label')), ['CPU: 25% (1.5 / 6 cores)', 'Memory: 25% (3 GB / 12 GB)']);
   assert.deepEqual([...root.querySelectorAll('li')].map((li) => li.textContent), ['node-aCPU 25%Memory 25%', 'node-b ✕ not readyCPU –Memory –']);
 });
+
+
+test('weather widgets: no coordinates ask for the viewer\'s location, then use it', async () => {
+  const asked = [];
+  const srv = await serve((req, res) => {
+    asked.push(new URL(req.url, 'http://x').searchParams);
+    res.end(JSON.stringify({ current: { temperature_2m: 8, weather_code: 0, is_day: 1 } }));
+  });
+  const saved = OPEN_METEO.url;
+  OPEN_METEO.url = `${srv.url}/v1/forecast`;
+  try {
+    assert.deepEqual(await openmeteo.fetch(fakeCtx({ units: 'metric', cache: 5 })), { blocks: [], weather: null, needsLocation: true });
+    const out = await openmeteo.fetch(fakeCtx({ units: 'metric', cache: 5 }, { params: { latitude: '52.37', longitude: '4.89' } }));
+    assert.equal(out.weather.temperature, 8);
+    assert.deepEqual([asked[0].get('latitude'), asked[0].get('longitude')], ['52.37', '4.89']);
+  } finally {
+    OPEN_METEO.url = saved;
+    await srv.close();
+  }
+
+  const secure = await renderClient('openmeteo', {});
+  Object.defineProperty(secure.window, 'isSecureContext', { value: true });
+  Object.defineProperty(secure.window.navigator, 'geolocation', { value: { getCurrentPosition: (ok) => ok({ coords: { latitude: 52.3676, longitude: 4.9041 } }) } });
+  const events = [];
+  secure.el.addEventListener('hd-widget-params', (e) => events.push(e.detail));
+  secure.el.t = (k) => k;
+  secure.el.data = { blocks: [], weather: null, needsLocation: true };
+  assert.deepEqual(events[0], { latitude: '52.37', longitude: '4.90' }, 'rounded to two decimals');
+  const plain = await renderClient('openmeteo', {});
+  plain.el.t = (k) => ({ noLocation: 'Set latitude and longitude' })[k] ?? k;
+  plain.el.data = { blocks: [], weather: null, needsLocation: true };
+  assert.equal(plain.el.shadowRoot.querySelector('.cond').textContent, 'Set latitude and longitude', 'no HTTPS: an explanation');
+});

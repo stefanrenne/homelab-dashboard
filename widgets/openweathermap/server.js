@@ -19,9 +19,17 @@ export function condition(id) {
 
 export default {
   async fetch(ctx) {
-    const o = ctx.options;
-    const cached = ctx.cache.get('weather');
-    if (cached && Date.now() - cached.at < Math.max(1, o.cache) * 60_000) return cached.data;
+    const o = { ...ctx.options };
+    // no coordinates in the options: the viewer's location, sent by client.js (ctx.params)
+    if (o.latitude === undefined || o.longitude === undefined) {
+      const lat = Number(ctx.params?.latitude);
+      const lon = Number(ctx.params?.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return { blocks: [], weather: null, needsLocation: true };
+      Object.assign(o, { latitude: lat, longitude: lon });
+    }
+    const cacheKey = `weather:${o.latitude},${o.longitude}`;
+    const cached = ctx.cache.get(cacheKey);
+    if (cached && Date.now() - cached.at < Math.max(1, o.cache ?? 5) * 60_000) return cached.data;
 
     const url = new URL(API.url);
     url.search = new URLSearchParams({
@@ -44,7 +52,7 @@ export default {
       ],
       weather: { temperature, unit, condition: key, day: !String(weather.icon ?? '').endsWith('n'), label: o.label ?? null, format: o.format ?? null },
     };
-    ctx.cache.set('weather', { at: Date.now(), data });
+    ctx.cache.set(cacheKey, { at: Date.now(), data });
     return data;
   },
 };

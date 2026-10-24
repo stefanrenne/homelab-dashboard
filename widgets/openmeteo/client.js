@@ -32,10 +32,29 @@ class HdWeather extends HTMLElement {
   get data() {
     return this._data;
   }
+  /** No coordinates configured: ask the browser once, rounded to about a kilometre. */
+  locate() {
+    if (this._locating) return;
+    this._locating = true;
+    if (!window.isSecureContext || !navigator.geolocation) {
+      this._noLocation = true;
+      this.render();
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => this.dispatchEvent(new CustomEvent('hd-widget-params', {
+        bubbles: true, composed: true,
+        detail: { latitude: pos.coords.latitude.toFixed(2), longitude: pos.coords.longitude.toFixed(2) },
+      })),
+      () => { this._noLocation = true; this.render(); },
+      { maximumAge: 30 * 60_000, timeout: 15_000 },
+    );
+  }
   render() {
     const root = this.shadowRoot;
     if (!root) return;
     const t = this.t ?? ((k) => k);
+    if (this._data?.needsLocation && !this._noLocation) this.locate();
     const w = this._data?.weather;
     const lang = document.documentElement.lang || undefined;
     const icon = !w ? 'unknown' : w.condition === 'clear' && !w.day ? 'night' : w.condition;
@@ -45,7 +64,8 @@ class HdWeather extends HTMLElement {
     root.querySelector('.temp').textContent = temp;
     const cond = root.querySelector('.cond');
     cond.className = this.error ? 'error' : 'cond';
-    cond.textContent = this.error ?? [w?.label, w ? t(w.condition) : ''].filter(Boolean).join(' · ');
+    const waiting = this._data?.needsLocation ? t(this._noLocation ? 'noLocation' : 'locating') : '';
+    cond.textContent = this.error ?? (waiting || [w?.label, w ? t(w.condition) : ''].filter(Boolean).join(' · '));
     root.querySelector('.w').setAttribute('aria-label', [w?.label, temp, w ? t(w.condition) : ''].filter(Boolean).join(', '));
   }
 }

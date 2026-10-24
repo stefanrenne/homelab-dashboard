@@ -73,13 +73,16 @@ const RESULTS = {
   '/api/widgets/w-5': { ok: false, error: 'connect ECONNREFUSED' },
 };
 
-async function page(results = RESULTS) {
+async function page(results = RESULTS, calls = []) {
   const dom = new JSDOM(HTML, {
     runScripts: 'dangerously',
     url: 'http://localhost/',
     beforeParse(window) {
       // the page asks relative URLs (api/layout); resolve them as the browser does
-      window.fetch = async (url) => ({ json: async () => structuredClone(results[new URL(url, 'http://localhost/').pathname] ?? { ok: false, error: 'nope' }) });
+      window.fetch = async (url) => {
+        calls.push(String(url));
+        return { json: async () => structuredClone(results[new URL(url, 'http://localhost/').pathname] ?? { ok: false, error: 'nope' }) };
+      };
     },
   });
   await new Promise((r) => setTimeout(r, 30));
@@ -635,4 +638,14 @@ test('quicklaunch shows search suggestions with showSearchSuggestions', async ()
   await new Promise((r) => setTimeout(r, 400));
   const names = [...doc.querySelectorAll('#ql-list .ql-name')].map((n) => n.textContent);
   assert.deepEqual(names, ['Zoek “z” met DuckDuckGo', 'Zoek “zebra” met DuckDuckGo', 'Zoek “zebra crossing” met DuckDuckGo']);
+});
+
+
+test('a widget\'s hd-widget-params makes the page ask again with those params', async () => {
+  const calls = [];
+  const w = await page(RESULTS, calls);
+  const box = w.document.querySelector('[data-service="svc-1"] .widget');
+  box.dispatchEvent(new w.CustomEvent('hd-widget-params', { detail: { latitude: '52.37', longitude: '4.89' }, bubbles: true }));
+  await new Promise((r) => setTimeout(r, 10));
+  assert.ok(calls.includes('api/widgets/w-1?latitude=52.37&longitude=4.89'), calls.join('\n'));
 });

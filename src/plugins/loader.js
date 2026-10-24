@@ -33,6 +33,9 @@ export function readManifest(dir) {
   if (typeof manifest.version !== 'string') problems.push('version: required (a string like "1.0.0")');
   if (!Number.isInteger(manifest.apiVersion)) problems.push('apiVersion: required (an integer)');
   problems.push(...checkSchema(manifest.options));
+  if (manifest.params !== undefined && (!Array.isArray(manifest.params) || manifest.params.some((k) => !/^[a-zA-Z][\w-]*$/.test(String(k))))) {
+    problems.push('params: a list of names the page may send, such as [latitude, longitude]');
+  }
   if (manifest.aliases !== undefined && (!Array.isArray(manifest.aliases) || manifest.aliases.some((a) => !ALIAS_PATTERN.test(String(a))))) {
     problems.push('aliases: a list of other names, lowercase letters, digits, dashes and underscores');
   }

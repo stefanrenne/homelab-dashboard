@@ -190,3 +190,21 @@ test('ctx.fetch: insecure accepts a self-signed certificate; Set-Cookie stays a 
     server.close();
   }
 });
+
+test('runtime: params reach ctx.params only when the widget declares them, each set cached apart', async () => {
+  const { WidgetRuntime } = await import('../src/plugins/runtime.js');
+  const seen = [];
+  const widget = { id: 'w', manifest: { params: ['latitude', 'longitude'] }, server: { fetch: (ctx) => { seen.push({ ...ctx.params }); return { blocks: [{ label: 'x', value: ctx.params.latitude ?? null }] }; } } };
+  const rt = new WidgetRuntime({ registry: new Map([['w', widget]]), log: { info() {}, warn() {}, error() {} } });
+  rt.setInstances(new Map([['i', { type: 'w', options: {}, secretValues: [], refreshMs: 60000 }]]));
+  const a = await rt.get('i', { latitude: '52.37', longitude: '4.89', evil: 'x' });
+  assert.equal(a.data.blocks[0].value, '52.37');
+  assert.deepEqual(seen[0], { latitude: '52.37', longitude: '4.89' }, 'undeclared params are dropped');
+  await rt.get('i', { longitude: '4.89', latitude: '52.37' });
+  assert.equal(seen.length, 1, 'the same params come from the cache');
+  await rt.get('i', { latitude: '1', longitude: '2' });
+  await rt.get('i');
+  assert.deepEqual(seen.slice(1), [{ latitude: '1', longitude: '2' }, {}]);
+  await rt.get('i', { latitude: 'x'.repeat(101) });
+  assert.deepEqual(seen.at(-1), {}, 'long values are dropped');
+});

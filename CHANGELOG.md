@@ -63,6 +63,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   optional colour, as in homepage.
 - Kubernetes widget: CPU and memory of the cluster and per node (metrics-server), as in homepage.
 - homepage's widget name `customapi` works (as `custom-api`); widgets can declare such `aliases`.
+- Weather widgets without `latitude`/`longitude` use the viewer's location (HTTPS), as in homepage.
+  Widget API: `params:` in widget.yaml, the `hd-widget-params` page event and `ctx.params`.
 - Widget API: `ctx.fetch(url, { insecure: true })` accepts a self-signed certificate (for an
   option the user turns on), and cookies are kept apart (`headers.getSetCookie()`).
 

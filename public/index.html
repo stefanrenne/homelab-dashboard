@@ -789,14 +789,23 @@ function mountWidget(instance, extraClass, name) {
       box.replaceChildren(apiError(name || widgetName(instance.type), `${translate('clientFailed')}: ${err.message}`));
     });
   }
-  if (instance.server) poll(instance, apply);
+  if (instance.server) {
+    const run = poll(instance, apply);
+    // a client.js sends hd-widget-params (e.g. the viewer's location) for its server.js
+    box.addEventListener('hd-widget-params', (e) => {
+      e.stopPropagation();
+      instance.params = Object.fromEntries(Object.entries(e.detail ?? {}).map(([k, v]) => [k, String(v)]));
+      run();
+    });
+  }
   return box;
 }
 
 function poll(instance, onResult) {
   const run = async () => {
     try {
-      const res = await fetch(`api/widgets/${encodeURIComponent(instance.instanceId)}`);
+      const query = instance.params && Object.keys(instance.params).length ? `?${new URLSearchParams(instance.params)}` : '';
+      const res = await fetch(`api/widgets/${encodeURIComponent(instance.instanceId)}${query}`);
       onResult(await res.json());
     } catch (err) {
       onResult({ ok: false, error: translate('offline') });
@@ -805,6 +814,7 @@ function poll(instance, onResult) {
   const every = Math.max(1000, instance.refreshMs || 30000);
   pollers.push({ run, timer: setInterval(() => { if (!document.hidden) run(); }, every) });
   run();
+  return run;
 }
 
 function stopPolling() {

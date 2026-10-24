@@ -1,12 +1,13 @@
 id: openmeteo
 name: Open-Meteo
-version: 1.0.0
+version: 1.1.0
 apiVersion: 1
 description: The current weather from Open-Meteo, no account needed (homepage's recommended weather widget).
 refresh: 5m
+params: [latitude, longitude]   # the viewer's location, sent by client.js when the options have none
 options:
-  latitude: { type: number, required: true }
-  longitude: { type: number, required: true }
+  latitude: { type: number }                                  # without latitude and longitude: the browser's location (HTTPS)
+  longitude: { type: number }
   label: { type: string }                                     # e.g. the city
   timezone: { type: string }                                  # e.g. Europe/Amsterdam; default: the location's own
   units: { type: enum, values: [metric, imperial], default: metric }

@@ -30,18 +30,26 @@ export class WidgetRuntime {
     for (const id of this.stores.keys()) if (!instances.has(id)) this.stores.delete(id);
   }
 
-  async get(instanceId) {
+  /**
+   * The result of an instance. `params` come from the page (a client.js asked for them): only
+   * the names the widget declares in widget.yaml `params`, as short text; each set of params
+   * has its own cached result.
+   */
+  async get(instanceId, params = {}) {
     const instance = this.instances.get(instanceId);
     if (!instance) return { ok: false, error: 'unknown widget instance' };
-    const cached = this.cache.get(instanceId);
+    const allowed = this.registry.get(instance.type)?.manifest.params ?? [];
+    const clean = Object.fromEntries(allowed.filter((k) => typeof params[k] === 'string' && params[k] && params[k].length <= 100).sort().map((k) => [k, params[k]]));
+    const key = Object.keys(clean).length ? `${instanceId}?${new URLSearchParams(clean)}` : instanceId;
+    const cached = this.cache.get(key);
     if (cached && cached.expires > this.now()) return cached.result;
-    if (this.pending.has(instanceId)) return this.pending.get(instanceId);
-    const promise = this.#run(instanceId, instance).finally(() => this.pending.delete(instanceId));
-    this.pending.set(instanceId, promise);
+    if (this.pending.has(key)) return this.pending.get(key);
+    const promise = this.#run(instanceId, instance, clean, key).finally(() => this.pending.delete(key));
+    this.pending.set(key, promise);
     return promise;
   }
 
-  async #run(instanceId, instance) {
+  async #run(instanceId, instance, params = {}, key = instanceId) {
     const widget = this.registry.get(instance.type);
     let result;
     if (!widget) {
@@ -54,7 +62,7 @@ export class WidgetRuntime {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(new Error(`timed out after ${this.timeoutMs} ms`)), this.timeoutMs);
       try {
-        const ctx = this.#context(instanceId, instance, controller.signal);
+        const ctx = this.#context(instanceId, instance, controller.signal, params);
         const data = await Promise.race([
           Promise.resolve().then(() => widget.server.fetch(ctx)),
           new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(controller.signal.reason))),
@@ -71,12 +79,14 @@ export class WidgetRuntime {
       }
     }
     if (this.instances.get(instanceId) === instance) {
-      this.cache.set(instanceId, { result, expires: this.now() + instance.refreshMs });
+      // many viewers' params could pile up: drop what has expired once the cache grows
+      if (this.cache.size > 500) for (const [k, v] of this.cache) if (v.expires <= this.now()) this.cache.delete(k);
+      this.cache.set(key, { result, expires: this.now() + instance.refreshMs });
     }
     return result;
   }
 
-  #context(instanceId, instance, signal) {
+  #context(instanceId, instance, signal, params = {}) {
     if (!this.stores.has(instanceId)) this.stores.set(instanceId, new Map());
     const prefix = `widget ${instance.type}:`;
     const log = {
@@ -88,6 +98,7 @@ export class WidgetRuntime {
       apiVersion: 1,
       instanceId,
       options: structuredClone(instance.options),
+      params: Object.freeze({ ...params }),
       signal,
       cache: this.stores.get(instanceId),
       log,

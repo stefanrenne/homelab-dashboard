@@ -20,7 +20,6 @@ hideErrors, status labels, container stats on click, search widget, bookmarks.
 
 Generic ones built in, service-specific ones in the widgets collection.
 
-- [ ] Weather without coordinates: the browser's location (homepage, needs HTTPS), passed to the server for that request
 
 ### Phase 3: integrations (core)
 

@@ -191,7 +191,7 @@ export async function createApp({
       if (method === 'GET' && p === '/api/layout') return send(res, 200, state.layout);
       if (method === 'GET' && p === '/api/suggest') return send(res, 200, await suggestions(url.searchParams));
       if (method === 'GET' && p.startsWith('/api/widgets/')) {
-        return send(res, 200, await runtime.get(p.slice('/api/widgets/'.length)));
+        return send(res, 200, await runtime.get(p.slice('/api/widgets/'.length), Object.fromEntries(url.searchParams)));
       }
       if (method === 'GET' && p === '/api/events') {
         res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });

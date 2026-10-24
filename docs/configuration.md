@@ -38,6 +38,12 @@ your network cannot read the dashboard through your browser. An entry without a 
 port; `localhost` and `127.0.0.1` always work (the image's health check uses them). Unset, or
 `*`, answers every host, as before. Unlike homepage the check is off until you set it.
 
+## Widget worker
+
+Installed widgets run in a worker thread with a memory limit, so one that hangs cannot stop the
+dashboard. `HD_WIDGET_MEMORY_MB` sets the limit (default 256); `HD_WIDGET_ISOLATION=off` runs them
+in the dashboard process instead.
+
 ## Including other files
 
 A long `services.yaml` can be split up. `!include <file>` puts the YAML of another file at that

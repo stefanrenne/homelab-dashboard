@@ -10,5 +10,4 @@ Open work, roughly in order of value. Move an item to `completed.md` when it is 
 
 ## Other
 
-- [ ] Run widget `server.js` in a `worker_thread` with resource limits (see docs/widgets/security.md).
 - [ ] A widget catalogue: an index (YAML in a separate repo) of known widget packages, shown in the docs.

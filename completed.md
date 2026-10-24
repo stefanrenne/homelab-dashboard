@@ -59,3 +59,4 @@ Finished work, newest first.
 - 2026-10-24: `HD_ALLOWED_HOSTS` (and `HOMEPAGE_ALLOWED_HOSTS`): a Host header check against DNS rebinding, off until set, loopback always allowed.
 - 2026-10-24: `HD_WATCH_POLL`: polling the config files for network file systems, and polling as the fallback when fs.watch cannot start.
 - 2026-10-24: widget scaffolding: `npm run new-widget -- <id>` (dashboard) and `npm run rename -- <id>` (the example repo).
+- 2026-10-24: installed widgets run in one worker thread with a memory limit; a hung widget restarts the worker (checked: all 164 collection widgets give the same results as in the process).

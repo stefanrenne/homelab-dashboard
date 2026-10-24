@@ -2,6 +2,15 @@
 
 Why things are the way they are. Newest first.
 
+## One worker thread for installed widgets (2026-10-24)
+A widget's `fetch` used to run in the dashboard's event loop, so a loop without end froze the
+whole page and a leak took the process down, against hard rule 4. Installed widgets now run in a
+worker thread with `resourceLimits`; a call that ignores its timeout gets the worker terminated
+and started again. One worker for all of them rather than one per widget: a worker costs about
+10 MB, and a homelab easily uses thirty widget types. Built-in widgets stay in the process (they
+are ours and some, like docker, are called very often). It is not a sandbox for hostile code: a
+worker has the same network and files.
+
 ## Frames only for the configured origins (2026-10-24)
 homepage's iframe widget needs `frame-src` to allow the framed page. A blanket `frame-src *`
 would let any injected markup frame anything; instead widget.yaml names the options that hold a

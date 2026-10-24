@@ -9,6 +9,7 @@ import { watchConfig } from './config/watch.js';
 import { loadRegistry } from './plugins/loader.js';
 import { syncPlugins, withDefaultPlugins, DEFAULT_PLUGINS } from './plugins/installer.js';
 import { WidgetRuntime } from './plugins/runtime.js';
+import { WidgetSandbox } from './plugins/sandbox.js';
 import { Discovery, mergeDiscovered } from './discovery/index.js';
 import { withMountedSocket, DEFAULT_SOCKET } from './discovery/docker.js';
 import { buildState } from './layout.js';
@@ -89,7 +90,9 @@ export async function createApp({
   releasesUrl = RELEASES_URL,
 } = {}) {
   const sseClients = new Set();
-  const runtime = new WidgetRuntime({ registry: new Map(), log, timeoutMs });
+  // installed widgets run in a worker thread (src/plugins/sandbox.js) unless HD_WIDGET_ISOLATION=off
+  const sandbox = env.HD_WIDGET_ISOLATION === 'off' ? null : new WidgetSandbox({ log, memoryMb: Number(env.HD_WIDGET_MEMORY_MB) > 0 ? Number(env.HD_WIDGET_MEMORY_MB) : undefined });
+  const runtime = new WidgetRuntime({ registry: new Map(), log, timeoutMs, sandbox });
   const state = { config: null, registry: new Map(), pluginResult: { errors: [], warnings: [] }, registryErrors: [], layout: null, actions: new Map(), frames: [] };
   const updates = new UpdateCheck({ url: releasesUrl, log, onChange: () => state.config && rebuild() });
   const discovery = new Discovery({ log, env, onChange: () => state.config && rebuild(), ...discoveryOptions });
@@ -297,6 +300,7 @@ export async function createApp({
       watcher?.close();
       discovery.stop();
       clearInterval(heartbeat);
+      sandbox?.close();
       for (const res of sseClients) res.end();
     },
   };

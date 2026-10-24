@@ -68,6 +68,11 @@ export default {
 
 `fetch(ctx)` is called at most once per `refresh` per widget instance. Concurrent browser requests share one call.
 
+Installed widgets (not the built-in ones) run in a worker thread, apart from the dashboard: one
+worker for all of them, with a memory limit. `ctx` is the same; what `fetch` returns must be plain
+data (it is copied out of the worker), and module-level state is the worker's. A widget that does
+not stop within a second after its timeout gets the worker restarted.
+
 ### ctx (API 1)
 
 | Field | Meaning |
@@ -78,7 +83,7 @@ export default {
 | `ctx.fetch(url, init)` | The standard `fetch`, plus: relative URLs resolve against `options.url`; the call is aborted with the widget; `init.socketPath` sends the request over a unix socket (used for Docker); `init.insecure: true` accepts a self-signed certificate for that request (only behind an option the user sets, off by default); `init.tls: { ca, cert, key }` (PEM text) trusts that CA and sends that client certificate, as for a Docker daemon with `--tlsverify`. `res.headers.getSetCookie()` lists every cookie. |
 | `ctx.params` | What the page sent through `hd-widget-params`: only names in widget.yaml `params`, each a non-empty string of at most 100 characters; `{}` when nothing was sent. Comes from the browser, so treat it as untrusted input (validate, never put it in a URL path unchecked). Each set of params has its own cached result. |
 | `ctx.signal` | `AbortSignal`, aborted when the call times out (10 s). |
-| `ctx.cache` | A `Map` that survives between calls of this instance (e.g. the previous value for a delta). Cleared when the instance disappears from the config. |
+| `ctx.cache` | A `Map` that survives between calls of this instance (e.g. the previous value for a delta). Cleared when the instance disappears from the config, and when the widget worker restarts (see below). |
 | `ctx.log` | `info`, `warn`, `error`; prefixed with the widget type. |
 
 Only `node:` built-ins can be imported. Bundle any other dependency into the file.
@@ -203,3 +208,4 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 | 1 | next | Options with `service_group` and `service_name` get the referenced widget's options. |
 | 1 | next | `params` in widget.yaml, the `hd-widget-params` page event and `ctx.params`. |
 | 1 | next | `frames` in widget.yaml: the page may frame the origin of these options. |
+| 1 | next | Installed widgets run in a worker thread; their result must be plain data. Widgets that return plain data need no change. |

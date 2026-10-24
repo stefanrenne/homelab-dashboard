@@ -87,6 +87,9 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 - Kubernetes pod status per service: `app`, `namespace` and `podSelector` (and `external`), as in
   homepage, with the pods' state, CPU and memory on a click; discovered Ingresses and routes get
   it too. Built-in `kubernetes-pods` widget.
+- Installed widgets run in a worker thread with a memory limit (`HD_WIDGET_MEMORY_MB`, default
+  256): a widget that hangs or leaks no longer stops the dashboard. `HD_WIDGET_ISOLATION=off` turns
+  it off.
 - `npm run new-widget -- <id>`: a new widget package from the template, renamed to your id.
 - `HD_WATCH_POLL=<seconds>`: check the config files for changes that often, for a config folder on
   a network share. When the folder cannot be watched at all, it is checked every 5 seconds.

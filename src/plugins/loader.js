@@ -68,10 +68,12 @@ export async function loadWidget(dir, { source = 'builtin' } = {}) {
     );
   }
   let server = null;
+  let serverUrl = null;
   const serverFile = path.join(dir, 'server.js');
   if (fs.existsSync(serverFile)) {
     // The mtime in the URL makes a changed file load again after a config reload.
     const url = pathToFileURL(serverFile).href + '?v=' + fs.statSync(serverFile).mtimeMs;
+    serverUrl = url;
     const mod = await import(url);
     server = mod.default;
     if (!server || typeof server.fetch !== 'function') {
@@ -93,6 +95,7 @@ export async function loadWidget(dir, { source = 'builtin' } = {}) {
     dir,
     source,
     server,
+    serverUrl, // the worker thread (sandbox.js) imports installed widgets from here
     hasClient: fs.existsSync(path.join(dir, 'client.js')),
     i18n,
   };

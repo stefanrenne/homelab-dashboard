@@ -2,8 +2,8 @@
 
 ## Trust model
 
-A widget's `server.js` runs **inside the dashboard process with the same rights**: network, files
-in the container, environment variables. Installing a widget means trusting its author, like
+A widget's `server.js` runs **with the dashboard's rights**: network, files in the container,
+environment variables. Installing a widget means trusting its author, like
 choosing a Docker image. The dashboard limits the damage where it can:
 
 - Plugins come **only from sources listed in `settings.yaml`**, plus the project's own
@@ -21,7 +21,11 @@ choosing a Docker image. The dashboard limits the damage where it can:
 - A mounted Docker socket gives every widget the whole Docker API (`:ro` does not limit it).
   Use a docker-socket-proxy with `CONTAINERS=1` when you install widgets you do not fully trust.
 
-Not (yet) done: running `server.js` in a separate worker with its own limits. See `todo.md`.
+- Installed widgets' `server.js` runs in a **worker thread** with a memory limit
+  (`HD_WIDGET_MEMORY_MB`, default 256): a widget stuck in a loop or eating memory stops the
+  worker, which starts again, not the dashboard. A worker thread is not a security boundary: it
+  has the same network, files and environment. `HD_WIDGET_ISOLATION=off` runs installed widgets
+  in the dashboard process, as before.
 
 ## Secrets
 

@@ -11,8 +11,10 @@ export const SERVICE_STATUSES = ['up', 'down', 'warn', 'unknown'];
 export const ROW_ICONS = ['play', 'pause'];
 
 export class WidgetRuntime {
-  constructor({ registry, timeoutMs = DEFAULT_TIMEOUT_MS, log = console, now = Date.now }) {
+  /** `sandbox` (a WidgetSandbox) runs installed widgets in a worker thread; null runs them here. */
+  constructor({ registry, timeoutMs = DEFAULT_TIMEOUT_MS, log = console, now = Date.now, sandbox = null }) {
     this.registry = registry;
+    this.sandbox = sandbox;
     this.timeoutMs = timeoutMs;
     this.log = log;
     this.now = now;
@@ -28,6 +30,7 @@ export class WidgetRuntime {
     this.instances = instances;
     this.cache.clear();
     for (const id of this.stores.keys()) if (!instances.has(id)) this.stores.delete(id);
+    this.sandbox?.keep(instances.keys());
   }
 
   /**
@@ -62,9 +65,12 @@ export class WidgetRuntime {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(new Error(`timed out after ${this.timeoutMs} ms`)), this.timeoutMs);
       try {
-        const ctx = this.#context(instanceId, instance, controller.signal, params);
+        const isolated = this.sandbox && widget.source !== 'builtin' && widget.serverUrl;
+        const call = isolated
+          ? () => this.sandbox.run({ url: widget.serverUrl, instanceId, options: structuredClone(instance.options), params, signal: controller.signal, log: this.#log(instance) })
+          : () => widget.server.fetch(this.#context(instanceId, instance, controller.signal, params));
         const data = await Promise.race([
-          Promise.resolve().then(() => widget.server.fetch(ctx)),
+          Promise.resolve().then(call),
           new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(controller.signal.reason))),
         ]);
         const selected = selectFields(checkData(data ?? {}), instance.fields);
@@ -86,14 +92,18 @@ export class WidgetRuntime {
     return result;
   }
 
-  #context(instanceId, instance, signal, params = {}) {
-    if (!this.stores.has(instanceId)) this.stores.set(instanceId, new Map());
+  #log(instance) {
     const prefix = `widget ${instance.type}:`;
-    const log = {
+    return {
       info: (...a) => this.log.info(prefix, ...a),
       warn: (...a) => this.log.warn(prefix, ...a),
       error: (...a) => this.log.error(prefix, ...a),
     };
+  }
+
+  #context(instanceId, instance, signal, params = {}) {
+    if (!this.stores.has(instanceId)) this.stores.set(instanceId, new Map());
+    const log = this.#log(instance);
     return Object.freeze({
       apiVersion: 1,
       instanceId,

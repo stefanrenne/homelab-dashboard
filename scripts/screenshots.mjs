@@ -13,9 +13,10 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const out = root + 'docs/images/';
 const quiet = { info() {}, warn() {}, error() {} };
 
-const collection = path.resolve(process.env.HD_COLLECTION_DIR ?? path.join(root, '../homelab-dashboard-widgets'), 'widgets');
-// no update check: the footer shows the version only, the same on every run
-const app = await createApp({ configDir: root + 'config.example', log: quiet, defaultPlugins: [], builtinDir: collection, dockerSocket: null, releasesUrl: null });
+const collection = path.resolve(process.env.HD_COLLECTION_DIR ?? path.join(root, '../homelab-dashboard-widgets'));
+// the checkout as the default plugin, so the footer reads `core vX | widgets vY` as installed;
+// no update check, so the footer is the same on every run
+const app = await createApp({ configDir: root + 'config.example', log: quiet, defaultPlugins: [{ path: collection, label: 'widgets' }], dockerSocket: null, releasesUrl: null });
 const server = http.createServer(app.handler).listen(0, '127.0.0.1');
 await new Promise((r) => server.once('listening', r));
 const url = `http://127.0.0.1:${server.address().port}/`;

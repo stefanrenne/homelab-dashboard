@@ -182,6 +182,7 @@ again after every refresh:
 | `error` | Error message of the last refresh, or `null`. |
 | `instanceId` | The id of this widget instance (for `api/suggest`). |
 | `busy` | `true` while an action this widget asked for (`hd-widget-action`) runs, then `false`. Use a setter to update the look (disable the button). Since 0.8.0. |
+| `actionResult` | `{ status: 'ok' \| 'error' }` of the last action, set just before `busy` goes back to `false`, e.g. to show a check after a quiet success. Since 0.10.0. |
 
 Theme CSS variables inherit into the shadow root: `--hd-text`, `--hd-muted`, `--hd-accent`,
 `--hd-card`, `--hd-border`, `--hd-ok`, `--hd-warn`, `--hd-error`.
@@ -198,7 +199,7 @@ A `client.js` may talk to the dashboard through DOM events that bubble out of it
 |---|---|---|
 | `hd-search-input` | `{ query }` | Shows only the services and bookmarks that match every word; empty shows all. |
 | `hd-search-submit` | `{ query }` | Send it `cancelable: true`. With exactly one match the dashboard opens it and cancels the event; otherwise the widget may search elsewhere. |
-| `hd-widget-action` | `{ title? }` | Runs server.js's `action` (see above) and shows its result in a dialog titled `title` (default: the service's name). Sets the element's `busy` to `true` until it is done; a press while it runs is ignored. Since 0.8.0. |
+| `hd-widget-action` | `{ title?, showResult? }` | Runs server.js's `action` (see above) and shows its result in a dialog titled `title` (default: the service's name). Sets the element's `busy` to `true` until it is done and then its `actionResult`; a press while it runs is ignored. `showResult: 'failure'` (since 0.10.0) is for a widget that shows its own progress: no running toast, and the dialog only when the action failed. Since 0.8.0. |
 | `hd-widget-params` | `{ name: value, ... }` | Fetches the widget again with these values (text) for `server.js`, and keeps sending them on every refresh. Only the names in widget.yaml `params` arrive. |
 
 The collection's `search` widget uses the first two. The weather widgets of the
@@ -228,6 +229,7 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 |---|---|---|
 | 1 | 0.1.0 | First version (including `vars`, row `status` and `defaultFields`). |
 | 1 | 0.8.0 | `action(ctx)` in server.js, `ctx.configDir`, the `hd-widget-action` event and the element's `busy`; `POST api/widgets/<instanceId>/action`. |
+| 1 | 0.10.0 | `showResult: 'failure'` in `hd-widget-action`, and the element's `actionResult`. |
 | 1 | next | Blocks can carry `highlight: { level, valueOnly }`, added by the dashboard from the entry's `highlight:` rules. Widgets need no change. |
 | 1 | next | `provider: <name>` in an entry fills options from `settings.yaml` `providers`. Widgets need no change. |
 | 1 | next | `client.js` gets `instanceId`; `GET api/suggest` for search suggestions. |

@@ -697,7 +697,8 @@ test('hd-widget-action: one POST at a time, then a dialog with how it went, the 
   assert.ok(dialog.querySelector('.status').classList.contains('error'));
   assert.equal(dialog.querySelector('pre').textContent, 'line 1\n<b>line 2</b>', 'output as text, never HTML');
   assert.equal(dialog.querySelector('pre b'), null);
-  dialog.querySelector('.actions button:not(.copy)').click();
+  assert.equal(dialog.querySelector('.close').getAttribute('aria-label'), 'Sluiten', 'an × in the corner, with a name');
+  dialog.querySelector('.close').click();
   assert.equal(w.document.querySelector('dialog.action-result'), null, 'Close removes it');
 
   results['/api/widgets/w-1/action'] = { ok: true, data: { status: 'ok', exitCode: 0 } };
@@ -722,17 +723,36 @@ test('the action dialog copies the output to the clipboard, and has no copy butt
   const box = w.document.querySelector('[data-service="svc-1"] .widget');
   box.dispatchEvent(new w.CustomEvent('hd-widget-action', { bubbles: true, composed: true }));
   await new Promise((r) => setTimeout(r, 20));
-  const copy = w.document.querySelector('dialog.action-result .actions .copy');
-  assert.equal(copy.textContent, 'Uitvoer kopiëren');
+  const copy = w.document.querySelector('dialog.action-result .output .copy');
+  assert.equal(copy.getAttribute('aria-label'), 'Uitvoer kopiëren', 'an icon in the output block, with a name');
   copy.click();
   await new Promise((r) => setTimeout(r, 10));
   assert.deepEqual(copied, ['line 1\nline 2']);
-  assert.equal(copy.textContent, 'Gekopieerd');
-  w.document.querySelector('dialog.action-result .actions button:not(.copy)').click();
+  assert.equal(copy.getAttribute('aria-label'), 'Gekopieerd');
+  assert.ok(copy.classList.contains('done'), 'a check while it says so');
+  w.document.querySelector('dialog.action-result .close').click();
 
   results['/api/widgets/w-1/action'] = { ok: true, data: { status: 'ok', exitCode: 0 } };
   box.dispatchEvent(new w.CustomEvent('hd-widget-action', { bubbles: true, composed: true }));
   await new Promise((r) => setTimeout(r, 20));
   assert.equal(w.document.querySelector('dialog.action-result .copy'), null, 'nothing to copy');
+  w.close();
+});
+
+test('hd-widget-action with showResult failure: no toast or dialog on success, the dialog on failure', async () => {
+  const calls = [];
+  const results = { ...RESULTS, '/api/widgets/w-1/action': { ok: true, data: { status: 'ok', output: 'fine', exitCode: 0 } } };
+  const w = await page(results, calls);
+  const box = w.document.querySelector('[data-service="svc-1"] .widget');
+  const press = () => box.dispatchEvent(new w.CustomEvent('hd-widget-action', { bubbles: true, composed: true, detail: { title: 'Gen Swag', showResult: 'failure' } }));
+  press();
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(calls.filter((c) => c.endsWith('/action')).length, 1);
+  assert.equal(w.document.querySelector('dialog.action-result'), null, 'success: the widget shows it itself');
+  assert.equal(w.document.getElementById('toast').classList.contains('show'), false, 'no running toast either');
+  results['/api/widgets/w-1/action'] = { ok: true, data: { status: 'error', output: 'broke', exitCode: 2 } };
+  press();
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(w.document.querySelector('dialog.action-result .status').textContent, 'Gen Swag mislukt: Exitcode 2');
   w.close();
 });

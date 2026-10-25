@@ -4,6 +4,17 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-25
+
+### Changed
+- The action result dialog: a × in the corner instead of a Close button, and a copy icon in the
+  corner of the output that shows on hover (always on touch screens).
+
+### Added
+- Widget API: `showResult: 'failure'` in `hd-widget-action` shows the dialog only when the action
+  failed (and no running toast), and the element gets `actionResult` with how it went. The
+  collection's `button` uses it for a spinner and a check.
+
 ## [0.9.0] - 2026-10-25
 
 ### Added

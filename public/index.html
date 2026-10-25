@@ -283,16 +283,24 @@
   .action-result { max-width: min(48rem, calc(100% - 32px)); width: 100%; padding: 16px 20px; border: 1px solid var(--hd-border);
     border-radius: 10px; background: linear-gradient(var(--hd-card), var(--hd-card)), var(--hd-bg); color: var(--hd-text); box-shadow: var(--hd-shadow); }
   .action-result::backdrop { background: rgb(0 0 0 / .45); }
-  .action-result h2 { margin: 0 0 4px; font-size: 1.0625rem; font-weight: 600; color: var(--hd-heading); }
+  .action-result { position: relative; }
+  .action-result h2 { margin: 0 0 4px; padding-inline-end: 36px; font-size: 1.0625rem; font-weight: 600; color: var(--hd-heading); }
+  .action-result .close { position: absolute; top: 10px; inset-inline-end: 10px; }
+  .action-result .icon-action { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
+    border: 0; border-radius: 6px; background: none; color: var(--hd-muted); cursor: pointer; }
+  .action-result .icon-action:hover { background: var(--hd-card-hover); color: var(--hd-text); }
+  .action-result .icon-action svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .action-result .output { position: relative; }
+  .action-result .output .copy { position: absolute; top: 6px; inset-inline-end: 6px; background: var(--hd-block); opacity: 0; transition: opacity .15s; }
+  .action-result .output:hover .copy, .action-result .output:focus-within .copy, .action-result .copy.done { opacity: 1; }
+  .action-result .copy.done { color: var(--hd-ok); }
+  @media (hover: none) { .action-result .output .copy { opacity: 1; } }
   .action-result .status { margin: 0 0 12px; font-size: .875rem; }
   .action-result .status.ok { color: var(--hd-ok); }
   .action-result .status.error { color: var(--hd-error); }
   .action-result pre { margin: 0; max-height: 60vh; overflow: auto; padding: 10px 12px; border-radius: 6px; background: var(--hd-block);
-    font: .8125rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+    font: .8125rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; padding-inline-end: 44px; }
   .action-result .empty { margin: 0; font-size: .875rem; color: var(--hd-muted); }
-  .action-result .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
-  .action-result .actions button { min-height: 32px; padding-inline: 14px; border-radius: 6px; border: 1px solid var(--hd-border);
-    background: var(--hd-block); color: var(--hd-text); font: inherit; font-size: .875rem; cursor: pointer; }
   a:focus-visible, button:focus-visible { outline: 2px solid var(--hd-accent); outline-offset: 2px; }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   [hidden] { display: none !important; }
@@ -818,7 +826,7 @@ function mountWidget(instance, extraClass, name) {
     box.addEventListener('hd-widget-action', (e) => {
       e.stopPropagation();
       const title = typeof e.detail?.title === 'string' && e.detail.title ? e.detail.title : name || widgetName(instance.type);
-      runWidgetAction(instance, custom, title);
+      runWidgetAction(instance, custom, title, e.detail?.showResult === 'failure' ? 'failure' : 'always');
     });
   }
   return box;
@@ -826,12 +834,16 @@ function mountWidget(instance, extraClass, name) {
 
 const runningActions = new Set();
 
-/** Runs an instance's action once at a time; the element's `busy` is true meanwhile. */
-async function runWidgetAction(instance, element, title) {
+/**
+ * Runs an instance's action once at a time; the element's `busy` is true meanwhile and its
+ * `actionResult` gets the outcome. `showResult: 'failure'` (the widget shows its own progress)
+ * skips the running toast and shows the dialog only when the action failed.
+ */
+async function runWidgetAction(instance, element, title, showResult = 'always') {
   if (runningActions.has(instance.instanceId)) return;
   runningActions.add(instance.instanceId);
   if (element) element.busy = true;
-  toast(translate('running', { name: title }));
+  if (showResult === 'always') toast(translate('running', { name: title }));
   let out;
   try {
     const res = await fetch(`api/widgets/${encodeURIComponent(instance.instanceId)}/action`, { method: 'POST', headers: { 'x-requested-with': 'homelab-dashboard' } });
@@ -840,10 +852,32 @@ async function runWidgetAction(instance, element, title) {
     out = { ok: false, error: translate('offline') };
   } finally {
     runningActions.delete(instance.instanceId);
-    if (element) element.busy = false;
   }
-  hideToast();
-  showActionResult(title, out);
+  const ok = out.ok && out.data?.status === 'ok';
+  if (element) {
+    element.actionResult = { status: ok ? 'ok' : 'error' };
+    element.busy = false;
+  }
+  if (showResult === 'always') hideToast();
+  if (showResult === 'always' || !ok) showActionResult(title, out);
+}
+
+// line icons for the result dialog (24×24, stroked)
+const ICON_PATHS = {
+  close: 'M18 6 6 18M6 6l12 12',
+  copy: 'M9 9h11v11H9zM5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1',
+  check: 'M20 6 9 17l-5-5',
+};
+
+function lineIcon(d) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', d);
+  svg.append(path);
+  return svg;
 }
 
 /**
@@ -881,18 +915,33 @@ function showActionResult(title, out) {
   const status = ok
     ? translate('runOk', { name: title }) + (Number.isInteger(data.exitCode) ? ` · ${translate('exitCode', { code: data.exitCode })}` : '')
     : translate('runFailed', { name: title, reason });
-  const close = el('button', { type: 'button', text: translate('close') });
-  const copy = data?.output ? el('button', { type: 'button', class: 'copy', text: translate('copyOutput') }) : null;
+  const iconButton = (cls, label, path) => {
+    const b = el('button', { type: 'button', class: `icon-action ${cls}`, 'aria-label': label, title: label });
+    b.append(lineIcon(path));
+    return b;
+  };
+  const close = iconButton('close', translate('close'), ICON_PATHS.close);
+  const copy = data?.output ? iconButton('copy', translate('copyOutput'), ICON_PATHS.copy) : null;
   const dialog = el('dialog', { class: 'action-result', 'aria-labelledby': 'action-title' },
     el('h2', { id: 'action-title', text: title }),
+    close,
     el('p', { class: `status ${ok ? 'ok' : 'error'}`, role: 'status', text: status }),
-    data?.output ? el('pre', { text: data.output }) : el('p', { class: 'empty', text: translate('noOutput') }),
-    el('div', { class: 'actions' }, copy, close));
+    data?.output ? el('div', { class: 'output' }, el('pre', { text: data.output }), copy) : el('p', { class: 'empty', text: translate('noOutput') }));
   copy?.addEventListener('click', async () => {
     const done = await copyText(data.output);
-    copy.textContent = translate(done ? 'copied' : 'copyFailed');
+    const label = translate(done ? 'copied' : 'copyFailed');
+    copy.replaceChildren(lineIcon(done ? ICON_PATHS.check : ICON_PATHS.copy));
+    copy.classList.toggle('done', done);
+    copy.setAttribute('aria-label', label);
+    copy.title = label;
+    toast(label, { error: !done });
     clearTimeout(copy.timer);
-    copy.timer = setTimeout(() => { copy.textContent = translate('copyOutput'); }, 2000);
+    copy.timer = setTimeout(() => {
+      copy.replaceChildren(lineIcon(ICON_PATHS.copy));
+      copy.classList.remove('done');
+      copy.setAttribute('aria-label', translate('copyOutput'));
+      copy.title = translate('copyOutput');
+    }, 2000);
   });
   close.addEventListener('click', () => (typeof dialog.close === 'function' ? dialog.close() : dialog.remove()));
   dialog.addEventListener('close', () => dialog.remove());

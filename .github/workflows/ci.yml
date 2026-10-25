@@ -37,8 +37,35 @@ jobs:
 
   # On a pull request the image is built and smoke-tested too, without pushing: an update of the
   # build actions or the base image is tested before it is merged.
+  # Whether the image changes. A push to main that touches only docs, scripts, tests, examples
+  # or Markdown (none of them matters in the image, see .dockerignore) builds no image, so
+  # `latest` stays the build it was (a release keeps its number). Tags, runs by hand, the weekly
+  # rebuild and pull requests always build.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.files.outputs.image }}
+    steps:
+      - id: files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          image=true
+          if [[ "$GITHUB_EVENT_NAME" == push && "$GITHUB_REF" == refs/heads/* && -n "$BEFORE" && "$BEFORE" != 0000000000000000000000000000000000000000 ]]; then
+            # the compare API lists at most 300 files; more counts as a change to the image
+            if files=$(gh api "repos/$GITHUB_REPOSITORY/compare/$BEFORE...$GITHUB_SHA" --jq 'if (.files | length) >= 300 then "many files" else .files[].filename end'); then
+              if [ -n "$files" ] && ! grep -qvE '^(docs|scripts|tests|examples)/|\.md$' <<<"$files"; then
+                image=false
+                echo "only docs, scripts, tests, examples or Markdown changed: no image"
+              fi
+            fi
+          fi
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
   image:
-    needs: test
+    needs: [test, changes]
+    if: needs.changes.outputs.image == 'true'
     runs-on: ubuntu-latest
     outputs:
       release: ${{ steps.version.outputs.release }}

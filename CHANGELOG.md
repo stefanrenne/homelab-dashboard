@@ -4,6 +4,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-25
+
 Needs the widgets collection 0.4.0 (installed by default at its newest release), which now holds
 every widget, also the ones that were built in.
 

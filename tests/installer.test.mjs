@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import YAML from 'yaml';
-import { syncPlugins, parseSource, readLock, latestTag, withDefaultPlugins, DEFAULT_PLUGINS, CORE_WIDGETS, olderTag, pluginUpdates } from '../src/plugins/installer.js';
+import { syncPlugins, parseSource, readLock, latestTag, withDefaultPlugins, DEFAULT_PLUGINS, CORE_WIDGETS, olderTag, pluginUpdates, packageInfo } from '../src/plugins/installer.js';
 import { loadWidget } from '../src/plugins/loader.js';
 import { WidgetRuntime } from '../src/plugins/runtime.js';
 import { validateOptions } from '../src/plugins/options.js';
@@ -314,9 +314,9 @@ test('syncPlugins reports each source by name and version, never its URL', async
   const out = await syncPlugins({ configDir, entries, log: silentLog });
   assert.deepEqual(out.errors, []);
   const [latest, tag, main, ...folders] = out.packages;
-  assert.deepEqual([latest, tag], [{ name: 'widget', version: 'v1.0.0' }, { name: 'widget', version: 'v1.0.0' }]);
+  assert.deepEqual([latest, tag], [{ name: 'widget', version: 'v1.0.0', url: null }, { name: 'widget', version: 'v1.0.0', url: null }], 'file:// is no public repository: no link');
   const template = YAML.parse(fs.readFileSync(path.join(TEMPLATE, 'widget.yaml'), 'utf8')).version;
-  assert.deepEqual(folders, [{ name: 'my-widget', version: template }, { name: 'my-collection', version: '0.4.0' }, { name: 'bare', version: null }], 'a folder: its widget.yaml or package.json');
+  assert.deepEqual(folders, [{ name: 'my-widget', version: template, url: null }, { name: 'my-collection', version: '0.4.0', url: null }, { name: 'bare', version: null, url: null }], 'a folder: its widget.yaml or package.json');
   assert.match(main.version, /^[0-9a-f]{7}$/, 'a branch shows its commit');
   assert.ok(!JSON.stringify(out.packages).includes('file://'));
 });
@@ -383,4 +383,20 @@ test('pluginUpdates: #latest and branches that moved, never pinned tags; update 
   assert.deepEqual(out.installed.map((i) => path.basename(i.dir)), ['example-counter@1.2.0', 'example-counter@1.2.0', 'example-counter@1.0.0']);
   assert.deepEqual(await pluginUpdates({ configDir, entries }), [], 'the lock caught up');
   assert.deepEqual(await pluginUpdates({ configDir, entries: [{ source: 'git+file:///nowhere/at/all#latest' }] }), [], 'offline is no news');
+});
+
+test('packageInfo: a label, and links to a public GitHub release or commit or an npm page only', () => {
+  const commit = 'abcdef0123456789abcdef0123456789abcdef01';
+  const git = (source, record, entry = {}) => packageInfo({ source, ...entry }, parseSource({ source }), { commit, ...record });
+  assert.deepEqual(git('git+https://github.com/a/widgets#latest', { tag: 'v0.4.1' }, { label: 'widgets' }),
+    { name: 'widgets', version: 'v0.4.1', url: 'https://github.com/a/widgets/releases/tag/v0.4.1' });
+  assert.deepEqual(git('git+https://github.com/a/widgets.git#v1.0.0', {}), { name: 'widgets', version: 'v1.0.0', url: 'https://github.com/a/widgets/releases/tag/v1.0.0' });
+  assert.deepEqual(git('git+https://github.com/a/widgets#main', {}), { name: 'widgets', version: 'abcdef0', url: `https://github.com/a/widgets/commit/${commit}` });
+  assert.equal(git('git+https://user:t0ken@github.com/a/widgets#v1.0.0', {}).url, null, 'credentials: no link, the token stays on the server');
+  assert.equal(git('git+https://gitea.lan/a/widgets#v1.0.0', {}).url, null);
+  assert.equal(git('git+git@github.com:a/widgets.git#v1.0.0', {}).url, null);
+  const npm = packageInfo({ source: 'npm:hd-widget-y@2.0.1' }, parseSource({ source: 'npm:hd-widget-y@2.0.1' }), { version: '2.0.1' });
+  assert.deepEqual(npm, { name: 'hd-widget-y', version: '2.0.1', url: 'https://www.npmjs.com/package/hd-widget-y/v/2.0.1' });
+  assert.equal(withDefaultPlugins([{ source: 'git+https://github.com/a/widgets#v1.0.0' }], [{ source: 'git+https://github.com/a/widgets#latest', label: 'widgets' }])[0].label, 'widgets', 'your own entry for the collection keeps its name');
+  assert.equal(DEFAULT_PLUGINS[0].label, 'widgets');
 });

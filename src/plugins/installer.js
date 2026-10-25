@@ -36,8 +36,9 @@ const PINNED_REF = /^([0-9a-f]{40}|v?\d+\.\d+\.\d+([-+][\w.-]+)?)$/;
 const PINNED_VERSION = /^\d+\.\d+\.\d+([-+][\w.-]+)?$/;
 const RELEASE_TAG = /^v?(\d+)\.(\d+)\.(\d+)$/;
 export const LATEST_REF = 'latest';
-// atLeast: the release this dashboard needs; a #latest locked below it moves on by itself
-export const DEFAULT_PLUGINS = [{ source: 'git+https://github.com/stefanrenne/homelab-dashboard-widgets#latest', atLeast: 'v0.4.0' }];
+// atLeast: the release this dashboard needs; a #latest locked below it moves on by itself.
+// label: its name in the footer.
+export const DEFAULT_PLUGINS = [{ source: 'git+https://github.com/stefanrenne/homelab-dashboard-widgets#latest', atLeast: 'v0.4.0', label: 'widgets' }];
 // The collection's widgets behind a service's siteMonitor:, ping:, container:, app: and
 // proxmoxNode: (src/layout.js). `only:` on a default's repository keeps them.
 export const CORE_WIDGETS = ['http-status', 'ping', 'docker', 'kubernetes-pods', 'proxmoxvm'];
@@ -83,7 +84,7 @@ function repoOf(entry) {
 /**
  * The user's entries followed by the defaults; a user entry for a default's repository replaces
  * it, and its `only:` list gets CORE_WIDGETS added, so the service fields keep working. With
- * #latest it also takes the default's `atLeast`.
+ * #latest it also takes the default's `atLeast`, and it keeps the default's footer `label`.
  */
 export function withDefaultPlugins(entries, defaults = DEFAULT_PLUGINS) {
   const own = new Set(entries.map(repoOf).filter(Boolean));
@@ -93,6 +94,7 @@ export function withDefaultPlugins(entries, defaults = DEFAULT_PLUGINS) {
     const out = { ...e };
     if (Array.isArray(e.only) && !e.subdir) out.only = [...new Set([...e.only, ...CORE_WIDGETS])];
     if (d.atLeast && String(e.source).endsWith(`#${LATEST_REF}`)) out.atLeast = d.atLeast;
+    if (d.label && !e.subdir) out.label = d.label;
     return out;
   });
   return [...kept, ...defaults.filter((d) => !own.has(repoOf(d))).map((d) => ({ ...d, yields: true }))];
@@ -137,21 +139,40 @@ function localVersion(dir) {
   }
 }
 
+/** A public GitHub repository's web address, from a git URL; null for anything else (another host, credentials). */
+function githubRepo(url) {
+  try {
+    const u = new URL(url);
+    const m = /^\/([\w.-]+)\/([\w.-]+?)(\.git)?\/?$/.exec(u.pathname);
+    if (u.protocol !== 'https:' || u.hostname !== 'github.com' || u.username || u.password || u.search || !m) return null;
+    return `https://github.com/${m[1]}/${m[2]}`;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * The name and version of an installed source, for the footer: the repository, npm package or
- * folder name and the tag, version or short commit. Never the URL (it can hold a token).
+ * The name, version and link of an installed source, for the footer: the label (the widgets
+ * collection's "widgets") or the repository, npm package or folder name; the tag, version or short
+ * commit; its GitHub release or commit, or its npm page. Never the source URL itself (it can hold
+ * a token): a link is only made for a public GitHub repository or an npm package.
  */
-function packageInfo(src, record, dir) {
-  if (src.kind === 'path') return { name: path.basename(dir), version: localVersion(dir) };
-  if (src.kind === 'npm') return { name: src.subdir ? `${src.name}/${path.basename(src.subdir)}` : src.name, version: record.version };
+export function packageInfo(entry, src, record, dir) {
+  if (src.kind === 'path') return { name: entry.label ?? path.basename(dir), version: localVersion(dir), url: null };
+  if (src.kind === 'npm') {
+    const url = `https://www.npmjs.com/package/${src.name}/v/${encodeURIComponent(record.version)}`;
+    return { name: entry.label ?? (src.subdir ? `${src.name}/${path.basename(src.subdir)}` : src.name), version: record.version, url };
+  }
   const repo = path.basename(src.url.replace(/\/+$/, '')).replace(/\.git$/, '');
-  const version = record.tag ?? (!src.floating && !/^[0-9a-f]{40}$/.test(src.ref) ? src.ref : record.commit.slice(0, 7));
-  return { name: src.subdir ? `${repo}/${path.basename(src.subdir)}` : repo, version };
+  const tag = record.tag ?? (!src.floating && !/^[0-9a-f]{40}$/.test(src.ref) ? src.ref : null);
+  const web = githubRepo(src.url);
+  const url = web && (tag ? `${web}/releases/tag/${encodeURIComponent(tag)}` : `${web}/commit/${record.commit}`);
+  return { name: entry.label ?? (src.subdir ? `${repo}/${path.basename(src.subdir)}` : repo), version: tag ?? record.commit.slice(0, 7), url };
 }
 
 /**
  * Makes sure every source in `entries` is installed. Returns
- * { installed: [{ dir, source }], packages: [{ name, version }], errors: [{ source, message }], warnings: [...] }.
+ * { installed: [{ dir, source }], packages: [{ name, version, url }], errors: [{ source, message }], warnings: [...] }.
  * With `update: true` git and npm sources are resolved again even when locked; with
  * `update: 'moving'` only the ones that can move (#latest, a branch, an npm range).
  */
@@ -172,7 +193,7 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
       if (src.kind === 'path') {
         const dir = path.resolve(configDir, src.path.replace(/^~(?=\/)/, process.env.HOME ?? '~'), src.subdir);
         for (const d of packageDirs(dir, Boolean(src.subdir), entry.only, label, warnings)) installed.push({ dir: d, source: label, yields: Boolean(entry.yields) });
-        packages.push(packageInfo(src, null, dir));
+        packages.push(packageInfo(entry, src, null, dir));
         continue;
       }
       if (src.floating) {
@@ -206,7 +227,7 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
       nextLock[src.key] = record;
       const root = path.join(pluginsRoot, record.dir, src.subdir);
       for (const d of packageDirs(root, Boolean(src.subdir), entry.only, label, warnings)) installed.push({ dir: d, source: label, yields: Boolean(entry.yields) });
-      packages.push(packageInfo(src, record));
+      packages.push(packageInfo(entry, src, record));
     } catch (err) {
       errors.push({ source: label, message: err.message });
     }

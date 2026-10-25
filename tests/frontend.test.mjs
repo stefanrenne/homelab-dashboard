@@ -620,16 +620,27 @@ test('showStats opens the container stats from the start; the label still folds 
   assert.equal(tag.getAttribute('aria-expanded'), 'false');
 });
 
-test('the footer shows the version and the plugins\' only with showVersion, and links a newer release', async () => {
+test('the footer: core and plugin versions linked to their release or commit, and a newer release', async () => {
   const layout = structuredClone(LAYOUT);
   layout.showVersion = true;
   layout.update = { version: '0.9.0', url: 'https://github.com/example/releases/tag/v0.9.0' };
-  layout.plugins = [{ name: 'homelab-dashboard-widgets', version: 'v0.4.0' }, { name: 'hd-widget-y', version: '2.0.1' }, { name: 'my-widgets', version: null }];
+  layout.versionUrl = 'https://github.com/example/releases/tag/v0.1.0';
+  layout.plugins = [
+    { name: 'widgets', version: 'v0.4.0', url: 'https://github.com/example/widgets/releases/tag/v0.4.0' },
+    { name: 'hd-widget-y', version: '2.0.1', url: 'https://www.npmjs.com/package/hd-widget-y/v/2.0.1' },
+    { name: 'my-widgets', version: null, url: null },
+    { name: 'odd', version: 'abc1234', url: 'javascript:alert(1)' },
+  ];
   const w = await page({ ...RESULTS, '/api/layout': layout });
   const box = w.document.getElementById('version-box');
   assert.equal(box.hidden, false);
-  assert.equal(box.textContent, 'v0.1.0 · v0.9.0 beschikbaar · homelab-dashboard-widgets v0.4.0 · hd-widget-y v2.0.1 · my-widgets');
-  assert.equal(box.querySelector('a').getAttribute('href'), 'https://github.com/example/releases/tag/v0.9.0');
+  assert.equal(box.textContent, 'core v0.1.0 · v0.9.0 beschikbaar | widgets v0.4.0 | hd-widget-y v2.0.1 | my-widgets | odd abc1234');
+  assert.deepEqual([...box.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href')]), [
+    ['core v0.1.0', 'https://github.com/example/releases/tag/v0.1.0'],
+    ['v0.9.0 beschikbaar', 'https://github.com/example/releases/tag/v0.9.0'],
+    ['widgets v0.4.0', 'https://github.com/example/widgets/releases/tag/v0.4.0'],
+    ['hd-widget-y v2.0.1', 'https://www.npmjs.com/package/hd-widget-y/v/2.0.1'],
+  ], 'only safe links; a plugin without one is text');
   const plain = await page();
   assert.equal(plain.document.getElementById('version-box').hidden, true);
 });

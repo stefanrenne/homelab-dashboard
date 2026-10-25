@@ -4,6 +4,13 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-10-25
+
+### Changed
+- The footer reads `core v0.7.3 | widgets v0.4.1`: the widgets collection is called "widgets",
+  and each version links to its GitHub release or commit (an npm plugin to its npm page). A
+  plugin from elsewhere, or from a URL with credentials, gets no link.
+
 ## [0.7.2] - 2026-10-25
 
 ### Changed

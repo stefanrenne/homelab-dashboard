@@ -263,6 +263,7 @@
   footer .right { display: flex; align-items: center; gap: 12px; }
   footer .version { font-size: .75rem; }
   footer .version a { color: var(--hd-accent); }
+  footer .version a.ref { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
   .icon-btn { background: none; border: 0; padding: 7px; min-width: 32px; min-height: 32px; cursor: pointer; color: var(--hd-text); opacity: .8;
     display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; }
   .icon-btn:hover { opacity: 1; }
@@ -1090,23 +1091,24 @@ function placeBookmarkGroups() {
 }
 
 /**
- * The version in the footer (unless hideVersion: true), with a link when a newer release is out,
- * and the installed plugins (the widgets collection, ...) with theirs.
+ * The version in the footer (unless hideVersion: true): `core v1.2.3 | widgets v0.4.1`, each
+ * linked to its release or commit, and a link when a newer release of the core is out.
  */
 function renderVersion(data) {
   const box = document.getElementById('version-box');
   box.hidden = !data.showVersion;
   box.replaceChildren();
   if (!data.showVersion) return;
-  box.append(document.createTextNode(/^\d/.test(data.version) ? `v${data.version}` : data.version));
-  const href = data.update && safeHref(data.update.url);
-  if (href) {
-    box.append(document.createTextNode(' · '));
-    box.append(el('a', { href, target: '_blank', rel: 'noopener noreferrer', text: translate('updateAvailable', { version: `v${data.update.version}` }) }));
-  }
+  const v = (version) => (/^\d/.test(version) ? `v${version}` : version);
+  const part = (text, url, cls = 'ref') => {
+    const href = url && safeHref(url);
+    return href ? el('a', { href, target: '_blank', rel: 'noopener noreferrer', text, class: cls }) : document.createTextNode(text);
+  };
+  box.append(part(`core ${v(data.version)}`, data.versionUrl));
+  const update = data.update && safeHref(data.update.url);
+  if (update) box.append(document.createTextNode(' · '), part(translate('updateAvailable', { version: `v${data.update.version}` }), update, null));
   for (const p of data.plugins ?? []) {
-    const version = p.version ? ` ${/^\d/.test(p.version) ? `v${p.version}` : p.version}` : '';
-    box.append(document.createTextNode(` · ${p.name}${version}`));
+    box.append(document.createTextNode(' | '), part(p.version ? `${p.name} ${v(p.version)}` : p.name, p.url));
   }
 }
 

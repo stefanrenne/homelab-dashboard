@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
-import { createApp } from '../src/app.js';
+import { createApp, versionUrl } from '../src/app.js';
 import { watchConfig } from '../src/config/watch.js';
 import { execFileSync } from 'node:child_process';
 import { tmpDir, serve, silentLog, writeWidget, COLLECTION_WIDGETS } from './helpers.mjs';
@@ -535,13 +535,13 @@ test('checkPluginUpdates installs a newer #latest and reloads; without news noth
   fs.writeFileSync(path.join(configDir, 'settings.yaml'), 'hideVersion: false\ndisableUpdateCheck: true\n');
   const app = await createApp({ configDir, log: silentLog, defaultPlugins: [{ source: `git+file://${repo}#latest` }], dockerSocket: null, releasesUrl: null });
   try {
-    assert.deepEqual(app.layout.plugins, [{ name: 'widget', version: 'v1.0.0' }]);
+    assert.deepEqual(app.layout.plugins, [{ name: 'widget', version: 'v1.0.0', url: null }]);
     assert.deepEqual(await app.checkPluginUpdates(), []);
     fs.writeFileSync(path.join(repo, 'widget.yaml'), fs.readFileSync(path.join(repo, 'widget.yaml'), 'utf8').replace(/^version: .*$/m, 'version: 9.0.0'));
     git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qam', 'v9');
     git('tag', 'v9.0.0');
     assert.equal((await app.checkPluginUpdates()).length, 1);
-    assert.deepEqual(app.layout.plugins, [{ name: 'widget', version: 'v9.0.0' }]);
+    assert.deepEqual(app.layout.plugins, [{ name: 'widget', version: 'v9.0.0', url: null }]);
     assert.equal(app.runtime.registry.get('example-counter').manifest.version, '9.0.0');
   } finally {
     app.close();
@@ -844,6 +844,11 @@ test('the version is shown and checked for updates by default; hideVersion: true
     const off = await make(`disableUpdateCheck: true\nplugins:\n  - path: ${path.resolve('examples/widget-template')}\n`);
     assert.equal(off.layout.showVersion, true);
     assert.deepEqual(off.layout.plugins.map((p) => p.name), ['widget-template'], 'the plugins next to the version');
+    assert.equal(off.layout.versionUrl, versionUrl(off.layout.version));
+    assert.equal(quiet.layout.versionUrl, null);
+    assert.equal(versionUrl('0.7.2'), 'https://github.com/stefanrenne/homelab-dashboard/releases/tag/v0.7.2');
+    assert.equal(versionUrl('main-1d0c028'), 'https://github.com/stefanrenne/homelab-dashboard/commit/1d0c028');
+    assert.equal(versionUrl('dev'), null);
     assert.equal(off.layout.update, null);
     off.close();
     assert.equal(calls, 0, 'no request without the version shown, or with disableUpdateCheck');

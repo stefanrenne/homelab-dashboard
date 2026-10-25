@@ -138,8 +138,8 @@ providers:          # shared keys and logins; a widget entry uses one with provi
     username: admin
     password: "{{HD_VAR_LONGHORN_PASSWORD}}"
 instanceName: internal   # for discovery labels meant for one dashboard (homelab.instance.internal.href)
-hideVersion: true   # hide the version in the footer, and each plugin's (the widgets collection, ...);
-                    # shown by default, as in homepage
+hideVersion: true   # hide the versions in the footer (shown by default, as in homepage):
+                    # `core v0.7.3 | widgets v0.4.1`, each linking to its release or commit
 pluginUpdateInterval: 1h   # how often #latest and branch plugins are checked for a newer version (false: never)
 disableUpdateCheck: true   # do not ask GitHub once a day for a newer release (only asked while the version is shown)
 disableIndexing: true      # ask search engines not to index the page (robots.txt and a robots meta tag)

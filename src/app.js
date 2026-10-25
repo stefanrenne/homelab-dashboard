@@ -24,6 +24,7 @@ import { safeJoin } from './util.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const PUBLIC_DIR = path.join(ROOT, 'public');
+export const REPO_URL = 'https://github.com/stefanrenne/homelab-dashboard';
 // HD_VERSION is set by the Docker build (1.2.3 or main-<sha>); otherwise package.json's version.
 export const VERSION = process.env.HD_VERSION || JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
 
@@ -75,6 +76,13 @@ export function hostAllowed(header, list) {
   return LOOPBACK.includes(name) || list.includes(host) || list.includes(name);
 }
 
+/** The release (1.2.3) or commit (main-<sha>) page of this dashboard's version, or null. */
+export function versionUrl(version) {
+  if (/^\d+\.\d+\.\d+$/.test(version)) return `${REPO_URL}/releases/tag/v${version}`;
+  const sha = /^main-([0-9a-f]{7,40})$/.exec(version)?.[1];
+  return sha ? `${REPO_URL}/commit/${sha}` : null;
+}
+
 export async function createApp({
   configDir,
   // every widget comes from a plugin (the widgets collection by default); a folder of widgets
@@ -122,7 +130,7 @@ export async function createApp({
     const update = latest && isNewer(latest.version, VERSION) ? latest : null;
     // the installed plugins (name and version) next to the version, behind the same setting
     const plugins = showVersion ? state.pluginResult.packages ?? [] : [];
-    state.layout = { ...layout, version: VERSION, showVersion, update, plugins };
+    state.layout = { ...layout, version: VERSION, versionUrl: showVersion ? versionUrl(VERSION) : null, showVersion, update, plugins };
     broadcast('reload');
   }
 

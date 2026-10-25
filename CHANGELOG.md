@@ -4,6 +4,14 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-10-25
+
+### Fixed
+- An installation that had the widgets collection locked at 0.3.0 kept it after the update, so
+  the service fields lost their widgets (`unknown widget type "docker"`). The collection's
+  `#latest` now moves on by itself when it is locked below the release the dashboard needs.
+- `plugins:` with every entry commented out is an empty list again, not "expected a list".
+
 ## [0.6.1] - 2026-10-25
 
 ### Fixed

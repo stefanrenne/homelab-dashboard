@@ -209,6 +209,8 @@ it to the newest release. The folder of the previous version is then deleted. An
 fails (offline, a broken release) keeps the version that worked and says so in the messages. A branch named `latest` can no longer be used as `#latest`.
 The widgets collection is the exception: when its `#latest` is locked at a release older than
 the one this dashboard needs (0.4.0 for 0.6), the next start moves it to the newest release by itself.
+The widgets collection is the exception: when its `#latest` is locked at a release older than
+the one this dashboard needs (0.4.0 for 0.6), the next start moves it to the newest release by itself.
 
 A source without `widget.yaml` at its root is a **collection**: every folder with a
 `widget.yaml` directly in it, or in its `widgets/` folder, is installed.

@@ -4,6 +4,12 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-25
+
+### Added
+- A "Copy output" button in the result dialog of a widget action (the button widget's script
+  output), in every language; it says "Copied" when it worked.
+
 ## [0.8.0] - 2026-10-25
 
 Pairs with the widgets collection 0.5.0, which has the `button` widget.

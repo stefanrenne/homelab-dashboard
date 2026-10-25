@@ -5,10 +5,10 @@ CI (`.github/workflows/ci.yml`) does the work; a release is a tag.
 | Event | What CI does |
 |---|---|
 | Pull request | Tests, an amd64 image build and a smoke test. Nothing is pushed. |
-| Push to `main` | The same, then `ghcr.io/stefanrenne/homelab-dashboard:latest` and `:sha-<short>` for amd64 and arm64. |
+| Push to `main` | The same, then `ghcr.io/stefanrenne/homelab-dashboard:latest` and `:sha-<short>` for amd64 and arm64. The version in the image is `main-<short sha>`, or `X.Y.Z` when the commit carries the release tag `vX.Y.Z` (so `latest` of a release shows its number). |
 | Tag `vX.Y.Z` | The same, tagged `X.Y.Z` and `X.Y`, and a GitHub release with that version's CHANGELOG section. |
 | Run by hand on `main` | As a tag, for `package.json`'s version when it is not released yet: CI creates the tag `vX.Y.Z` with the release. For when a tag cannot be pushed. Otherwise as a push to `main`. |
-| Monday 04:23 UTC | Rebuild of `latest`, so base image security fixes arrive without a code change. |
+| Monday 04:23 UTC | Rebuild of `latest`, so base image security fixes arrive without a code change; versioned as a push to `main`. |
 
 ## Release steps
 

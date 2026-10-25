@@ -49,7 +49,9 @@ jobs:
       - uses: docker/setup-buildx-action@v4
       # the version in the image: 1.2.3 for a tag v1.2.3, or for a run by hand on main (which
       # releases package.json's version unless it is released already; dependabot-automerge.yml
-      # starts such runs too), otherwise main-<short sha>
+      # starts such runs too). Otherwise main-<short sha>, unless the commit carries a release
+      # tag: the main build of a release commit (and the weekly rebuild) is that version too, so
+      # `latest` never calls a release main-<sha>.
       - id: version
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -59,6 +61,11 @@ jobs:
             v=$(node -p "require('./package.json').version"); rel=true
             if gh release view "v$v" >/dev/null 2>&1; then echo "v$v is released already: a main build"; v="main-${GITHUB_SHA::7}"; rel=false; fi
           else v="main-${GITHUB_SHA::7}"; rel=false; fi
+          if [[ "$v" == main-* ]]; then
+            # a release tag on this commit (annotated tags show as <tag>^{})
+            tag=$(git ls-remote --tags origin | awk -v sha="$GITHUB_SHA" '$1 == sha { sub("refs/tags/", "", $2); sub(/\^\{\}$/, "", $2); print $2 }' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)
+            if [ -n "$tag" ]; then echo "this commit is release $tag"; v="${tag#v}"; fi
+          fi
           { echo "version=$v"; echo "release=$rel"; echo "minor=${v%.*}"; } >> "$GITHUB_OUTPUT"
       - name: Build for the smoke test (amd64)
         uses: docker/build-push-action@v7

@@ -4,6 +4,13 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-10-25
+
+### Changed
+- A container, VM or pod label opens its stats above the card's widgets instead of below, without
+  the state block (the label shows it), as in homepage. With the widgets collection 0.4.1 a
+  container shows RX and TX too.
+
 ## [0.7.0] - 2026-10-25
 
 ### Added

@@ -828,7 +828,8 @@ function stopPolling() {
 /**
  * A status label in the top-right corner of a card, like homepage: "78 ms" or "down" for
  * HTTP and ping checks, the container state ("healthy", "running") for Docker. Clicking a
- * container label shows the container's CPU and memory below the card.
+ * container label shows the container's CPU, memory, RX and TX above the card's widgets, as in
+ * homepage; the state block is left out there, the label shows it already.
  */
 /**
  * A status label in the card's corner. statusStyle (settings or service): none shows the
@@ -850,8 +851,8 @@ function statusTag(status, card, style, showStats) {
     tag.setAttribute('aria-expanded', 'false');
     const open = () => {
       stats = el('div', { class: 'widget container-stats' });
-      card.append(stats);
-      renderResult(stats, { type: status.type }, last, card.dataset.name);
+      card.insertBefore(stats, card.querySelector(':scope > .widget'));
+      renderResult(stats, { type: status.type }, withoutState(last), card.dataset.name);
       tag.setAttribute('aria-expanded', 'true');
     };
     tag.addEventListener('click', (e) => {
@@ -878,9 +879,15 @@ function statusTag(status, card, style, showStats) {
     else tag.textContent = text;
     tag.setAttribute('aria-label', `${translate(s)}: ${text}`);
     if (!isContainer) tag.title = result.ok ? translate(s) : result.error;
-    if (stats) renderResult(stats, { type: status.type }, result, card.dataset.name);
+    if (stats) renderResult(stats, { type: status.type }, withoutState(result), card.dataset.name);
   });
   return tag;
+}
+
+/** A status widget's result without its state block, for the stats under a label that shows it. */
+function withoutState(result) {
+  if (!result?.ok || !Array.isArray(result.data?.blocks)) return result;
+  return { ...result, data: { ...result.data, blocks: result.data.blocks.filter((b) => (b.key ?? b.label) !== 'status') } };
 }
 
 // ---------------------------------------------------------------- page

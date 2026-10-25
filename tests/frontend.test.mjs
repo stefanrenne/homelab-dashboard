@@ -135,12 +135,15 @@ test('a proxmoxNode label opens the VM\'s CPU and memory too, with its own widge
   w.close();
 });
 
-test('clicking a container label shows the container stats', async () => {
-  const w = await page();
+test('clicking a container label shows the container stats above the widgets, without the state', async () => {
+  const w = await page({ ...RESULTS, '/api/widgets/s-2': { ok: true, data: { status: 'up', statusText: 'healthy', blocks: [
+    { label: 'status', value: 'running (healthy)', status: 'ok' }, { label: 'cpu', value: 3, unit: '%' }, { key: 'rx', label: 'rx', value: 55.5, unit: 'MB' }] } } });
   const router = w.document.querySelector('[data-service="svc-1"]');
   const tag = router.querySelectorAll('.tag')[1];
   tag.click();
-  assert.deepEqual([...router.querySelectorAll('.container-stats .block .v')].map((n) => n.textContent), ['3%']);
+  assert.deepEqual([...router.querySelectorAll('.container-stats .block .v')].map((n) => n.textContent), ['3%', '55,5 MB'], 'no state block: the label shows it');
+  const widgets = [...router.querySelectorAll(':scope > .widget')];
+  assert.ok(widgets.length > 1 && widgets[0].classList.contains('container-stats'), 'above the service widget, as in homepage');
   tag.click();
   assert.equal(router.querySelector('.container-stats'), null);
   w.close();

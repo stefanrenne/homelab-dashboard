@@ -6,16 +6,27 @@ import https from 'node:https';
 import { highlightBlocks } from '../highlight.js';
 
 export const DEFAULT_TIMEOUT_MS = 10_000;
+// the most an action may take; a widget keeps its own, shorter limit (the button's `timeout`)
+export const ACTION_TIMEOUT_MS = 60 * 60 * 1000;
+// what an action shows is cut to this many characters (the end is kept)
+export const ACTION_OUTPUT_MAX = 64 * 1024;
 export const BLOCK_STATUSES = ['ok', 'warn', 'error', 'unknown'];
 export const SERVICE_STATUSES = ['up', 'down', 'warn', 'unknown'];
 export const ROW_ICONS = ['play', 'pause'];
 
 export class WidgetRuntime {
-  /** `sandbox` (a WidgetSandbox) runs installed widgets in a worker thread; null runs them here. */
-  constructor({ registry, timeoutMs = DEFAULT_TIMEOUT_MS, log = console, now = Date.now, sandbox = null }) {
+  /**
+   * `sandbox` (a WidgetSandbox) runs installed widgets in a worker thread; null runs them here.
+   * `configDir` reaches widgets as ctx.configDir.
+   */
+  constructor({ registry, timeoutMs = DEFAULT_TIMEOUT_MS, actionTimeoutMs = ACTION_TIMEOUT_MS, configDir = null, log = console, now = Date.now, sandbox = null }) {
     this.registry = registry;
     this.sandbox = sandbox;
     this.timeoutMs = timeoutMs;
+    this.actionTimeoutMs = actionTimeoutMs;
+    this.configDir = configDir;
+    this.secrets = []; // every known secret value (config and discovery), scrubbed from action results
+    this.running = new Set(); // instanceIds with an action under way
     this.log = log;
     this.now = now;
     this.instances = new Map(); // instanceId -> { type, options, secretValues, refreshMs }
@@ -25,9 +36,10 @@ export class WidgetRuntime {
   }
 
   /** Replaces the set of instances; keeps ctx.cache stores of instances that still exist. */
-  setInstances(instances, registry = this.registry) {
+  setInstances(instances, registry = this.registry, secrets = this.secrets) {
     this.registry = registry;
     this.instances = instances;
+    this.secrets = [...secrets];
     this.cache.clear();
     for (const id of this.stores.keys()) if (!instances.has(id)) this.stores.delete(id);
     this.sandbox?.keep(instances.keys());
@@ -92,6 +104,43 @@ export class WidgetRuntime {
     return result;
   }
 
+  /**
+   * Runs an instance's `action` (a button press): one at a time per instance, at most
+   * actionTimeoutMs, every known secret scrubbed from what it returns. Never throws:
+   * { ok: true, data: { status, output?, exitCode?, error? } } or { ok: false, error, busy?, missing? }.
+   */
+  async action(instanceId) {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return { ok: false, missing: true, error: 'unknown widget instance' };
+    const widget = this.registry.get(instance.type);
+    if (!widget?.hasAction) return { ok: false, missing: true, error: 'this widget has no action' };
+    if (instance.errors?.length) return { ok: false, error: `invalid options: ${instance.errors.join('; ')}` };
+    if (this.running.has(instanceId)) return { ok: false, busy: true, error: 'already running' };
+    this.running.add(instanceId);
+    const secrets = [...instance.secretValues, ...this.secrets];
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(new Error(`timed out after ${this.actionTimeoutMs} ms`)), this.actionTimeoutMs);
+    try {
+      const isolated = this.sandbox && widget.source !== 'builtin' && widget.serverUrl;
+      const call = isolated
+        ? () => this.sandbox.run({ url: widget.serverUrl, instanceId, options: structuredClone(instance.options), kind: 'action', configDir: this.configDir, signal: controller.signal, log: this.#log(instance) })
+        : () => widget.server.action(this.#context(instanceId, instance, controller.signal));
+      const data = await Promise.race([
+        Promise.resolve().then(call),
+        new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(controller.signal.reason))),
+      ]);
+      return { ok: true, data: actionResult(data, secrets) };
+    } catch (err) {
+      const message = scrub(describeError(err), secrets);
+      this.log.warn(`widget ${instance.type} (${instanceId}) action: ${message}`);
+      return { ok: false, error: message };
+    } finally {
+      clearTimeout(timer);
+      controller.abort();
+      this.running.delete(instanceId);
+    }
+  }
+
   #log(instance) {
     const prefix = `widget ${instance.type}:`;
     return {
@@ -111,6 +160,7 @@ export class WidgetRuntime {
       params: Object.freeze({ ...params }),
       signal,
       cache: this.stores.get(instanceId),
+      configDir: this.configDir,
       log,
       fetch: (input, init = {}) => widgetFetch(input, init, instance.options.url, signal),
     });
@@ -236,6 +286,19 @@ export function describeError(err) {
 }
 
 /** Removes secret values from a message before it is logged or sent to the browser. */
+/** What an action returned, as the page shows it: status, output (its end), exit code, error; secrets scrubbed. */
+export function actionResult(data, secrets = []) {
+  const d = data && typeof data === 'object' ? data : {};
+  const out = { status: d.status === 'ok' ? 'ok' : 'error' };
+  if (d.output !== undefined && d.output !== null) {
+    const text = scrub(String(d.output), secrets);
+    out.output = text.length > ACTION_OUTPUT_MAX ? text.slice(-ACTION_OUTPUT_MAX) : text;
+  }
+  if (Number.isInteger(d.exitCode)) out.exitCode = d.exitCode;
+  if (d.error !== undefined && d.error !== null) out.error = scrub(String(d.error), secrets).slice(0, 500);
+  return out;
+}
+
 export function scrub(message, secretValues = []) {
   let out = message;
   for (const s of secretValues) if (s && s.length >= 3) out = out.split(s).join('***');

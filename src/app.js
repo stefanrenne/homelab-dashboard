@@ -101,7 +101,7 @@ export async function createApp({
   const sseClients = new Set();
   // installed widgets run in a worker thread (src/plugins/sandbox.js) unless HD_WIDGET_ISOLATION=off
   const sandbox = env.HD_WIDGET_ISOLATION === 'off' ? null : new WidgetSandbox({ log, memoryMb: Number(env.HD_WIDGET_MEMORY_MB) > 0 ? Number(env.HD_WIDGET_MEMORY_MB) : undefined });
-  const runtime = new WidgetRuntime({ registry: new Map(), log, timeoutMs, sandbox });
+  const runtime = new WidgetRuntime({ registry: new Map(), log, timeoutMs, sandbox, configDir: path.resolve(configDir) });
   const state = { config: null, registry: new Map(), pluginResult: { errors: [], warnings: [] }, registryErrors: [], layout: null, actions: new Map(), frames: [] };
   const updates = new UpdateCheck({ url: releasesUrl, log, onChange: () => state.config && rebuild() });
   const discovery = new Discovery({ log, env, onChange: () => state.config && rebuild(), ...discoveryOptions });
@@ -119,7 +119,7 @@ export async function createApp({
       extraWarnings: [...pluginMessages(state.pluginResult.warnings), ...merged.warnings],
       secrets: new Set([...state.config.secrets, ...discovery.secrets]),
     });
-    runtime.setInstances(instances, state.registry);
+    runtime.setInstances(instances, state.registry, new Set([...state.config.secrets, ...discovery.secrets]));
     state.actions = actions;
     state.frames = frames;
     // the version is shown unless hideVersion: true, as in homepage
@@ -278,6 +278,12 @@ export async function createApp({
         if (req.headers['x-requested-with'] !== 'homelab-dashboard') return send(res, 403, { error: 'missing X-Requested-With' });
         await reload({ update: url.searchParams.get('update') === '1' });
         return send(res, 200, { errors: state.pluginResult.errors, warnings: state.pluginResult.warnings });
+      }
+      if (method === 'POST' && /^\/api\/widgets\/[^/]+\/action$/.test(p)) {
+        // A custom header cannot be sent cross-site without a CORS preflight, which we never allow.
+        if (req.headers['x-requested-with'] !== 'homelab-dashboard') return send(res, 403, { error: 'missing X-Requested-With' });
+        const out = await runtime.action(p.split('/')[3]);
+        return send(res, out.busy ? 409 : out.missing ? 404 : 200, out);
       }
       if (method === 'POST' && p.startsWith('/api/run/')) {
         // A custom header cannot be sent cross-site without a CORS preflight, which we never allow.

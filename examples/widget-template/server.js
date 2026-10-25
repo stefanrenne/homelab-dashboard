@@ -35,4 +35,14 @@ export default {
       max: ctx.options.max,
     };
   },
+
+  /**
+   * Optional: runs when client.js sends `hd-widget-action` (a button press). One at a time per
+   * instance; the dashboard shows the result in a dialog (`output` as text, `exitCode` if any).
+   * Same ctx as fetch, plus ctx.configDir (the dashboard's config folder).
+   */
+  async action(ctx) {
+    ctx.cache.delete('previous');
+    return { status: 'ok', output: 'The change starts again from the next value.' };
+  },
 };

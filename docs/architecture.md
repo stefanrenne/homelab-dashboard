@@ -34,6 +34,7 @@
 | `GET /api/events` | Server-sent events: `reload` |
 | `GET /api/health` | `{ ok, version }` (Docker healthcheck) |
 | `POST /api/plugins/sync[?update=1]` | Re-sync plugins; needs `X-Requested-With: homelab-dashboard` |
+| `POST /api/widgets/:instanceId/action` | Runs the widget's `action`; `{ ok, data: { status, output?, exitCode?, error? } }`, `{ ok: false, error }`, 409 while one runs, 404 without an action. Same header. |
 | `POST /api/run/:serviceId` | Calls the configured URL of a `target: hidden-iframe` service; `{ ok, status }` or `{ ok: false, error }`. Same header. |
 | `GET /widgets/:type/client.js`, `/widgets/:type/assets/*` | Widget browser files |
 | `GET /icons/*` | `<config>/icons` |

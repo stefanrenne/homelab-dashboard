@@ -680,3 +680,36 @@ test('a widget\'s hd-widget-params makes the page ask again with those params', 
   await new Promise((r) => setTimeout(r, 10));
   assert.ok(calls.includes('api/widgets/w-1?latitude=52.37&longitude=4.89'), calls.join('\n'));
 });
+
+test('hd-widget-action: one POST at a time, then a dialog with how it went, the exit code and the output', async () => {
+  const calls = [];
+  const results = { ...RESULTS, '/api/widgets/w-1/action': { ok: true, data: { status: 'error', output: 'line 1\n<b>line 2</b>', exitCode: 3 } } };
+  const w = await page(results, calls);
+  const box = w.document.querySelector('[data-service="svc-1"] .widget');
+  box.dispatchEvent(new w.CustomEvent('hd-widget-action', { bubbles: true, composed: true, detail: { title: 'Gen Swag' } }));
+  box.dispatchEvent(new w.CustomEvent('hd-widget-action', { bubbles: true, composed: true, detail: { title: 'Gen Swag' } }));
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(calls.filter((c) => c.endsWith('/action')).length, 1, 'a second press while it runs is ignored');
+  const dialog = w.document.querySelector('dialog.action-result');
+  assert.ok(dialog);
+  assert.equal(dialog.querySelector('h2').textContent, 'Gen Swag');
+  assert.equal(dialog.querySelector('.status').textContent, 'Gen Swag mislukt: Exitcode 3');
+  assert.ok(dialog.querySelector('.status').classList.contains('error'));
+  assert.equal(dialog.querySelector('pre').textContent, 'line 1\n<b>line 2</b>', 'output as text, never HTML');
+  assert.equal(dialog.querySelector('pre b'), null);
+  dialog.querySelector('.actions button').click();
+  assert.equal(w.document.querySelector('dialog.action-result'), null, 'Close removes it');
+
+  results['/api/widgets/w-1/action'] = { ok: true, data: { status: 'ok', exitCode: 0 } };
+  box.dispatchEvent(new w.CustomEvent('hd-widget-action', { bubbles: true, composed: true }));
+  await new Promise((r) => setTimeout(r, 20));
+  const ok = w.document.querySelector('dialog.action-result');
+  assert.equal(ok.querySelector('.status').textContent, 'Router: klaar · Exitcode 0', 'no title: the service name');
+  assert.equal(ok.querySelector('.empty').textContent, 'Geen uitvoer');
+  results['/api/widgets/w-1/action'] = { ok: false, busy: true, error: 'already running' };
+  box.dispatchEvent(new w.CustomEvent('hd-widget-action', { bubbles: true, composed: true }));
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(w.document.querySelectorAll('dialog.action-result').length, 1, 'one dialog at a time');
+  assert.equal(w.document.querySelector('dialog.action-result .status').textContent, 'Router mislukt: het draait nog');
+  w.close();
+});

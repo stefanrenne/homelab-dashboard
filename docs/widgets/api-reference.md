@@ -68,6 +68,32 @@ export default {
 
 `fetch(ctx)` is called at most once per `refresh` per widget instance. Concurrent browser requests share one call.
 
+### action (API 1, dashboard 0.8.0)
+
+```js
+export default {
+  async fetch(ctx) { return { blocks: [] }; },
+  async action(ctx) { return { status: 'ok', output: 'done', exitCode: 0 }; },
+};
+```
+
+Optional. Runs when the widget's `client.js` sends `hd-widget-action` (a button press): the page
+POSTs `api/widgets/<instanceId>/action` and shows the result in a dialog. Same `ctx` as `fetch`;
+`ctx.signal` aborts after an hour at most (keep your own, shorter limit). One action at a time per
+instance: a second press while one runs is refused. The result:
+
+| Field | Meaning |
+|---|---|
+| `status` | `ok`, or anything else for a failure. |
+| `output` | Text shown as it is (monospace, scrollable); the last 64 KB are kept. |
+| `exitCode` | An integer, shown next to the status. |
+| `error` | A short reason for a failure. |
+
+Other fields are dropped. Every secret value the dashboard knows (secret options, `{{HD_VAR_*}}`,
+`{{HD_FILE_*}}`) is replaced by `***` in `output` and `error`, as is a thrown error's message.
+An action changes something somewhere: it runs for anyone who can open the page (there is no
+login), so say so in the widget's README.
+
 Widgets run in a worker thread, apart from the dashboard: one
 worker for all of them, with a memory limit. `ctx` is the same; what `fetch` returns must be plain
 data (it is copied out of the worker), and module-level state is the worker's. A widget that does
@@ -84,6 +110,7 @@ not stop within a second after its timeout gets the worker restarted.
 | `ctx.params` | What the page sent through `hd-widget-params`: only names in widget.yaml `params`, each a non-empty string of at most 100 characters; `{}` when nothing was sent. Comes from the browser, so treat it as untrusted input (validate, never put it in a URL path unchecked). Each set of params has its own cached result. |
 | `ctx.signal` | `AbortSignal`, aborted when the call times out (10 s). |
 | `ctx.cache` | A `Map` that survives between calls of this instance (e.g. the previous value for a delta). Cleared when the instance disappears from the config, and when the widget worker restarts (see below). |
+| `ctx.configDir` | The dashboard's config folder (an absolute path), e.g. to resolve a script path from the options. Since 0.8.0. |
 | `ctx.log` | `info`, `warn`, `error`; prefixed with the widget type. |
 
 Only `node:` built-ins can be imported. Bundle any other dependency into the file.
@@ -154,6 +181,7 @@ again after every refresh:
 | `data` | What `server.js` returned, or `null` (before the first result, or for a client-only widget). |
 | `error` | Error message of the last refresh, or `null`. |
 | `instanceId` | The id of this widget instance (for `api/suggest`). |
+| `busy` | `true` while an action this widget asked for (`hd-widget-action`) runs, then `false`. Use a setter to update the look (disable the button). Since 0.8.0. |
 
 Theme CSS variables inherit into the shadow root: `--hd-text`, `--hd-muted`, `--hd-accent`,
 `--hd-card`, `--hd-border`, `--hd-ok`, `--hd-warn`, `--hd-error`.
@@ -170,6 +198,7 @@ A `client.js` may talk to the dashboard through DOM events that bubble out of it
 |---|---|---|
 | `hd-search-input` | `{ query }` | Shows only the services and bookmarks that match every word; empty shows all. |
 | `hd-search-submit` | `{ query }` | Send it `cancelable: true`. With exactly one match the dashboard opens it and cancels the event; otherwise the widget may search elsewhere. |
+| `hd-widget-action` | `{ title? }` | Runs server.js's `action` (see above) and shows its result in a dialog titled `title` (default: the service's name). Sets the element's `busy` to `true` until it is done; a press while it runs is ignored. Since 0.8.0. |
 | `hd-widget-params` | `{ name: value, ... }` | Fetches the widget again with these values (text) for `server.js`, and keeps sending them on every refresh. Only the names in widget.yaml `params` arrive. |
 
 The collection's `search` widget uses the first two. The weather widgets of the
@@ -198,6 +227,7 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 | API | Dashboard | Change |
 |---|---|---|
 | 1 | 0.1.0 | First version (including `vars`, row `status` and `defaultFields`). |
+| 1 | 0.8.0 | `action(ctx)` in server.js, `ctx.configDir`, the `hd-widget-action` event and the element's `busy`; `POST api/widgets/<instanceId>/action`. |
 | 1 | next | Blocks can carry `highlight: { level, valueOnly }`, added by the dashboard from the entry's `highlight:` rules. Widgets need no change. |
 | 1 | next | `provider: <name>` in an entry fills options from `settings.yaml` `providers`. Widgets need no change. |
 | 1 | next | `client.js` gets `instanceId`; `GET api/suggest` for search suggestions. |

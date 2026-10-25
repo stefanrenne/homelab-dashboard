@@ -960,3 +960,40 @@ test('homepage\'s widget names work as aliases: type customapi is the custom-api
     await t.close();
   }
 });
+
+test('a widget action: POST with the header, one at a time, secrets scrubbed, 404 without one', async () => {
+  const plugin = path.join(tmpDir('hd-act-'), 'act');
+  writeWidget(plugin, { id: 'act', name: 'Act', version: '1.0.0', apiVersion: 1, options: { key: { type: 'string', secret: true }, wait: { type: 'number' } } }, {
+    'server.js': `export default {
+  async fetch() { return { blocks: [] }; },
+  async action(ctx) {
+    await new Promise((r) => setTimeout(r, ctx.options.wait ?? 0));
+    if (ctx.options.wait === 1) throw new Error('broke with ' + ctx.options.key);
+    return { status: 'ok', output: 'key ' + ctx.options.key + ' in ' + ctx.configDir, exitCode: 0, extra: 'dropped' };
+  },
+};
+`,
+  });
+  const t = await startApp({
+    'settings.yaml': `plugins:\n  - path: ${plugin}\n`,
+    'services.yaml': '- G:\n    - A:\n        widget: { type: act, key: "{{HD_VAR_K}}", wait: 300 }\n    - B:\n        widget: { type: act, key: "{{HD_VAR_K}}", wait: 1 }\n    - C:\n        widget: { type: custom-api, url: "http://c.lan/", mappings: [] }\n',
+  }, { HD_VAR_K: SECRET });
+  const post = (id, headers = { 'x-requested-with': 'homelab-dashboard' }) => fetch(`${t.base}/api/widgets/${id}/action`, { method: 'POST', headers });
+  try {
+    const [a, b, c] = t.app.layout.groups[0].services.map((s) => s.widgets[0].instanceId);
+    assert.equal((await post(a, {})).status, 403, 'the header keeps other sites out');
+    const first = post(a);
+    await new Promise((r) => setTimeout(r, 50));
+    const second = await post(a);
+    assert.equal(second.status, 409, 'one at a time');
+    const done = await (await first).json();
+    assert.deepEqual(done, { ok: true, data: { status: 'ok', output: `key *** in ${path.resolve(t.configDir)}`, exitCode: 0 } }, 'extra fields are dropped');
+    const failed = await (await post(b)).json();
+    assert.equal(failed.ok, false);
+    assert.equal(failed.error.includes(SECRET), false, 'scrubbed');
+    assert.equal((await post(c)).status, 404, 'custom-api has no action');
+    assert.equal((await post('nope')).status, 404);
+  } finally {
+    await t.close();
+  }
+});

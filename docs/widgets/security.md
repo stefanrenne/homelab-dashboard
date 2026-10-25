@@ -17,6 +17,11 @@ choosing a Docker image. The dashboard limits the damage where it can:
 - `git`, `npm` and `ping` get validated arguments without a shell (no `-`-prefixed refs or names).
 - The default collection yields: a widget id from your own `plugins:` wins over the collection's,
   and two of your own sources cannot share an id.
+- **Actions run for anyone who can open the page.** There is no login: a widget with an
+  `action` (the collection's `button` running a script) does its thing for every visitor who
+  presses it. Put the dashboard behind your proxy's authentication, or keep such buttons off a
+  dashboard that is reachable from outside. Only the configured script or command runs; nothing
+  in the request reaches it.
 - The dashboard, and so every widget, runs as the unprivileged `node` user. The entrypoint is
   root only to give `node` a mounted Docker socket's group, before the dashboard starts.
 - A mounted Docker socket gives every widget the whole Docker API (`:ro` does not limit it).

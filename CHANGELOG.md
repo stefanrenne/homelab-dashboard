@@ -4,6 +4,18 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-25
+
+Pairs with the widgets collection 0.5.0, which has the `button` widget.
+
+### Added
+- Widget actions (widget API 1): a widget's server.js may have `action(ctx)` next to `fetch`,
+  started when its client.js sends `hd-widget-action` (a button press). The page shows the result
+  in a dialog with the status, exit code and output; one run at a time per widget, secrets
+  scrubbed from the output. `ctx.configDir` gives widgets the config folder.
+- The image has bash, curl, jq, docker-cli and docker compose, for the scripts the collection's
+  `button` widget runs, so a separate webhook container is no longer needed.
+
 ## [0.7.3] - 2026-10-25
 
 ### Changed

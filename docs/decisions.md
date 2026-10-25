@@ -2,6 +2,19 @@
 
 Why things are the way they are. Newest first.
 
+## Widgets may run actions; the button widget runs scripts (2026-10-25)
+A separate webhook container ran the homelab's scripts (bash with curl, jq and docker). The widget
+API got `action(ctx)` so a widget can do something on a press, and the collection's `button`
+widget uses it to run a script file or an inline command in the dashboard container (bash, curl,
+jq, docker-cli and compose are in the image for it). The script is the user's own code, from the
+config, never from the request; it runs as `node` with an empty environment unless the button
+says `inheritEnv: true`, and its output passes the secret scrubbing. The hard rules are about the
+dashboard's own code: its Docker calls stay GET-only (rule 9) and it writes only its plugins
+folder (rule 5); what a configured script does with the socket or files is up to the user. There
+is no login, so anyone who can open the page can press the button: that is the user's choice
+(documented in the widget's README and in security.md). One action at a time per instance, at
+most an hour; the button keeps its own `timeout` (5 minutes by default).
+
 ## Every widget in the widgets collection (2026-10-25)
 The dashboard had built-in widgets: the generic and header ones, and the ones behind a
 service's `siteMonitor:`, `ping:`, `container:`, `app:` and `proxmoxNode:`. They moved to the

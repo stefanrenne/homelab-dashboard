@@ -57,8 +57,8 @@ export class WidgetSandbox {
     this.#calls.delete(id);
   }
 
-  /** Runs a widget's fetch in the worker; resolves its data or rejects with its error. */
-  run({ url, instanceId, options, params = {}, signal, log }) {
+  /** Runs a widget's fetch (or `kind: 'action'`, its action) in the worker; resolves its data or rejects with its error. */
+  run({ url, instanceId, options, params = {}, kind = 'fetch', configDir = null, signal, log }) {
     this.#worker ??= this.#spawn();
     const worker = this.#worker;
     const id = ++this.#seq;
@@ -77,7 +77,7 @@ export class WidgetSandbox {
       if (signal?.aborted) onAbort();
       else signal?.addEventListener('abort', onAbort, { once: true });
       try {
-        worker.postMessage({ type: 'run', id, url, instanceId, options, params });
+        worker.postMessage({ type: 'run', id, url, instanceId, options, params, kind, configDir });
       } catch (err) {
         this.#settle(id);
         reject(new Error(`options cannot reach the widget worker (${err.message})`));

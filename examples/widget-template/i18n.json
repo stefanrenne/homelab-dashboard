@@ -1,7 +1,7 @@
 {
-  "en": { "value": "Value", "change": "Change" },
-  "nl": { "value": "Waarde", "change": "Verschil" },
-  "fr": { "value": "Valeur", "change": "Écart" },
-  "de": { "value": "Wert", "change": "Änderung" },
-  "es": { "value": "Valor", "change": "Cambio" }
+  "en": { "value": "Value", "change": "Change", "reset": "Reset" },
+  "nl": { "value": "Waarde", "change": "Verschil", "reset": "Opnieuw" },
+  "fr": { "value": "Valeur", "change": "Écart", "reset": "Réinitialiser" },
+  "de": { "value": "Wert", "change": "Änderung", "reset": "Zurücksetzen" },
+  "es": { "value": "Valor", "change": "Cambio", "reset": "Reiniciar" }
 }

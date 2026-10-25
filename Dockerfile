@@ -5,7 +5,8 @@ FROM node:24-alpine
 # git: installs widget packages from git sources. iputils-ping: the ping widget
 # (busybox ping needs root; iputils' ping works for the unprivileged user). su-exec: the
 # entrypoint drops from root to `node` after giving it the Docker socket's group.
-RUN apk add --no-cache git iputils-ping tini su-exec
+# bash, curl, jq, docker-cli, docker-cli-compose: for the scripts a button widget runs.
+RUN apk add --no-cache git iputils-ping tini su-exec bash curl jq docker-cli docker-cli-compose
 
 WORKDIR /app
 COPY package.json package-lock.json ./

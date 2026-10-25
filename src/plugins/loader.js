@@ -97,6 +97,7 @@ export async function loadWidget(dir, { source = 'builtin' } = {}) {
     server,
     serverUrl, // the worker thread (sandbox.js) imports installed widgets from here
     hasClient: fs.existsSync(path.join(dir, 'client.js')),
+    hasAction: typeof server?.action === 'function', // a button press and the like (runtime.action)
     i18n,
   };
 }

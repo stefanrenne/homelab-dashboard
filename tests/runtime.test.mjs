@@ -235,3 +235,22 @@ test('runtime: params reach ctx.params only when the widget declares them, each 
   await rt.get('i', { latitude: 'x'.repeat(101) });
   assert.deepEqual(seen.at(-1), {}, 'long values are dropped');
 });
+
+test('runtime.action in the process: ctx.configDir, the result reduced to status/output/exitCode/error, a cap', async () => {
+  const dir = writeWidget(tmpDir(), { ...base, id: 'act2' }, { 'server.js': 'export default { async fetch() { return {}; }, async action(ctx) { return { status: "weird", output: "x".repeat(70000) + ctx.configDir, exitCode: 2.5, error: 7 }; } };' });
+  const widget = await loadWidget(dir);
+  assert.equal(widget.hasAction, true);
+  const runtime = new WidgetRuntime({ registry: new Map([['act2', widget]]), log: silentLog, configDir: '/cfg' });
+  runtime.setInstances(new Map([['i', { type: 'act2', options: {}, secretValues: [], refreshMs: 1000 }]]), undefined, ['/cfg']);
+  const out = await runtime.action('i');
+  assert.equal(out.ok, true);
+  assert.equal(out.data.status, 'error', 'anything but ok is an error');
+  assert.equal(out.data.output.length, 64 * 1024, 'the end is kept');
+  assert.ok(out.data.output.endsWith('***'), 'every known secret is scrubbed, not only the instance\'s');
+  assert.equal(out.data.exitCode, undefined);
+  assert.equal(out.data.error, '7');
+  const slow = new WidgetRuntime({ registry: new Map([['act2', { ...widget, server: { action: () => new Promise(() => {}) } }]]), log: silentLog, actionTimeoutMs: 30 });
+  slow.setInstances(new Map([['i', { type: 'act2', options: {}, secretValues: [], refreshMs: 1000 }]]));
+  assert.match((await slow.action('i')).error, /timed out after 30 ms/);
+  assert.equal(slow.running.size, 0, 'a timed-out action frees the instance');
+});

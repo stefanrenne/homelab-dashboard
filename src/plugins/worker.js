@@ -1,6 +1,6 @@
 // The worker thread that runs installed widgets' server.js (see sandbox.js). It builds the same
-// ctx as the dashboard process: options, params, a signal, a cache per instance, a log and
-// fetch. Results go back as plain data; anything else becomes the widget's error.
+// ctx as the dashboard process: options, params, a signal, a cache per instance, the config
+// folder, a log and fetch. `kind: 'action'` calls the widget's action instead of its fetch. Results go back as plain data; anything else becomes the widget's error.
 
 import { parentPort } from 'node:worker_threads';
 import { widgetFetch, describeError } from './runtime.js';
@@ -42,10 +42,12 @@ parentPort.on('message', async (m) => {
       params: Object.freeze({ ...m.params }),
       signal: controller.signal,
       cache: stores.get(m.instanceId),
+      configDir: m.configDir ?? null,
       log,
       fetch: (input, init = {}) => widgetFetch(input, init, m.options.url, controller.signal),
     });
-    const data = await server.fetch(ctx);
+    if (m.kind === 'action' && typeof server.action !== 'function') throw new Error('server.js has no action');
+    const data = m.kind === 'action' ? await server.action(ctx) : await server.fetch(ctx);
     reply({ type: 'result', id: m.id, data: data ?? {} });
   } catch (err) {
     reply({ type: 'error', id: m.id, error: describeError(err) });

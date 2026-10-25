@@ -55,8 +55,9 @@ the image and smoke-tests it.
    `/api/layout` carries public options only, and error messages are scrubbed. A test checks
    that a secret never appears in `/api/layout`; keep it passing.
 2. **The widget API is a versioned contract** (`apiVersion` in widget.yaml). Within one version the
-   `ctx` fields, the result format (`status`, `latency`, `blocks`) and the `client.js` properties
-   (`data`, `options`, `t`, `error`) only change in a backward-compatible way. A breaking change
+   `ctx` fields, the result format (`status`, `latency`, `blocks`), `action(ctx)` and its result,
+   the page events and the `client.js` properties (`data`, `options`, `t`, `error`, `busy`) only
+   change in a backward-compatible way. A breaking change
    means a new `apiVersion` next to the old one, which stays supported. Every change goes into
    `docs/widgets/api-reference.md` (with the version that introduced it).
 3. **The core needs no widget internals.** Widgets live in the collection and use only the public

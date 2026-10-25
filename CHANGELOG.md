@@ -4,6 +4,11 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-25
+
+Needs the widgets collection 0.3.0 (installed by default at its newest release), which now holds
+openmeteo, openweathermap and stocks and a widget for every service homepage supports.
+
 ### Added
 - `description` and `favicon` in settings.yaml, as in homepage: the meta description and the
   browser tab icon, written into the page itself.

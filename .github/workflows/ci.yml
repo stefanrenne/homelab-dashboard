@@ -36,10 +36,18 @@ jobs:
       - uses: actions/checkout@v7
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
-      # the version in the image: 1.2.3 for a tag v1.2.3, otherwise main-<short sha>
+      # the version in the image: 1.2.3 for a tag v1.2.3, or for a run by hand on main (which
+      # releases package.json's version), otherwise main-<short sha>
       - id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then echo "version=${GITHUB_REF_NAME#v}"; else echo "version=main-${GITHUB_SHA::7}"; fi >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then v="${GITHUB_REF_NAME#v}"; rel=true
+          elif [[ "$GITHUB_EVENT_NAME" == workflow_dispatch && "$GITHUB_REF" == refs/heads/main ]]; then
+            v=$(node -p "require('./package.json').version"); rel=true
+            if gh release view "v$v" >/dev/null 2>&1; then echo "::error::v$v is already released; bump package.json"; exit 1; fi
+          else v="main-${GITHUB_SHA::7}"; rel=false; fi
+          { echo "version=$v"; echo "release=$rel"; echo "minor=${v%.*}"; } >> "$GITHUB_OUTPUT"
       - name: Build for the smoke test (amd64)
         uses: docker/build-push-action@v7
         with:
@@ -71,8 +79,8 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.release == 'true' }}
+            type=raw,value=${{ steps.version.outputs.minor }},enable=${{ steps.version.outputs.release == 'true' }}
             type=sha,format=short
       - name: Build and push (amd64, arm64)
         uses: docker/build-push-action@v7
@@ -86,10 +94,11 @@ jobs:
           build-args: VERSION=${{ steps.version.outputs.version }}
           cache-from: type=gha
 
-  # A tag v1.2.3 becomes a GitHub release with that version's section of CHANGELOG.md.
+  # A tag v1.2.3 becomes a GitHub release with that version's section of CHANGELOG.md. Run by
+  # hand on main, it releases package.json's version and creates the tag on that commit.
   release:
     needs: image
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -97,7 +106,8 @@ jobs:
       - uses: actions/checkout@v7
       - name: Release notes from CHANGELOG.md
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then version="${GITHUB_REF_NAME#v}"; else version=$(node -p "require('./package.json').version"); fi
+          echo "TAG=v$version" >> "$GITHUB_ENV"
           awk -v v="$version" '
             $0 ~ "^## \\[" v "\\]" { on = 1; next }
             on && /^## \[/ { exit }
@@ -107,4 +117,7 @@ jobs:
           printf '\n```bash\ndocker pull ghcr.io/%s:%s\n```\n' "$GITHUB_REPOSITORY" "$version" >> notes.md
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md --verify-tag
+        # a pushed tag must exist; by hand, the release creates the tag on this commit
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then target=(--target "$GITHUB_SHA"); else target=(--verify-tag); fi
+          gh release create "$TAG" --title "$TAG" --notes-file notes.md "${target[@]}"

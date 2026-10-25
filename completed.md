@@ -60,3 +60,4 @@ Finished work, newest first.
 - 2026-10-24: `HD_WATCH_POLL`: polling the config files for network file systems, and polling as the fallback when fs.watch cannot start.
 - 2026-10-24: widget scaffolding: `npm run new-widget -- <id>` (dashboard) and `npm run rename -- <id>` (the example repo).
 - 2026-10-24: installed widgets run in one worker thread with a memory limit; a hung widget restarts the worker (checked: all 164 collection widgets give the same results as in the process).
+- 2026-10-25: released the widgets collection 0.3.0 and the dashboard 0.5.0.

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import YAML from 'yaml';
-import { syncPlugins, parseSource, readLock, latestTag, withDefaultPlugins, DEFAULT_PLUGINS, CORE_WIDGETS, olderTag } from '../src/plugins/installer.js';
+import { syncPlugins, parseSource, readLock, latestTag, withDefaultPlugins, DEFAULT_PLUGINS, CORE_WIDGETS, olderTag, pluginUpdates } from '../src/plugins/installer.js';
 import { loadWidget } from '../src/plugins/loader.js';
 import { WidgetRuntime } from '../src/plugins/runtime.js';
 import { validateOptions } from '../src/plugins/options.js';
@@ -362,4 +362,25 @@ test('a #latest locked below atLeast (the release this dashboard needs) moves on
   const def = [{ source: 'git+https://github.com/a/widgets#latest', atLeast: 'v2.0.0' }];
   assert.equal(withDefaultPlugins([{ source: 'git+https://github.com/a/widgets#latest', only: ['x'] }], def)[0].atLeast, 'v2.0.0', 'your own #latest entry keeps it');
   assert.equal(withDefaultPlugins([{ source: 'git+https://github.com/a/widgets#v1.0.0' }], def)[0].atLeast, undefined, 'a pinned tag is your choice');
+});
+
+test('pluginUpdates: #latest and branches that moved, never pinned tags; update moving installs only those', async () => {
+  const { url, repo, git } = templateRepo();
+  const configDir = tmpDir();
+  const latest = `git+${url}#latest`;
+  const branch = `git+${url}#main`;
+  const pinned = `git+${url}#v1.0.0`;
+  const entries = [{ source: latest }, { source: branch }, { source: pinned }];
+  await syncPlugins({ configDir, entries, log: silentLog });
+  assert.deepEqual(await pluginUpdates({ configDir, entries }), [], 'nothing new');
+
+  fs.writeFileSync(path.join(repo, 'widget.yaml'), fs.readFileSync(path.join(repo, 'widget.yaml'), 'utf8').replace('1.1.0', '1.2.0'));
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qam', 'v1.2');
+  git('tag', 'v1.2.0');
+  assert.deepEqual(await pluginUpdates({ configDir, entries }), [latest, branch]);
+
+  const out = await syncPlugins({ configDir, entries, update: 'moving', log: silentLog });
+  assert.deepEqual(out.installed.map((i) => path.basename(i.dir)), ['example-counter@1.2.0', 'example-counter@1.2.0', 'example-counter@1.0.0']);
+  assert.deepEqual(await pluginUpdates({ configDir, entries }), [], 'the lock caught up');
+  assert.deepEqual(await pluginUpdates({ configDir, entries: [{ source: 'git+file:///nowhere/at/all#latest' }] }), [], 'offline is no news');
 });

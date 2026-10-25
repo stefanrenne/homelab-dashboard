@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config/load.js';
 import { watchConfig } from './config/watch.js';
 import { loadRegistry } from './plugins/loader.js';
-import { syncPlugins, withDefaultPlugins, DEFAULT_PLUGINS } from './plugins/installer.js';
+import { syncPlugins, withDefaultPlugins, pluginUpdates, DEFAULT_PLUGINS } from './plugins/installer.js';
 import { WidgetRuntime } from './plugins/runtime.js';
 import { WidgetSandbox } from './plugins/sandbox.js';
 import { Discovery, mergeDiscovered } from './discovery/index.js';
@@ -126,12 +126,33 @@ export async function createApp({
     broadcast('reload');
   }
 
+  // pluginUpdateInterval: #latest and branch plugins are checked for a newer version, and only
+  // a newer one is installed (and reloads the page)
+  let pluginTimer = null;
+  let pluginEvery = null;
+  function schedulePluginChecks(ms) {
+    if (ms === pluginEvery) return;
+    pluginEvery = ms;
+    clearInterval(pluginTimer);
+    pluginTimer = ms > 0 ? setInterval(() => checkPluginUpdates().catch(() => {}), ms).unref() : null;
+  }
+  async function checkPluginUpdates() {
+    if (!state.config) return [];
+    const news = await pluginUpdates({ configDir, entries: withDefaultPlugins(state.config.settings.plugins, defaultPlugins) });
+    if (news.length) {
+      log.info(`plugins: a newer version of ${news.join(', ')}; updating`);
+      await reload({ update: 'moving' });
+    }
+    return news;
+  }
+
   /** Reloads everything; calls are queued so two reloads never interleave. */
   function reload({ update = false } = {}) {
     chain = chain.then(async () => {
       const config = loadConfig(configDir, { env });
       log.setLogPath?.(config.settings.logpath ? path.resolve(configDir, config.settings.logpath) : null);
       config.docker = withMountedSocket(config.docker, dockerSocket);
+      schedulePluginChecks(config.settings.pluginUpdateMs);
       const entries = withDefaultPlugins(config.settings.plugins, defaultPlugins);
       const pluginResult = await syncPlugins({ configDir, entries, update, log });
       const { widgets, errors } = await loadRegistry({ builtinDir, external: pluginResult.installed });
@@ -302,7 +323,9 @@ export async function createApp({
       return state.layout;
     },
     runtime,
+    checkPluginUpdates,
     close() {
+      clearInterval(pluginTimer);
       updates.stop();
       watcher?.close();
       discovery.stop();

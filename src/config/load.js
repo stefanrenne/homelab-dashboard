@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { substitute } from './vars.js';
 import { parseConfigYaml, resolveIncludes } from './include.js';
-import { isPlainObject } from '../util.js';
+import { isPlainObject, parseDuration } from '../util.js';
 
 export const CONFIG_FILES = ['settings', 'services', 'widgets', 'bookmarks', 'docker', 'kubernetes', 'proxmox'];
 
@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS = {
   headerStyle: 'boxed', // boxed | clean
   layout: {},
   plugins: [],
+  pluginUpdateInterval: '1h',
   discovery: { interval: '30s' },
 };
 
@@ -31,6 +32,25 @@ const SERVICE_KEYS = new Set([
   'proxmoxNode', 'proxmoxVMID', 'proxmoxType', 'app', 'namespace', 'podSelector', 'external',
 ]);
 export const STATUS_STYLES = ['dot', 'basic'];
+
+const MIN_PLUGIN_UPDATE_MS = 60_000;
+
+/** pluginUpdateInterval: how often #latest and branch plugins are checked; false or 0 turns it off. */
+function pluginUpdateMs(value, file, ctx) {
+  if (value === false || value === 0 || value === '0') return 0;
+  let ms;
+  try {
+    ms = parseDuration(value, 3_600_000);
+  } catch (err) {
+    ctx.warn(file, 'pluginUpdateInterval', `${err.message}; checking every hour`);
+    return 3_600_000;
+  }
+  if (ms < MIN_PLUGIN_UPDATE_MS) {
+    ctx.warn(file, 'pluginUpdateInterval', 'at least 1m; checking every minute');
+    return MIN_PLUGIN_UPDATE_MS;
+  }
+  return ms;
+}
 
 export function loadConfig(dir, opts = {}) {
   const errors = [];
@@ -139,6 +159,7 @@ export function normalizeSettings(raw, ctx) {
     delete settings.base;
   } else if (settings.base && !settings.base.endsWith('/')) settings.base += '/';
   settings.pwa = normalizePwa(settings.pwa, file, ctx);
+  settings.pluginUpdateMs = pluginUpdateMs(settings.pluginUpdateInterval, file, ctx);
   for (const key of ['fullWidth', 'useEqualHeights', 'disableCollapse', 'groupsInitiallyCollapsed', 'showStats', 'hideVersion', 'disableUpdateCheck', 'disableIndexing']) {
     if (settings[key] !== undefined && typeof settings[key] !== 'boolean') {
       ctx.warn(file, key, 'expected true or false, ignored');

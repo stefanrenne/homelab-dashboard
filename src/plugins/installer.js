@@ -152,7 +152,8 @@ function packageInfo(src, record, dir) {
 /**
  * Makes sure every source in `entries` is installed. Returns
  * { installed: [{ dir, source }], packages: [{ name, version }], errors: [{ source, message }], warnings: [...] }.
- * With `update: true` git and npm sources are resolved again even when locked.
+ * With `update: true` git and npm sources are resolved again even when locked; with
+ * `update: 'moving'` only the ones that can move (#latest, a branch, an npm range).
  */
 export async function syncPlugins({ configDir, entries, update = false, run = defaultRun, log = console }) {
   const pluginsRoot = path.join(configDir, PLUGINS_DIR);
@@ -185,7 +186,7 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
       // a #latest locked below the release this dashboard needs is updated, as with `update`
       const behind = Boolean(src.latest && entry.atLeast && locked?.tag && olderTag(locked.tag, entry.atLeast));
       if (behind) log.info(`plugins: ${label} is locked at ${locked.tag}, this dashboard needs ${entry.atLeast} or newer; updating`);
-      const refresh = update || behind;
+      const refresh = update === true || (update === 'moving' && (src.latest || src.floating)) || behind;
       let record;
       if (!refresh && lockedHere) {
         record = locked;
@@ -284,6 +285,31 @@ function place(pkgRoot, subdir, pluginsRoot, collectionName) {
   fs.rmSync(target, { recursive: true, force: true });
   fs.renameSync(pkgRoot, target);
   return name;
+}
+
+/**
+ * The git sources that can move (#latest, a branch) and have a newer version than the lock: their
+ * labels. One `git ls-remote` each, nothing is downloaded; a source that cannot be asked (offline)
+ * has no news. Pinned tags and commits never change, so they are not asked.
+ */
+export async function pluginUpdates({ configDir, entries, run = defaultRun }) {
+  const lock = readLock(configDir);
+  const news = [];
+  for (const entry of entries) {
+    if (entry.path) continue;
+    try {
+      const src = parseSource(entry);
+      if (src.kind !== 'git' || !(src.latest || src.floating)) continue;
+      const locked = lock[src.key];
+      const now = src.latest
+        ? await resolveLatestTag(src.url, run)
+        : (await run('git', ['ls-remote', '--', src.url, src.ref || 'HEAD'])).split(/\s/)[0];
+      if (now && now !== (src.latest ? locked?.tag : locked?.commit)) news.push(entry.source);
+    } catch {
+      // offline or gone: the next check asks again
+    }
+  }
+  return news;
 }
 
 /** True when release tag `tag` is older than `min` (both v1.2.3 or 1.2.3). */

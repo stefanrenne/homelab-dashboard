@@ -4,6 +4,11 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+- `pluginUpdateInterval` in settings.yaml (default `1h`, `false` turns it off): plugins on
+  `#latest` or a branch, such as the widgets collection, are checked for a newer version and
+  updated when there is one. Before, a `#latest` stayed at the release it was installed with.
+
 ## [0.6.2] - 2026-10-25
 
 ### Fixed

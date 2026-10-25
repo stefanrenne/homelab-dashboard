@@ -337,3 +337,16 @@ test('plugins: with every entry commented out is an empty list, not an error', (
   assert.deepEqual(cfg.errors, []);
   assert.match(loadConfig(configDir({ 'settings.yaml': 'plugins: radarr\n' })).errors[0].message, /expected a list/);
 });
+
+test('pluginUpdateInterval: every hour by default, a duration, false to turn off, at least a minute', () => {
+  const ms = (yaml) => loadConfig(configDir({ 'settings.yaml': yaml }));
+  assert.equal(ms('title: x\n').settings.pluginUpdateMs, 3_600_000);
+  assert.equal(ms('pluginUpdateInterval: 15m\n').settings.pluginUpdateMs, 900_000);
+  assert.equal(ms('pluginUpdateInterval: false\n').settings.pluginUpdateMs, 0);
+  const fast = ms('pluginUpdateInterval: 10s\n');
+  assert.equal(fast.settings.pluginUpdateMs, 60_000);
+  assert.match(fast.warnings[0].message, /at least 1m/);
+  const bad = ms('pluginUpdateInterval: soon\n');
+  assert.equal(bad.settings.pluginUpdateMs, 3_600_000);
+  assert.match(bad.warnings[0].message, /invalid duration "soon".*checking every hour/);
+});

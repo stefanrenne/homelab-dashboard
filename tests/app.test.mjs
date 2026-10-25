@@ -522,6 +522,31 @@ test('watchConfig reacts to YAML changes only', async () => {
   assert.ok(calls >= 1);
 });
 
+test('checkPluginUpdates installs a newer #latest and reloads; without news nothing happens', async () => {
+  const repo = path.join(tmpDir('hd-repo-'), 'widget');
+  fs.cpSync(path.resolve('examples/widget-template'), repo, { recursive: true });
+  const git = (...args) => execFileSync('git', ['-C', repo, ...args], { stdio: 'pipe' });
+  git('init', '-q', '-b', 'main');
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'add', '.');
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'v1');
+  git('tag', 'v1.0.0');
+  const configDir = tmpDir('hd-app-');
+  fs.writeFileSync(path.join(configDir, 'settings.yaml'), 'hideVersion: false\ndisableUpdateCheck: true\n');
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [{ source: `git+file://${repo}#latest` }], dockerSocket: null });
+  try {
+    assert.deepEqual(app.layout.plugins, [{ name: 'widget', version: 'v1.0.0' }]);
+    assert.deepEqual(await app.checkPluginUpdates(), []);
+    fs.writeFileSync(path.join(repo, 'widget.yaml'), fs.readFileSync(path.join(repo, 'widget.yaml'), 'utf8').replace(/^version: .*$/m, 'version: 9.0.0'));
+    git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qam', 'v9');
+    git('tag', 'v9.0.0');
+    assert.equal((await app.checkPluginUpdates()).length, 1);
+    assert.deepEqual(app.layout.plugins, [{ name: 'widget', version: 'v9.0.0' }]);
+    assert.equal(app.runtime.registry.get('example-counter').manifest.version, '9.0.0');
+  } finally {
+    app.close();
+  }
+});
+
 test('HEAD is answered like GET', async () => {
   const t = await startApp({});
   try {

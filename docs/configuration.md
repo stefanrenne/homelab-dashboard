@@ -140,6 +140,7 @@ providers:          # shared keys and logins; a widget entry uses one with provi
 instanceName: internal   # for discovery labels meant for one dashboard (homelab.instance.internal.href)
 hideVersion: false  # show the version in the footer, and each plugin's (the widgets collection, ...)
                     # (hidden by default, unlike homepage)
+pluginUpdateInterval: 1h   # how often #latest and branch plugins are checked for a newer version (false: never)
 disableUpdateCheck: true   # with the version shown: do not ask GitHub once a day for a newer release
 disableIndexing: true      # ask search engines not to index the page (robots.txt and a robots meta tag)
 base: https://lab.example.com/dashboard/   # behind a reverse proxy under a sub path: the page's address
@@ -209,6 +210,11 @@ it to the newest release. The folder of the previous version is then deleted. An
 fails (offline, a broken release) keeps the version that worked and says so in the messages. A branch named `latest` can no longer be used as `#latest`.
 The widgets collection is the exception: when its `#latest` is locked at a release older than
 the one this dashboard needs (0.4.0 for 0.6), the next start moves it to the newest release by itself.
+
+`pluginUpdateInterval` (default `1h`, at least `1m`, `false` turns it off) is how often the
+sources that can move (`#latest`, a branch) are asked for a newer version: one `git ls-remote`
+each, nothing is downloaded. Only a newer version is installed, which reloads the open pages;
+pinned tags and commits are never asked. `plugins.lock.yaml` then records the new version.
 The widgets collection is the exception: when its `#latest` is locked at a release older than
 the one this dashboard needs (0.4.0 for 0.6), the next start moves it to the newest release by itself.
 

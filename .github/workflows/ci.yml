@@ -32,12 +32,16 @@ jobs:
   image:
     needs: test
     runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.version.outputs.release }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
       # the version in the image: 1.2.3 for a tag v1.2.3, or for a run by hand on main (which
-      # releases package.json's version), otherwise main-<short sha>
+      # releases package.json's version unless it is released already; dependabot-automerge.yml
+      # starts such runs too), otherwise main-<short sha>
       - id: version
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,7 +49,7 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then v="${GITHUB_REF_NAME#v}"; rel=true
           elif [[ "$GITHUB_EVENT_NAME" == workflow_dispatch && "$GITHUB_REF" == refs/heads/main ]]; then
             v=$(node -p "require('./package.json').version"); rel=true
-            if gh release view "v$v" >/dev/null 2>&1; then echo "::error::v$v is already released; bump package.json"; exit 1; fi
+            if gh release view "v$v" >/dev/null 2>&1; then echo "v$v is released already: a main build"; v="main-${GITHUB_SHA::7}"; rel=false; fi
           else v="main-${GITHUB_SHA::7}"; rel=false; fi
           { echo "version=$v"; echo "release=$rel"; echo "minor=${v%.*}"; } >> "$GITHUB_OUTPUT"
       - name: Build for the smoke test (amd64)
@@ -95,10 +99,10 @@ jobs:
           cache-from: type=gha
 
   # A tag v1.2.3 becomes a GitHub release with that version's section of CHANGELOG.md. Run by
-  # hand on main, it releases package.json's version and creates the tag on that commit.
+  # hand on main with a version not released yet, it creates the tag on that commit.
   release:
     needs: image
-    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    if: needs.image.outputs.release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -106,7 +110,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Release notes from CHANGELOG.md
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then version="${GITHUB_REF_NAME#v}"; else version=$(node -p "require('./package.json').version"); fi
+          version="${{ needs.image.outputs.version }}"
           echo "TAG=v$version" >> "$GITHUB_ENV"
           awk -v v="$version" '
             $0 ~ "^## \\[" v "\\]" { on = 1; next }

@@ -16,6 +16,8 @@ if [ "$(id -u)" = 0 ]; then
     fi
     addgroup node "$group" 2>/dev/null || true
   fi
+  # downloaded widgets from a run as root belong to node, so it can update and remove them
+  if [ -d /config/plugins ]; then chown -R node:node /config/plugins 2>/dev/null || true; fi
   exec su-exec node "$0" "$@"
 fi
 

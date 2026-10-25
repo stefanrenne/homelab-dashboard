@@ -4,6 +4,15 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-25
+
+### Fixed
+- A plugin folder that cannot be removed (written by another user, for example by an earlier run
+  as root) no longer stops the dashboard from loading: it is a warning to delete it by hand. The
+  image's entrypoint, started as root, gives `/config/plugins` to the `node` user first.
+- When the first load fails, pages answer 503 with a hint to the log instead of an error per
+  request.
+
 ## [0.6.0] - 2026-10-25
 
 Needs the widgets collection 0.4.0 (installed by default at its newest release), which now holds

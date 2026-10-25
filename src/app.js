@@ -218,6 +218,10 @@ export async function createApp({
     // HEAD is answered like GET (status checks of this dashboard use it); Node drops the body.
     const method = req.method === 'HEAD' ? 'GET' : req.method;
     try {
+      // a first load that failed (see the log) leaves no config: say so instead of failing each request
+      if (!state.config && p !== '/api/health') {
+        return send(res, 503, 'The dashboard could not load its configuration; see its log.', 'text/plain; charset=utf-8');
+      }
       if (method === 'GET' && (p === '/' || p === '/index.html')) {
         const html = await fs.promises.readFile(path.join(publicDir, 'index.html'), 'utf8');
         const custom = CUSTOM_FILES.filter((f) => fs.existsSync(path.join(configDir, f)));

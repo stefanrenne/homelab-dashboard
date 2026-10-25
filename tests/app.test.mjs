@@ -94,6 +94,27 @@ test('status checks come from siteMonitor, ping and container', async () => {
   }
 });
 
+test('a first load that fails answers 503 with a hint, and the health check still answers', async () => {
+  const configDir = path.join(tmpDir('hd-app-'), 'a-file');
+  fs.writeFileSync(configDir, 'not a folder'); // the plugins folder cannot be made
+  const errors = [];
+  const app = await createApp({ configDir, log: { ...silentLog, error: (m) => errors.push(m) }, defaultPlugins: [{ source: 'git+https://example.com/x#v1.0.0' }], dockerSocket: null });
+  const server = http.createServer(app.handler);
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    assert.match(errors.join('\n'), /reload failed/);
+    const page = await fetch(`${base}/`);
+    assert.equal(page.status, 503);
+    assert.match(await page.text(), /could not load its configuration; see its log/);
+    assert.equal((await fetch(`${base}/api/layout`)).status, 503);
+    assert.equal((await fetch(`${base}/api/health`)).status, 200);
+  } finally {
+    app.close();
+    await new Promise((r) => server.close(r));
+  }
+});
+
 test('without the widgets collection a service field says where its widget comes from', async () => {
   const configDir = tmpDir('hd-app-');
   fs.writeFileSync(path.join(configDir, 'services.yaml'), '- G:\n    - A: { siteMonitor: "http://a.lan" }\n    - B:\n        widget: { type: radarr }\n');

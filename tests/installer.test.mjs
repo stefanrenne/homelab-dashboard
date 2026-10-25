@@ -320,3 +320,20 @@ test('syncPlugins reports each source by name and version, never its URL', async
   assert.match(main.version, /^[0-9a-f]{7}$/, 'a branch shows its commit');
   assert.ok(!JSON.stringify(out.packages).includes('file://'));
 });
+
+test('a folder that cannot be removed is a warning, and the plugins still load', async (t) => {
+  if (process.getuid?.() === 0) return t.skip('root removes anything');
+  const configDir = tmpDir();
+  const old = path.join(configDir, 'plugins', 'old@1.0.0');
+  fs.mkdirSync(path.join(old, 'sub'), { recursive: true });
+  fs.writeFileSync(path.join(old, 'sub', 'f'), 'x');
+  fs.chmodSync(old, 0o500); // as a folder written by another user: its contents cannot be removed
+  try {
+    const out = await syncPlugins({ configDir, entries: [{ path: TEMPLATE }], log: silentLog });
+    assert.equal(out.installed.length, 1);
+    assert.deepEqual(out.errors, []);
+    assert.match(out.warnings.map((w) => w.message).join('\n'), /could not remove plugins\/old@1\.0\.0, which is no longer in use \(E\w+\); delete it by hand/);
+  } finally {
+    fs.chmodSync(old, 0o700);
+  }
+});

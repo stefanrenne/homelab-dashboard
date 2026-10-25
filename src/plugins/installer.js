@@ -201,21 +201,28 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
   }
 
   if (entries.some((e) => !e.path) || Object.keys(lock).length) writeLock(configDir, nextLock);
-  removeUnlocked(pluginsRoot, nextLock, log);
+  removeUnlocked(pluginsRoot, nextLock, log, warnings);
   return { installed, packages, errors, warnings };
 }
 
 /**
  * Deletes the package folders in <config>/plugins that the lock file no longer points at:
- * older versions after an update, and sources that were removed from settings.yaml.
+ * older versions after an update, and sources that were removed from settings.yaml. A folder
+ * that cannot be removed (owned by another user) is a warning: the plugins still load.
  */
-function removeUnlocked(pluginsRoot, lock, log) {
+function removeUnlocked(pluginsRoot, lock, log, warnings) {
   if (!fs.existsSync(pluginsRoot)) return;
   const keep = new Set(Object.values(lock).map((r) => r.dir));
   for (const entry of fs.readdirSync(pluginsRoot, { withFileTypes: true })) {
     if (!entry.isDirectory() || keep.has(entry.name)) continue;
-    fs.rmSync(path.join(pluginsRoot, entry.name), { recursive: true, force: true });
-    if (entry.name !== '.tmp') log.info(`plugins: removed ${entry.name}, no longer in the lock file`);
+    try {
+      fs.rmSync(path.join(pluginsRoot, entry.name), { recursive: true, force: true });
+      if (entry.name !== '.tmp') log.info(`plugins: removed ${entry.name}, no longer in the lock file`);
+    } catch (err) {
+      const message = `could not remove ${PLUGINS_DIR}/${entry.name}, which is no longer in use (${err.code ?? err.message}); delete it by hand`;
+      log.warn(`plugins: ${message}`);
+      warnings.push({ source: PLUGINS_DIR, message });
+    }
   }
 }
 

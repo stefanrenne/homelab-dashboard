@@ -6,7 +6,8 @@ FROM node:24-alpine
 # (busybox ping needs root; iputils' ping works for the unprivileged user). su-exec: the
 # entrypoint drops from root to `node` after giving it the Docker socket's group.
 # bash, curl, jq, docker-cli, docker-cli-compose: for the scripts a button widget runs.
-RUN apk add --no-cache git iputils-ping tini su-exec bash curl jq docker-cli docker-cli-compose
+# sudo: only for a button with `user: root`, and only with HD_ALLOW_ROOT_SCRIPTS=true (start.sh).
+RUN apk add --no-cache git iputils-ping tini su-exec bash curl jq docker-cli docker-cli-compose sudo
 
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -24,8 +25,10 @@ ENV HD_VERSION=${VERSION} \
     HOST=0.0.0.0
 
 # docker/start.sh: Docker socket group, then the dashboard as `node` (never as root).
+# docker/hd-root: what a `user: root` button runs through sudo.
 COPY docker/start.sh /usr/local/bin/start
-RUN mkdir -p /config && chown node:node /config && chmod +x /usr/local/bin/start
+COPY docker/hd-root /usr/local/bin/hd-root
+RUN mkdir -p /config && chown node:node /config && chmod +x /usr/local/bin/start && chmod 755 /usr/local/bin/hd-root
 
 VOLUME /config
 EXPOSE 3000

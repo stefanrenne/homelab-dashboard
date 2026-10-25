@@ -2,6 +2,18 @@
 
 Why things are the way they are. Newest first.
 
+## Root scripts through one sudo rule, off by default (2026-10-25)
+Scripts that maintain the homelab (swag configs) write files that must stay owned by root, and the
+dashboard runs as `node`. The server itself stays unprivileged (see the pitfalls); instead the
+image's entrypoint, which starts as root anyway, can write one sudo rule that lets `node` run a
+fixed runner, `/usr/local/bin/hd-root`, which is bash as root. It does so only with
+`HD_ALLOW_ROOT_SCRIPTS=true`, because the rule cannot tell the button from any other widget code.
+`sudo -n` never waits for a password; `-E` keeps the environment only with the button's
+`inheritEnv`. A timeout reaches the root processes through sudo, which passes SIGTERM to the
+runner, and the runner stops its whole process group (node cannot signal root processes itself).
+Considered: running scripts in the webhook container through `docker exec` (works, keeps a
+second container), and ACLs (owner stays root, but shfs on Unraid does not support them).
+
 ## Widgets may run actions; the button widget runs scripts (2026-10-25)
 A separate webhook container ran the homelab's scripts (bash with curl, jq and docker). The widget
 API got `action(ctx)` so a widget can do something on a press, and the collection's `button`

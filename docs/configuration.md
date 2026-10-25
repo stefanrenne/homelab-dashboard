@@ -44,6 +44,26 @@ Installed widgets run in a worker thread with a memory limit, so one that hangs 
 dashboard. `HD_WIDGET_MEMORY_MB` sets the limit (default 256); `HD_WIDGET_ISOLATION=off` runs them
 in the dashboard process instead.
 
+## Scripts as root
+
+The [button](https://stefanrenne.github.io/homelab-dashboard/widgets/collection/button.html)
+widget runs its script as the dashboard's user (`node`, uid 1000). A button with `user: root`
+runs it as root inside the container, for scripts that write files owned by root. That only works
+with `HD_ALLOW_ROOT_SCRIPTS: "true"` on the container: the image then lets `node` start one fixed
+runner (`/usr/local/bin/hd-root`) through sudo. Without it such a button shows that it needs the
+variable. The container must start as root (the default; not `--user 1000`), since that is when
+the rule is written. Every installed widget could use the runner once it is on, and anyone who can
+open the page can press the button, so turn it on only for a dashboard you trust and keep behind
+authentication.
+
+```yaml
+# docker-compose.yml
+services:
+  homelab-dashboard:
+    environment:
+      HD_ALLOW_ROOT_SCRIPTS: "true"
+```
+
 ## Including other files
 
 A long `services.yaml` can be split up. `!include <file>` puts the YAML of another file at that

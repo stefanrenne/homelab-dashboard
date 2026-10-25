@@ -1,0 +1,10 @@
+#!/bin/sh
+# Runs a button widget's script as root (`user: root`): the one command the `node` user may
+# start through sudo, and only when the container has HD_ALLOW_ROOT_SCRIPTS=true (start.sh
+# writes the sudo rule then). Its arguments go to bash as they are.
+#
+# A stop (the widget's SIGTERM, relayed by sudo) ends everything the script started: those
+# processes run as root, so the widget cannot signal them itself.
+trap 'trap - TERM; kill -TERM 0 2>/dev/null' TERM
+/bin/bash "$@" &
+wait $!

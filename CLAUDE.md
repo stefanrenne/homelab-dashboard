@@ -116,6 +116,8 @@ the image and smoke-tests it.
 See `docs/decisions.md` for the background. In short:
 - A path check must happen on the **resolved** path: `assets/../server.js` starts with `assets/`.
 - The dashboard runs as `node` (uid 1000); `/var/run/docker.sock` is usually `root:root 660`.
+  Root scripts (a button's `user: root`) go through sudo and `docker/hd-root`, and only with
+  `HD_ALLOW_ROOT_SCRIPTS=true`; the server itself never runs as root.
   `docker/start.sh` starts as root, adds `node` to the socket's group and drops to `node` with
   su-exec. Started with `--user`, that step is skipped and discovery gets EACCES without
   `--group-add <gid of the socket>`. Never run `server.js` itself as root.

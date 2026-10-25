@@ -4,6 +4,13 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-25
+
+### Added
+- `HD_ALLOW_ROOT_SCRIPTS=true` lets a `button` widget with `user: root` (widgets collection
+  0.6.0) run its script as root in the container, for files that must stay owned by root. Off by
+  default; the image gets sudo and a fixed runner (`/usr/local/bin/hd-root`) for it.
+
 ## [0.8.1] - 2026-10-25
 
 ### Added

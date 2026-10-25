@@ -18,6 +18,15 @@ if [ "$(id -u)" = 0 ]; then
   fi
   # downloaded widgets from a run as root belong to node, so it can update and remove them
   if [ -d /config/plugins ]; then chown -R node:node /config/plugins 2>/dev/null || true; fi
+  # HD_ALLOW_ROOT_SCRIPTS=true: `node` may run /usr/local/bin/hd-root as root, for button widgets
+  # with `user: root`. Any widget could use it then, so it is off unless asked for.
+  rule=/etc/sudoers.d/homelab-dashboard
+  if [ "${HD_ALLOW_ROOT_SCRIPTS:-}" = true ]; then
+    printf '%s\n' 'Defaults:node !use_pty, !lecture' 'node ALL=(root) NOPASSWD:SETENV: /usr/local/bin/hd-root' > "$rule"
+    chmod 0440 "$rule"
+  else
+    rm -f "$rule"
+  fi
   exec su-exec node "$0" "$@"
 fi
 

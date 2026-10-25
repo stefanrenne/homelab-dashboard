@@ -22,6 +22,11 @@ choosing a Docker image. The dashboard limits the damage where it can:
   presses it. Put the dashboard behind your proxy's authentication, or keep such buttons off a
   dashboard that is reachable from outside. Only the configured script or command runs; nothing
   in the request reaches it.
+- **Root scripts are off unless you ask for them.** Only with `HD_ALLOW_ROOT_SCRIPTS=true` on
+  the container does the image let `node` run `/usr/local/bin/hd-root` (bash as root) through
+  sudo, for a `button` with `user: root`. Then every widget could, so a plugin you install can
+  be root in the container too. A mounted Docker socket already gives that much: whoever can use
+  the socket can start a root container.
 - The dashboard, and so every widget, runs as the unprivileged `node` user. The entrypoint is
   root only to give `node` a mounted Docker socket's group, before the dashboard starts.
 - A mounted Docker socket gives every widget the whole Docker API (`:ro` does not limit it).

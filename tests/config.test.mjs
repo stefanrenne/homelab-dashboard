@@ -330,3 +330,10 @@ test('base: a full URL, given a trailing slash; anything else is ignored with a 
 test('language zh-CN is read as zh-Hans, as in homepage', () => {
   assert.equal(loadConfig(configDir({ 'settings.yaml': 'language: zh-CN\n' })).settings.language, 'zh-Hans');
 });
+
+test('plugins: with every entry commented out is an empty list, not an error', () => {
+  const cfg = loadConfig(configDir({ 'settings.yaml': 'plugins:\n  # - source: git+https://github.com/someone/widgets#v1.0.0\n' }));
+  assert.deepEqual(cfg.settings.plugins, []);
+  assert.deepEqual(cfg.errors, []);
+  assert.match(loadConfig(configDir({ 'settings.yaml': 'plugins: radarr\n' })).errors[0].message, /expected a list/);
+});

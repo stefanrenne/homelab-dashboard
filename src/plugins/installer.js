@@ -36,7 +36,8 @@ const PINNED_REF = /^([0-9a-f]{40}|v?\d+\.\d+\.\d+([-+][\w.-]+)?)$/;
 const PINNED_VERSION = /^\d+\.\d+\.\d+([-+][\w.-]+)?$/;
 const RELEASE_TAG = /^v?(\d+)\.(\d+)\.(\d+)$/;
 export const LATEST_REF = 'latest';
-export const DEFAULT_PLUGINS = [{ source: 'git+https://github.com/stefanrenne/homelab-dashboard-widgets#latest' }];
+// atLeast: the release this dashboard needs; a #latest locked below it moves on by itself
+export const DEFAULT_PLUGINS = [{ source: 'git+https://github.com/stefanrenne/homelab-dashboard-widgets#latest', atLeast: 'v0.4.0' }];
 // The collection's widgets behind a service's siteMonitor:, ping:, container:, app: and
 // proxmoxNode: (src/layout.js). `only:` on a default's repository keeps them.
 export const CORE_WIDGETS = ['http-status', 'ping', 'docker', 'kubernetes-pods', 'proxmoxvm'];
@@ -81,13 +82,19 @@ function repoOf(entry) {
 
 /**
  * The user's entries followed by the defaults; a user entry for a default's repository replaces
- * it, and its `only:` list gets CORE_WIDGETS added, so the service fields keep working.
+ * it, and its `only:` list gets CORE_WIDGETS added, so the service fields keep working. With
+ * #latest it also takes the default's `atLeast`.
  */
 export function withDefaultPlugins(entries, defaults = DEFAULT_PLUGINS) {
-  const defaultRepos = new Set(defaults.map(repoOf).filter(Boolean));
   const own = new Set(entries.map(repoOf).filter(Boolean));
-  const kept = entries.map((e) =>
-    Array.isArray(e.only) && !e.subdir && defaultRepos.has(repoOf(e)) ? { ...e, only: [...new Set([...e.only, ...CORE_WIDGETS])] } : e);
+  const kept = entries.map((e) => {
+    const d = defaults.find((x) => repoOf(x) && repoOf(x) === repoOf(e));
+    if (!d) return e;
+    const out = { ...e };
+    if (Array.isArray(e.only) && !e.subdir) out.only = [...new Set([...e.only, ...CORE_WIDGETS])];
+    if (d.atLeast && String(e.source).endsWith(`#${LATEST_REF}`)) out.atLeast = d.atLeast;
+    return out;
+  });
   return [...kept, ...defaults.filter((d) => !own.has(repoOf(d))).map((d) => ({ ...d, yields: true }))];
 }
 
@@ -175,14 +182,18 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
       }
       const locked = lock[src.key];
       const lockedHere = Boolean(locked?.dir && fs.existsSync(path.join(pluginsRoot, locked.dir)));
+      // a #latest locked below the release this dashboard needs is updated, as with `update`
+      const behind = Boolean(src.latest && entry.atLeast && locked?.tag && olderTag(locked.tag, entry.atLeast));
+      if (behind) log.info(`plugins: ${label} is locked at ${locked.tag}, this dashboard needs ${entry.atLeast} or newer; updating`);
+      const refresh = update || behind;
       let record;
-      if (!update && lockedHere) {
+      if (!refresh && lockedHere) {
         record = locked;
       } else {
         try {
           record = src.kind === 'git'
-            ? await installGit(src, pluginsRoot, run, update ? null : locked)
-            : await installNpm(src, pluginsRoot, run, update ? null : locked);
+            ? await installGit(src, pluginsRoot, run, refresh ? null : locked)
+            : await installNpm(src, pluginsRoot, run, refresh ? null : locked);
           log.info(`plugins: installed ${label} as ${record.dir}`);
         } catch (err) {
           if (!lockedHere) throw err;
@@ -273,6 +284,15 @@ function place(pkgRoot, subdir, pluginsRoot, collectionName) {
   fs.rmSync(target, { recursive: true, force: true });
   fs.renameSync(pkgRoot, target);
   return name;
+}
+
+/** True when release tag `tag` is older than `min` (both v1.2.3 or 1.2.3). */
+export function olderTag(tag, min) {
+  const a = RELEASE_TAG.exec(tag)?.slice(1).map(Number);
+  const b = RELEASE_TAG.exec(min)?.slice(1).map(Number);
+  if (!a || !b) return false;
+  for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] < b[i];
+  return false;
 }
 
 /** The highest release tag (v1.2.3 or 1.2.3, no pre-releases) out of `names`, or undefined. */

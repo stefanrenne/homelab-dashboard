@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import YAML from 'yaml';
-import { syncPlugins, parseSource, readLock, latestTag, withDefaultPlugins, DEFAULT_PLUGINS, CORE_WIDGETS } from '../src/plugins/installer.js';
+import { syncPlugins, parseSource, readLock, latestTag, withDefaultPlugins, DEFAULT_PLUGINS, CORE_WIDGETS, olderTag } from '../src/plugins/installer.js';
 import { loadWidget } from '../src/plugins/loader.js';
 import { WidgetRuntime } from '../src/plugins/runtime.js';
 import { validateOptions } from '../src/plugins/options.js';
@@ -336,4 +336,30 @@ test('a folder that cannot be removed is a warning, and the plugins still load',
   } finally {
     fs.chmodSync(old, 0o700);
   }
+});
+
+test('a #latest locked below atLeast (the release this dashboard needs) moves on without update', async () => {
+  const { url, repo, git } = templateRepo();
+  const configDir = tmpDir();
+  const key = `git+${url}#latest`;
+  await syncPlugins({ configDir, entries: [{ source: key }], log: silentLog });
+  assert.equal(readLock(configDir)[key].tag, 'v1.0.0');
+  fs.writeFileSync(path.join(repo, 'widget.yaml'), fs.readFileSync(path.join(repo, 'widget.yaml'), 'utf8').replace('1.1.0', '1.2.0'));
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qam', 'v1.2');
+  git('tag', 'v1.2.0');
+
+  const kept = await syncPlugins({ configDir, entries: [{ source: key, atLeast: 'v1.0.0' }], log: silentLog });
+  assert.equal(path.basename(kept.installed[0].dir), 'example-counter@1.0.0', 'new enough: the lock wins');
+  const moved = await syncPlugins({ configDir, entries: [{ source: key, atLeast: 'v1.2.0' }], log: silentLog });
+  assert.deepEqual(moved.errors, []);
+  assert.equal(path.basename(moved.installed[0].dir), 'example-counter@1.2.0');
+  assert.equal(readLock(configDir)[key].tag, 'v1.2.0');
+
+  assert.equal(olderTag('v0.3.0', 'v0.4.0'), true);
+  assert.equal(olderTag('0.4.0', 'v0.4.0'), false);
+  assert.equal(olderTag('v0.10.0', 'v0.4.0'), false);
+  assert.ok(DEFAULT_PLUGINS[0].atLeast, 'the default collection names the release it needs');
+  const def = [{ source: 'git+https://github.com/a/widgets#latest', atLeast: 'v2.0.0' }];
+  assert.equal(withDefaultPlugins([{ source: 'git+https://github.com/a/widgets#latest', only: ['x'] }], def)[0].atLeast, 'v2.0.0', 'your own #latest entry keeps it');
+  assert.equal(withDefaultPlugins([{ source: 'git+https://github.com/a/widgets#v1.0.0' }], def)[0].atLeast, undefined, 'a pinned tag is your choice');
 });

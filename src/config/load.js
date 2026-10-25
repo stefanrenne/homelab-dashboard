@@ -198,6 +198,7 @@ export function normalizeSettings(raw, ctx) {
     settings.layout = {};
   }
   for (const [name, value] of Object.entries(settings.layout)) if (value === null) settings.layout[name] = {};
+  if (settings.plugins === null) settings.plugins = []; // `plugins:` with every entry commented out
   if (!Array.isArray(settings.plugins)) {
     ctx.error(file, 'plugins', 'expected a list');
     settings.plugins = [];

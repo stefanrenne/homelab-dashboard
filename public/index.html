@@ -172,6 +172,10 @@
   button.tag::before { content: ""; position: absolute; inset: -4px -4px -12px; } /* hit area ≥ 28 px high */
   .tag.dot { padding: 6px 8px; }
   .tag .status-dot { display: block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .tag.pending { display: flex; align-items: center; padding-block: 4px; }
+  .tag-spinner { display: block; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--hd-muted) 35%, transparent);
+    border-top-color: var(--hd-muted); animation: tag-spin .8s linear infinite; }
+  @keyframes tag-spin { to { transform: rotate(360deg); } }
   .tag.up { color: var(--hd-ok); }
   .tag.down { color: var(--hd-error); }
   .tag.warn { color: var(--hd-warn); }
@@ -985,8 +989,12 @@ function stopPolling() {
 function statusTag(status, card, style, showStats) {
   // container (docker), proxmox (proxmoxvm) and pods (kubernetes-pods) labels open CPU and memory on a click
   const isContainer = ['container', 'proxmox', 'pods'].includes(status.kind);
-  const tag = el(isContainer ? 'button' : 'div', { class: 'tag', type: isContainer ? 'button' : null, text: '·' });
+  // until the first result: a small spinner (static under Reduce Motion)
+  const tag = el(isContainer ? 'button' : 'div', { class: 'tag pending', type: isContainer ? 'button' : null, 'aria-label': translate('loading') },
+    el('span', { class: 'tag-spinner', 'aria-hidden': 'true' }));
   if (!status.known) {
+    tag.className = 'tag';
+    tag.removeAttribute('aria-label');
     tag.textContent = '?';
     tag.title = `${translate('unknownWidget')}: ${status.type}`;
     return tag;

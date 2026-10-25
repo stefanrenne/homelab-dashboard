@@ -4,6 +4,11 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-10-25
+
+### Changed
+- A status label shows a small spinner until its first result, instead of a dot.
+
 ## [0.10.1] - 2026-10-25
 
 ### Fixed

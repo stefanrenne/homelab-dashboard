@@ -756,3 +756,28 @@ test('hd-widget-action with showResult failure: no toast or dialog on success, t
   assert.equal(w.document.querySelector('dialog.action-result .status').textContent, 'Gen Swag mislukt: Exitcode 2');
   w.close();
 });
+
+test('a status label shows a spinner until its first result', async () => {
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  const dom = new JSDOM(HTML, {
+    runScripts: 'dangerously',
+    url: 'http://localhost/',
+    beforeParse(window) {
+      window.fetch = async (url) => {
+        const p = new URL(url, 'http://localhost/').pathname;
+        if (p === '/api/widgets/s-1') await gate;
+        return { json: async () => structuredClone(RESULTS[p] ?? { ok: false, error: 'nope' }) };
+      };
+    },
+  });
+  await new Promise((r) => setTimeout(r, 30));
+  const tag = dom.window.document.querySelector('[data-service="svc-1"] .tag');
+  assert.ok(tag.querySelector('.tag-spinner'), 'no dot: a spinner');
+  assert.equal(tag.getAttribute('aria-label'), 'Laden…');
+  release();
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(tag.querySelector('.tag-spinner'), null);
+  assert.equal(tag.textContent, '78 ms');
+  dom.window.close();
+});

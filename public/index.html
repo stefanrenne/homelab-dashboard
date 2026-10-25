@@ -1082,7 +1082,10 @@ function placeBookmarkGroups() {
   }
 }
 
-/** hideVersion: false shows the version in the footer, with a link when a newer release is out. */
+/**
+ * hideVersion: false shows the version in the footer, with a link when a newer release is out,
+ * and the installed plugins (the widgets collection, ...) with theirs.
+ */
 function renderVersion(data) {
   const box = document.getElementById('version-box');
   box.hidden = !data.showVersion;
@@ -1093,6 +1096,10 @@ function renderVersion(data) {
   if (href) {
     box.append(document.createTextNode(' · '));
     box.append(el('a', { href, target: '_blank', rel: 'noopener noreferrer', text: translate('updateAvailable', { version: `v${data.update.version}` }) }));
+  }
+  for (const p of data.plugins ?? []) {
+    const version = p.version ? ` ${/^\d/.test(p.version) ? `v${p.version}` : p.version}` : '';
+    box.append(document.createTextNode(` · ${p.name}${version}`));
   }
 }
 

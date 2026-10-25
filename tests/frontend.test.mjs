@@ -617,14 +617,15 @@ test('showStats opens the container stats from the start; the label still folds 
   assert.equal(tag.getAttribute('aria-expanded'), 'false');
 });
 
-test('the footer shows the version only with showVersion, and links a newer release', async () => {
+test('the footer shows the version and the plugins\' only with showVersion, and links a newer release', async () => {
   const layout = structuredClone(LAYOUT);
   layout.showVersion = true;
   layout.update = { version: '0.9.0', url: 'https://github.com/example/releases/tag/v0.9.0' };
+  layout.plugins = [{ name: 'homelab-dashboard-widgets', version: 'v0.4.0' }, { name: 'hd-widget-y', version: '2.0.1' }, { name: 'my-widgets', version: null }];
   const w = await page({ ...RESULTS, '/api/layout': layout });
   const box = w.document.getElementById('version-box');
   assert.equal(box.hidden, false);
-  assert.equal(box.textContent, 'v0.1.0 · v0.9.0 beschikbaar');
+  assert.equal(box.textContent, 'v0.1.0 · v0.9.0 beschikbaar · homelab-dashboard-widgets v0.4.0 · hd-widget-y v2.0.1 · my-widgets');
   assert.equal(box.querySelector('a').getAttribute('href'), 'https://github.com/example/releases/tag/v0.9.0');
   const plain = await page();
   assert.equal(plain.document.getElementById('version-box').hidden, true);

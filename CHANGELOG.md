@@ -4,6 +4,24 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+Needs the widgets collection 0.4.0 (installed by default at its newest release), which now holds
+every widget, also the ones that were built in.
+
+### Added
+- `hideVersion: false` also shows the installed plugins in the footer, each with its version:
+  the widgets collection's release (`homelab-dashboard-widgets v0.4.0`), an npm version, a short
+  commit for a branch. Only names and versions, never a source URL.
+
+### Changed
+- The built-in widgets (`datetime`, `greeting`, `logo`, `search`, `resources`, `iframe`,
+  `custom-api`, `kubernetes`, and `http-status`, `ping`, `docker`, `kubernetes-pods`, `proxmoxvm`
+  behind `siteMonitor:`, `ping:`, `container:`, `app:` and `proxmoxNode:`) moved to the widgets
+  collection, with the same types and options. They now run in the widget worker thread. The first
+  start downloads the collection, so it needs network access once.
+- An `only:` list for the widgets collection in `settings.yaml` always keeps the five widgets
+  behind the service fields.
+- A service field whose widget is missing says it comes with the widgets collection.
+
 ## [0.5.0] - 2026-10-25
 
 Needs the widgets collection 0.3.0 (installed by default at its newest release), which now holds

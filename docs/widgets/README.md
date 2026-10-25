@@ -1,8 +1,10 @@
 # Widgets
 
 A widget is a package: a folder with a `widget.yaml` and usually a `server.js`, kept in its own
-repository and pulled in through `plugins:` in `settings.yaml`. The built-in widgets follow the
-same contract, so anything they do, a third-party widget can do too.
+repository and pulled in through `plugins:` in `settings.yaml`. Even the widgets behind the
+dashboard's own service fields (`siteMonitor:`, `container:`, ...) come from the
+[widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets) this way, so anything
+they do, a third-party widget can do too.
 
 | Page | What |
 |---|---|

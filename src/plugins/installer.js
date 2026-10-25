@@ -37,6 +37,9 @@ const PINNED_VERSION = /^\d+\.\d+\.\d+([-+][\w.-]+)?$/;
 const RELEASE_TAG = /^v?(\d+)\.(\d+)\.(\d+)$/;
 export const LATEST_REF = 'latest';
 export const DEFAULT_PLUGINS = [{ source: 'git+https://github.com/stefanrenne/homelab-dashboard-widgets#latest' }];
+// The collection's widgets behind a service's siteMonitor:, ping:, container:, app: and
+// proxmoxNode: (src/layout.js). `only:` on a default's repository keeps them.
+export const CORE_WIDGETS = ['http-status', 'ping', 'docker', 'kubernetes-pods', 'proxmoxvm'];
 
 /** Parses a plugin entry from settings.yaml. Throws on anything unsafe or unknown. */
 export function parseSource(entry) {
@@ -76,10 +79,16 @@ function repoOf(entry) {
     .replace(':', '/').replace(/\.git$/, '').replace(/\/+$/, '');
 }
 
-/** The user's entries followed by the defaults; a user entry for a default's repository replaces it. */
+/**
+ * The user's entries followed by the defaults; a user entry for a default's repository replaces
+ * it, and its `only:` list gets CORE_WIDGETS added, so the service fields keep working.
+ */
 export function withDefaultPlugins(entries, defaults = DEFAULT_PLUGINS) {
+  const defaultRepos = new Set(defaults.map(repoOf).filter(Boolean));
   const own = new Set(entries.map(repoOf).filter(Boolean));
-  return [...entries, ...defaults.filter((d) => !own.has(repoOf(d))).map((d) => ({ ...d, yields: true }))];
+  const kept = entries.map((e) =>
+    Array.isArray(e.only) && !e.subdir && defaultRepos.has(repoOf(e)) ? { ...e, only: [...new Set([...e.only, ...CORE_WIDGETS])] } : e);
+  return [...kept, ...defaults.filter((d) => !own.has(repoOf(d))).map((d) => ({ ...d, yields: true }))];
 }
 
 function defaultRun(cmd, args, opts = {}) {
@@ -111,9 +120,31 @@ function writeLock(configDir, plugins) {
   fs.writeFileSync(file, text);
 }
 
+/** A local folder's version: its widget.yaml (one widget) or package.json (a collection), else null. */
+function localVersion(dir) {
+  try {
+    if (fs.existsSync(path.join(dir, 'widget.yaml'))) return readManifest(dir).version ?? null;
+    return JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8')).version ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The name and version of an installed source, for the footer: the repository, npm package or
+ * folder name and the tag, version or short commit. Never the URL (it can hold a token).
+ */
+function packageInfo(src, record, dir) {
+  if (src.kind === 'path') return { name: path.basename(dir), version: localVersion(dir) };
+  if (src.kind === 'npm') return { name: src.subdir ? `${src.name}/${path.basename(src.subdir)}` : src.name, version: record.version };
+  const repo = path.basename(src.url.replace(/\/+$/, '')).replace(/\.git$/, '');
+  const version = record.tag ?? (!src.floating && !/^[0-9a-f]{40}$/.test(src.ref) ? src.ref : record.commit.slice(0, 7));
+  return { name: src.subdir ? `${repo}/${path.basename(src.subdir)}` : repo, version };
+}
+
 /**
  * Makes sure every source in `entries` is installed. Returns
- * { installed: [{ dir, source }], errors: [{ source, message }], warnings: [...] }.
+ * { installed: [{ dir, source }], packages: [{ name, version }], errors: [{ source, message }], warnings: [...] }.
  * With `update: true` git and npm sources are resolved again even when locked.
  */
 export async function syncPlugins({ configDir, entries, update = false, run = defaultRun, log = console }) {
@@ -121,6 +152,7 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
   const lock = readLock(configDir);
   const nextLock = {};
   const installed = [];
+  const packages = [];
   const errors = [];
   const warnings = [];
   if (entries.some((e) => !e.path)) fs.mkdirSync(pluginsRoot, { recursive: true });
@@ -132,6 +164,7 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
       if (src.kind === 'path') {
         const dir = path.resolve(configDir, src.path.replace(/^~(?=\/)/, process.env.HOME ?? '~'), src.subdir);
         for (const d of packageDirs(dir, Boolean(src.subdir), entry.only, label, warnings)) installed.push({ dir: d, source: label, yields: Boolean(entry.yields) });
+        packages.push(packageInfo(src, null, dir));
         continue;
       }
       if (src.floating) {
@@ -161,6 +194,7 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
       nextLock[src.key] = record;
       const root = path.join(pluginsRoot, record.dir, src.subdir);
       for (const d of packageDirs(root, Boolean(src.subdir), entry.only, label, warnings)) installed.push({ dir: d, source: label, yields: Boolean(entry.yields) });
+      packages.push(packageInfo(src, record));
     } catch (err) {
       errors.push({ source: label, message: err.message });
     }
@@ -168,7 +202,7 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
 
   if (entries.some((e) => !e.path) || Object.keys(lock).length) writeLock(configDir, nextLock);
   removeUnlocked(pluginsRoot, nextLock, log);
-  return { installed, errors, warnings };
+  return { installed, packages, errors, warnings };
 }
 
 /**

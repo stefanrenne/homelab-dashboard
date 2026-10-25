@@ -2,8 +2,8 @@
 # Stages the GitHub Pages site in <out>: docs/ as it is, plus README.md as the home page.
 # Links that point outside docs/ go to the file on GitHub, since only docs/ is published, and
 # every page is wrapped in {% raw %} so Liquid leaves {{HD_VAR_*}} in the examples alone.
-# Then scripts/pages-widgets.mjs adds a page per widget: the built-in ones, and the widgets
-# collection when a checkout of it (and its tag) is given.
+# Then scripts/pages-widgets.mjs adds a page per widget of the widgets collection, when a
+# checkout of it (and its tag) is given.
 #   scripts/pages.sh <out> [owner/repo] [<collection checkout> <tag>]
 set -eu
 out=$1
@@ -38,7 +38,5 @@ find "$out" -name '*.md' | while read -r f; do
 done
 # widget pages carry their own front matter and raw wrapping, so they come last
 if [ -n "$collection" ]; then
-  node scripts/pages-widgets.mjs "$out" widgets "$collection" "$tag"
-else
-  node scripts/pages-widgets.mjs "$out" widgets
+  node scripts/pages-widgets.mjs "$out" "$collection" "$tag"
 fi

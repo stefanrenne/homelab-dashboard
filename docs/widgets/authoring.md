@@ -74,7 +74,7 @@ the dashboard repo shows how the template is tested end to end.
 
 ## 6. Document it
 
-Give the widget a `README.md` in its folder, in the format the built-in widgets and the
+Give the widget a `README.md` in its folder, in the format of the
 [widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets) use, so users find
 the same things in the same place:
 

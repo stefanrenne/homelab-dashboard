@@ -138,7 +138,8 @@ providers:          # shared keys and logins; a widget entry uses one with provi
     username: admin
     password: "{{HD_VAR_LONGHORN_PASSWORD}}"
 instanceName: internal   # for discovery labels meant for one dashboard (homelab.instance.internal.href)
-hideVersion: false  # show the version in the footer (hidden by default, unlike homepage)
+hideVersion: false  # show the version in the footer, and each plugin's (the widgets collection, ...)
+                    # (hidden by default, unlike homepage)
 disableUpdateCheck: true   # with the version shown: do not ask GitHub once a day for a newer release
 disableIndexing: true      # ask search engines not to index the page (robots.txt and a robots meta tag)
 base: https://lab.example.com/dashboard/   # behind a reverse proxy under a sub path: the page's address
@@ -193,6 +194,13 @@ installed, as `git+https://github.com/stefanrenne/homelab-dashboard-widgets#late
 under `plugins:` extend it. To pin it or take only some of its widgets, list that repository
 yourself (with a tag, `only:` or `subdir:`): your entry then takes its place. A widget of your
 own with the same id as one in the collection (for example a local checkout under `path:`) wins.
+
+Every widget comes from the collection, also the ones behind a service's `siteMonitor:`
+(`http-status`), `ping:` (`ping`), `container:` (`docker`), `app:` (`kubernetes-pods`) and
+`proxmoxNode:` (`proxmoxvm`). An `only:` list for the collection always gets those five added,
+so the service fields keep working. They need collection 0.4.0 or newer: an entry pinned to an
+older tag says so in the messages. The first start downloads the collection, so it needs
+network access once; after that the lock file keeps it without network.
 
 `#latest` installs the highest release tag (`v1.2.3` or `1.2.3`; pre-releases such as
 `v2.0.0-beta.1` are skipped) and records it in `plugins/plugins.lock.yaml`. A restart keeps
@@ -438,7 +446,7 @@ pve:                                   # the node name, as in proxmoxNode
 
 homepage's older form, one `url`, `token` and `secret` at the top for every node, works too.
 Make the token under **Datacenter > Permissions > API Tokens** and give it the role
-**PVEAuditor** on `/`; see the [Proxmox VM](https://stefanrenne.github.io/homelab-dashboard/widgets/built-in/proxmoxvm.html) widget page.
+**PVEAuditor** on `/`; see the [Proxmox VM](https://stefanrenne.github.io/homelab-dashboard/widgets/collection/proxmoxvm.html) widget page.
 `token` and `secret` stay on the server.
 
 ## kubernetes.yaml
@@ -452,14 +460,14 @@ traefik: false             # discover Traefik IngressRoutes
 gateway: false             # discover Gateway API HTTPRoutes
 ```
 
-See [Discovery](discovery.md#kubernetes). The built-in `kubernetes` widget uses the same
+See [Discovery](discovery.md#kubernetes). The `kubernetes` widget uses the same
 connection.
 
-## Built-in widgets
+## Generic and header widgets
 
-Each has its own page with fields and an example under
-[Built-in widgets](https://stefanrenne.github.io/homelab-dashboard/widgets/built-in/); the
-collection's widgets under [Widget collection](https://stefanrenne.github.io/homelab-dashboard/widgets/collection/).
+These widgets of the [widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets)
+are not tied to a service. Each widget has its own page with fields and an example under
+[Widget collection](https://stefanrenne.github.io/homelab-dashboard/widgets/collection/).
 
 | Type | Options |
 |---|---|
@@ -477,13 +485,20 @@ collection's widgets under [Widget collection](https://stefanrenne.github.io/hom
 | `proxmoxvm` | `node`, `vmid` (required), `type` (`qemu`/`lxc`), and `url`, `token`, `secret` (secret), `insecure` from proxmox.yaml when left out |
 | `custom-api` | `url` (required), `method`, `headers` (secret), `body`, `display` (`block`/`list`), `mappings` (required: `field`, `label`, `format` (`number`/`percent`/`bytes`/`text`), `scale`, `prefix`, `suffix`, `remap: [{ value, to }, { any: true, to }]`) |
 
-Widgets for the weather (openmeteo, openweathermap), stocks, radarr, sonarr, bazarr, prowlarr, sabnzbd, seerr, stash, tautulli, tdarr, What's
-up Docker, Portainer, Unraid, Glances, Longhorn and UniFi are in the separate
-[homelab-dashboard-widgets](https://github.com/stefanrenne/homelab-dashboard-widgets) collection.
+The collection also has a widget for the weather (openmeteo, openweathermap), stocks, and every
+service homepage supports (radarr, sonarr, Unraid, Portainer, ...).
 
 ## Migration
 
 Changes to these formats stay backward compatible (hard rule 6). Each renamed or changed key is
 listed here with the version, what the old form becomes, and the test that covers it.
 
-_No migrations yet._
+### 0.6.0: the built-in widgets moved to the widgets collection
+
+Nothing to change. The dashboard has no built-in widgets any more: `datetime`, `search`,
+`resources`, `http-status`, `ping`, `docker`, `custom-api` and the others are in the widgets
+collection, which is always installed (0.4.0 or newer needed). Their types and options are the
+same. With your own `plugins:` entry for the collection, `only:` gets the five widgets behind the
+service fields added, and a pinned tag must be 0.4.0 or newer. Covered by
+`tests/installer.test.mjs` (withDefaultPlugins) and `tests/app.test.mjs` (without the widgets
+collection a service field says where its widget comes from).

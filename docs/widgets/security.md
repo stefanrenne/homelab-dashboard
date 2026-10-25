@@ -15,7 +15,8 @@ choosing a Docker image. The dashboard limits the damage where it can:
   tarball for a locked version is refused.
 - `npm pack` runs with `--ignore-scripts`; nothing from a package runs during installation.
 - `git`, `npm` and `ping` get validated arguments without a shell (no `-`-prefixed refs or names).
-- A built-in widget id cannot be taken over by a plugin.
+- The default collection yields: a widget id from your own `plugins:` wins over the collection's,
+  and two of your own sources cannot share an id.
 - The dashboard, and so every widget, runs as the unprivileged `node` user. The entrypoint is
   root only to give `node` a mounted Docker socket's group, before the dashboard starts.
 - A mounted Docker socket gives every widget the whole Docker API (`:ro` does not limit it).

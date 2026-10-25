@@ -6,6 +6,14 @@ import http from 'node:http';
 
 export const silentLog = { info() {}, warn() {}, error() {} };
 
+// Every widget comes from the widgets collection; the tests load its widgets in-process from a
+// checkout: HD_COLLECTION_DIR (CI checks out the pinned release), else the sibling repository.
+export const COLLECTION_DIR = path.resolve(process.env.HD_COLLECTION_DIR ?? '../homelab-dashboard-widgets');
+export const COLLECTION_WIDGETS = path.join(COLLECTION_DIR, 'widgets');
+if (!fs.existsSync(path.join(COLLECTION_WIDGETS, 'http-status', 'widget.yaml'))) {
+  throw new Error(`no widgets collection in ${COLLECTION_DIR}: clone homelab-dashboard-widgets next to this repository or set HD_COLLECTION_DIR`);
+}
+
 export function tmpDir(prefix = 'hd-') {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 }

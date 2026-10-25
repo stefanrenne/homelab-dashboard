@@ -26,7 +26,7 @@ without `client.js` is rendered by the dashboard from `blocks`.
 
 | Key | Required | Meaning |
 |---|---|---|
-| `id` | yes | Lowercase letters, digits and dashes, max 63. Used as `type:` in the config and as `hd-<id>` element name. Built-in ids cannot be taken. |
+| `id` | yes | Lowercase letters, digits and dashes, max 63. Used as `type:` in the config and as `hd-<id>` element name. |
 | `name` | yes | Human-readable name. |
 | `version` | yes | A string, e.g. `"1.2.0"`. Installed as `plugins/<id>@<version>`. |
 | `apiVersion` | yes | The widget API this package targets. Supported: `1`. |
@@ -68,7 +68,7 @@ export default {
 
 `fetch(ctx)` is called at most once per `refresh` per widget instance. Concurrent browser requests share one call.
 
-Installed widgets (not the built-in ones) run in a worker thread, apart from the dashboard: one
+Widgets run in a worker thread, apart from the dashboard: one
 worker for all of them, with a memory limit. `ctx` is the same; what `fetch` returns must be plain
 data (it is copied out of the worker), and module-level state is the worker's. A widget that does
 not stop within a second after its timeout gets the worker restarted.
@@ -172,7 +172,7 @@ A `client.js` may talk to the dashboard through DOM events that bubble out of it
 | `hd-search-submit` | `{ query }` | Send it `cancelable: true`. With exactly one match the dashboard opens it and cancels the event; otherwise the widget may search elsewhere. |
 | `hd-widget-params` | `{ name: value, ... }` | Fetches the widget again with these values (text) for `server.js`, and keeps sending them on every refresh. Only the names in widget.yaml `params` arrive. |
 
-The built-in `search` widget uses the first two. The weather widgets of the
+The collection's `search` widget uses the first two. The weather widgets of the
 [collection](https://github.com/stefanrenne/homelab-dashboard-widgets) send `hd-widget-params`
 with the viewer's location (`navigator.geolocation`, HTTPS only, rounded to two decimals) when
 their options have no coordinates.

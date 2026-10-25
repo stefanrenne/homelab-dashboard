@@ -24,8 +24,16 @@ jobs:
         with:
           node-version: "24" # the same LTS line as the image
           cache: npm
+      # the tests load every widget from the widgets collection, at the release this version needs
+      - uses: actions/checkout@v7
+        with:
+          repository: stefanrenne/homelab-dashboard-widgets
+          ref: v0.4.0
+          path: collection
       - run: npm ci --no-audit --no-fund
       - run: npm test
+        env:
+          HD_COLLECTION_DIR: collection
 
   # On a pull request the image is built and smoke-tested too, without pushing: an update of the
   # build actions or the base image is tested before it is merged.

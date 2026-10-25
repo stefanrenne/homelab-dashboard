@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import YAML from 'yaml';
-import { syncPlugins, parseSource, readLock, latestTag, withDefaultPlugins, DEFAULT_PLUGINS } from '../src/plugins/installer.js';
+import { syncPlugins, parseSource, readLock, latestTag, withDefaultPlugins, DEFAULT_PLUGINS, CORE_WIDGETS } from '../src/plugins/installer.js';
 import { loadWidget } from '../src/plugins/loader.js';
 import { WidgetRuntime } from '../src/plugins/runtime.js';
 import { validateOptions } from '../src/plugins/options.js';
@@ -127,9 +127,14 @@ test('withDefaultPlugins: own entries come first, an entry for the same reposito
   assert.deepEqual(withDefaultPlugins([], def), yielding);
   assert.deepEqual(withDefaultPlugins([own, { path: './x' }], def), [own, { path: './x' }, ...yielding]);
   for (const source of ['git+https://github.com/a/widgets#v0.2.0', 'git+https://GitHub.com/a/widgets.git', 'git+git@github.com:a/widgets.git#latest']) {
-    const pinned = { source, only: ['radarr'] };
-    assert.deepEqual(withDefaultPlugins([pinned], def), [pinned], source);
+    assert.deepEqual(withDefaultPlugins([{ source }], def), [{ source }], source);
+    // only: keeps the widgets behind the service fields
+    assert.deepEqual(withDefaultPlugins([{ source, only: ['radarr', 'ping'] }], def), [{ source, only: ['radarr', 'ping', 'http-status', 'docker', 'kubernetes-pods', 'proxmoxvm'] }], source);
   }
+  const one = { source: def[0].source, subdir: 'widgets/radarr' };
+  assert.deepEqual(withDefaultPlugins([one], def), [one], 'a subdir is the user\'s choice of one widget');
+  assert.deepEqual(withDefaultPlugins([{ source: 'git+https://github.com/b/other', only: ['x'] }], def)[0].only, ['x'], 'another repository keeps its list');
+  assert.deepEqual(CORE_WIDGETS, ['http-status', 'ping', 'docker', 'kubernetes-pods', 'proxmoxvm']);
   assert.equal(DEFAULT_PLUGINS[0].source, 'git+https://github.com/stefanrenne/homelab-dashboard-widgets#latest');
 });
 
@@ -295,4 +300,23 @@ test('scripts/new-widget: the template under a new id loads, with nothing of exa
   assert.match(all, /customElements\.define\('hd-my-nas', MyNas\)/);
   assert.match(fs.readFileSync(path.join(dir, 'README.md'), 'utf8'), /^# My NAS\n/);
   assert.throws(() => renameWidget(dir, 'My Widget'), /not a widget id/);
+});
+
+test('syncPlugins reports each source by name and version, never its URL', async () => {
+  const { url } = templateRepo();
+  const configDir = tmpDir();
+  fs.cpSync(TEMPLATE, path.join(configDir, 'my-widget'), { recursive: true });
+  fs.cpSync(TEMPLATE, path.join(configDir, 'my-collection', 'widgets', 'a'), { recursive: true });
+  fs.writeFileSync(path.join(configDir, 'my-collection', 'package.json'), '{ "version": "0.4.0" }');
+  fs.mkdirSync(path.join(configDir, 'bare', 'widgets'), { recursive: true });
+  fs.cpSync(TEMPLATE, path.join(configDir, 'bare', 'widgets', 'b'), { recursive: true });
+  const entries = [{ source: `git+${url}#latest` }, { source: `git+${url}#v1.0.0` }, { source: `git+${url}#main` }, { path: './my-widget' }, { path: './my-collection' }, { path: './bare' }];
+  const out = await syncPlugins({ configDir, entries, log: silentLog });
+  assert.deepEqual(out.errors, []);
+  const [latest, tag, main, ...folders] = out.packages;
+  assert.deepEqual([latest, tag], [{ name: 'widget', version: 'v1.0.0' }, { name: 'widget', version: 'v1.0.0' }]);
+  const template = YAML.parse(fs.readFileSync(path.join(TEMPLATE, 'widget.yaml'), 'utf8')).version;
+  assert.deepEqual(folders, [{ name: 'my-widget', version: template }, { name: 'my-collection', version: '0.4.0' }, { name: 'bare', version: null }], 'a folder: its widget.yaml or package.json');
+  assert.match(main.version, /^[0-9a-f]{7}$/, 'a branch shows its commit');
+  assert.ok(!JSON.stringify(out.packages).includes('file://'));
 });

@@ -5,6 +5,7 @@
 
 import { validateOptions } from './plugins/options.js';
 import { DEFAULT_REFRESH_MS } from './plugins/loader.js';
+import { CORE_WIDGETS } from './plugins/installer.js';
 import { stableId, parseDuration, isPlainObject } from './util.js';
 import { DEFAULT_LEVELS } from './highlight.js';
 import { k8sConnection } from './discovery/kubeconfig.js';
@@ -136,8 +137,12 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     const type = widget?.id ?? requested; // an alias (homepage's customapi) becomes the widget's id
     usedTypes.add(type);
     if (!widget) {
-      errors.push({ ...where, message: `unknown widget type "${type}"` });
-      instances.set(id, { type, options: {}, secretValues: [], refreshMs: DEFAULT_REFRESH_MS, errors: [`unknown widget type "${type}"`] });
+      // the service fields' widgets come with the widgets collection: say so when it is missing
+      const message = CORE_WIDGETS.includes(type)
+        ? `unknown widget type "${type}": it comes with the widgets collection (0.4.0 or newer), which is not installed`
+        : `unknown widget type "${type}"`;
+      errors.push({ ...where, message });
+      instances.set(id, { type, options: {}, secretValues: [], refreshMs: DEFAULT_REFRESH_MS, errors: [message] });
       return { instanceId: id, type, options: {}, known: false };
     }
     const { own, options: widgetOptions } = splitInstanceKeys(widget.manifest.options, withConnection(widget.id, rawOptions, where));

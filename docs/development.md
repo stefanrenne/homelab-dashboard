@@ -9,6 +9,9 @@ npm run dev              # http://localhost:3000 with config.example
 node src/server.js --config ~/my-test-config --port 3001
 ```
 
+- The tests load every widget from a checkout of the
+  [widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets): clone it next to
+  this repository (`../homelab-dashboard-widgets`) or point `HD_COLLECTION_DIR` at one.
 - The YAML reloads on save; changes to `src/` or `public/` need a restart.
   `public/index.html` only needs a browser refresh.
 - `tests/helpers.mjs` has `tmpDir`, `writeWidget`, `serve` (HTTP on a port or a unix socket) and

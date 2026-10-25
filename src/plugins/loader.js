@@ -103,6 +103,7 @@ export async function loadWidget(dir, { source = 'builtin' } = {}) {
 
 /** Lists the widget folders directly inside `root` (folders that contain widget.yaml). */
 export function widgetDirs(root) {
+  if (!root) return [];
   let entries;
   try {
     entries = fs.readdirSync(root, { withFileTypes: true });
@@ -116,8 +117,8 @@ export function widgetDirs(root) {
 }
 
 /**
- * Builds the registry from built-in widgets and external packages. The first widget with
- * an id wins, so an external package can never replace a built-in one. A package with
+ * Builds the registry from external packages (and `builtinDir`, widgets loaded in-process, in
+ * tests). The first widget with an id wins, so an external package can never replace a built-in one. A package with
  * `yields` (a default plugin) quietly gives way to a widget id that is already there.
  * A widget's `aliases` are added after every id, where they are still free, pointing to the
  * same widget (its `id` stays the real one).

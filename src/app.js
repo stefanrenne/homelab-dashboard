@@ -23,7 +23,6 @@ export const CUSTOM_FILES = ['custom.css', 'custom.js'];
 import { safeJoin } from './util.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const BUILTIN_WIDGETS = path.join(ROOT, 'widgets');
 export const PUBLIC_DIR = path.join(ROOT, 'public');
 // HD_VERSION is set by the Docker build (1.2.3 or main-<sha>); otherwise package.json's version.
 export const VERSION = process.env.HD_VERSION || JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
@@ -78,7 +77,9 @@ export function hostAllowed(header, list) {
 
 export async function createApp({
   configDir,
-  builtinDir = BUILTIN_WIDGETS,
+  // every widget comes from a plugin (the widgets collection by default); a folder of widgets
+  // loaded in-process, before the plugins, is for tests
+  builtinDir = null,
   publicDir = PUBLIC_DIR,
   env = process.env,
   log = console,
@@ -119,7 +120,9 @@ export async function createApp({
     else updates.stop();
     const latest = showVersion && !state.config.settings.disableUpdateCheck ? updates.latest : null;
     const update = latest && isNewer(latest.version, VERSION) ? latest : null;
-    state.layout = { ...layout, version: VERSION, showVersion, update };
+    // the installed plugins (name and version) next to the version, behind the same setting
+    const plugins = showVersion ? state.pluginResult.packages ?? [] : [];
+    state.layout = { ...layout, version: VERSION, showVersion, update, plugins };
     broadcast('reload');
   }
 

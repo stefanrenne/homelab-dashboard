@@ -12,7 +12,6 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
 COPY src ./src
 COPY public ./public
-COPY widgets ./widgets
 COPY config.example ./config.example
 
 # The version reported by /api/health: 1.2.3 for a release, main-<sha> for other builds (CI sets it).

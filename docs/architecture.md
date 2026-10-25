@@ -4,7 +4,7 @@
             settings.yaml ─┐
             services.yaml ─┤ loadConfig ──► config ──┬─► syncPlugins ──► installed dirs ─┐
   widgets / bookmarks / …  ┘   (+ variables)         │                                   ▼
-                                                     │                 loadRegistry (built-in + plugins)
+                                                     │                 loadRegistry (plugins)    
                                                      ├─► Discovery (Docker, K8s) ──┐     │
                                                      ▼                             ▼     ▼
                                               mergeDiscovered ──────────────► buildState

@@ -31,9 +31,8 @@ every push to `main` that touches them. Jekyll builds it with the just-the-docs 
 Markdown stays plain (no front matter), titles and the menu order are in `docs/_config.yml`.
 `scripts/pages.sh` stages the site: it adds the README as home page, points links outside
 `docs/` at GitHub, and wraps each page in `{% raw %}` so `{{HD_VAR_*}}` examples stay literal.
-`scripts/pages-widgets.mjs` then adds a page per widget from its `README.md` and `widget.yaml`:
-the built-in ones, and the widgets collection at its newest release (checked out by the
-workflow). A daily run picks up a new collection release.
+`scripts/pages-widgets.mjs` then adds a page per widget from its `README.md` and `widget.yaml`,
+for the widgets collection at its newest release (checked out by the workflow). A daily run picks up a new collection release.
 
 ## Dependabot
 

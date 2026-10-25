@@ -17,8 +17,9 @@ get a pull request merged here first.
 
 - **YAML configuration** for services, header widgets, bookmarks and discovery, hot-reloaded on save.
 - **Status checks** per service: HTTP (`siteMonitor`), `ping`, or Docker container state.
-- **Widgets** with live data. Built in: date/time, system resources, search, HTTP status, ping,
-  Docker container, and a generic JSON API mapper.
+- **Widgets** with live data, all from the [widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets)
+  (installed by default): date/time, system resources, search, HTTP status, ping, Docker
+  container, a generic JSON API mapper, and one for every service homepage supports.
 - **Third-party widgets**: `widget.yaml` + `server.js` (+ optional `client.js` Web Component),
   installed from git/npm/path, pinned in a lock file.
 - **Secrets stay on the server**: API keys go in `{{HD_VAR_...}}` and never reach the browser.

@@ -8,7 +8,8 @@ Homelab Dashboard: a self-hosted start page for a homelab, in the spirit of
 [homepage](https://gethomepage.dev). Everything is configured in YAML files (services, header
 widgets, bookmarks, Docker/Kubernetes discovery). The difference: **widgets are packages that
 anyone can publish outside this repository** (a git repo, an npm package or a local folder),
-pulled in through `plugins:` in `settings.yaml`. A single Docker container, Node.js without a build step.
+pulled in through `plugins:` in `settings.yaml`. This repository has no widgets of its own: all of
+them, also those behind core features, are in the widgets collection (`DEFAULT_PLUGINS`). A single Docker container, Node.js without a build step.
 
 ## Structure
 
@@ -21,7 +22,6 @@ pulled in through `plugins:` in `settings.yaml`. A single Docker container, Node
 | `src/discovery/` | `docker.js` (labels, Swarm services), `kubernetes.js` (Ingress, IngressRoute and HTTPRoute annotations), `kubeconfig.js` (service account or kubeconfig connection), `labels.js`, `index.js` (polling + merge with YAML, weights). |
 | `src/layout.js` | Widget instances (server side) and the layout JSON (browser side). |
 | `public/index.html` | The dashboard. A single file, vanilla JS, no build step. |
-| `widgets/` | Built-in widgets. Same contract as external ones (hard rule 3). Only generic ones and those behind a core feature (`container:`, `proxmoxNode:`, `app:`, `siteMonitor:`, `ping:`); a widget for an outside service goes in the collection. |
 | `examples/widget-template/` | Copy-and-go template for widget authors; covered by tests. Its repository form is `../homelab-dashboard-widget-example` ([GitHub](https://github.com/stefanrenne/homelab-dashboard-widget-example)); keep the two in step. |
 | `config.example/` | Example config: the default for an empty `/config` and for `npm run dev`. |
 | `deploy/` | Your own installations (config, compose file, preview scripts). Ignored by git; never referenced from the rest of the codebase. |
@@ -30,7 +30,7 @@ pulled in through `plugins:` in `settings.yaml`. A single Docker container, Node
 | `scripts/pages.sh`, `scripts/pages-widgets.mjs` | Stage the GitHub Pages site: `docs/`, the README as home page, a page per widget. |
 | `scripts/screenshots.mjs` | Recreates the README screenshots (Playwright, not in `package.json`). |
 | `scripts/new-widget.mjs` | `npm run new-widget -- <id>`: the widget template under a new id (the example repo's `npm run rename` does the same in place). |
-| `../homelab-dashboard-widgets` | Separate repo ([GitHub](https://github.com/stefanrenne/homelab-dashboard-widgets)): the homepage-style widgets (radarr, unraid, ...) as a collection. Not part of this codebase on purpose. |
+| `../homelab-dashboard-widgets` | Separate repo ([GitHub](https://github.com/stefanrenne/homelab-dashboard-widgets)): every widget, as a collection, including `CORE_WIDGETS` (`src/plugins/installer.js`), the ones `src/layout.js` creates for `siteMonitor:`, `ping:`, `container:`, `app:` and `proxmoxNode:`. Not part of this codebase on purpose. The tests load its widgets from a checkout (`HD_COLLECTION_DIR`, else this sibling folder; CI checks out a pinned release). |
 | `.github/` | CI (tests, image smoke test, amd64+arm64 image to GHCR, release on a tag), Dependabot and its auto-merge. |
 | `docs/` | Architecture, configuration, widgets (authoring, API reference, security), discovery, development, publishing, decisions. Published as a GitHub Pages site (`docs/_config.yml`: titles and menu order; `scripts/pages.sh` adds the README as home page). A new page gets an entry under `defaults:` in `_config.yml`. |
 | `todo.md` / `completed.md` | Open and finished work. Update them when you pick something up or finish it. |
@@ -44,6 +44,7 @@ npm run dev                   # http://localhost:3000 with config.example, hot r
 docker build -t homelab-dashboard .
 ```
 
+The tests need a checkout of the widgets collection next to this repository (or `HD_COLLECTION_DIR`).
 Run the tests before every commit. CI (`.github/workflows/ci.yml`) does the same, then builds
 the image and smoke-tests it.
 
@@ -58,8 +59,10 @@ the image and smoke-tests it.
    (`data`, `options`, `t`, `error`) only change in a backward-compatible way. A breaking change
    means a new `apiVersion` next to the old one, which stays supported. Every change goes into
    `docs/widgets/api-reference.md` (with the version that introduced it).
-3. **Built-in widgets use only the public widget API.** No imports from `src/`. If a built-in
-   widget needs more, the API gets it first (documented, tested), so external authors get it too.
+3. **The core needs no widget internals.** Widgets live in the collection and use only the public
+   widget API. If a widget behind a core feature needs more, the API gets it first (documented,
+   tested), so external authors get it too. The ids and options of `CORE_WIDGETS` are a contract
+   with the collection.
 4. **A widget can never take down the server.** Every call has a timeout and a try/catch; a failure
    ends up on the widget's card. The same holds for broken packages, unknown types and bad options:
    they become messages, never exceptions.
@@ -83,26 +86,14 @@ the image and smoke-tests it.
 ## Conventions
 
 - **Every widget has a docs page** on the GitHub Pages site, generated by
-  `scripts/pages-widgets.mjs` from `widgets/<id>/README.md` plus `widget.yaml`. The README holds,
-  in this order:
-  1. `# <name>`: exactly the `name` in widget.yaml.
-  2. What it shows, and the setup the user must do: where to find the API key or token, which
-     ids or names to fill in, required permissions or service versions, a socket proxy, ...
-  3. `Learn more about [<service>](<url>).` for widgets of a third-party service.
-  4. `## Fields`: every block `key` the widget can return, in backticks (or a sentence when the
-     blocks are not fixed). A test checks them against `server.js`.
-  5. `## Example`: a complete `services.yaml` (or `widgets.yaml`) entry with `type: <id>`, secrets
-     through `{{HD_VAR_...}}`, made-up hosts (`*.lan`).
-  The options table, version and source link are generated: every option in widget.yaml gets a
-  line comment (`# e.g. http://radarr:7878`) when its name does not explain it. A new option,
-  field or setup step updates the README in the same commit. The widgets collection follows the
-  same format (its CLAUDE.md); the site shows the collection's newest release.
+  `scripts/pages-widgets.mjs` from the widgets collection's newest release (`widgets/<id>/README.md`
+  plus `widget.yaml`); the README format is in the collection's CLAUDE.md.
 - Everything is **English**: code comments, log lines, Markdown docs, this file. Only UI texts in
   `I18N` (and widget `i18n.json`) are translated.
 - The UI is multilingual (en, nl, fr, de, es, ca, he, hr, hu, it, nb-NO, pt, ru, sv, vi, zh-Hans,
   zh-Hant; homepage's set plus nl): all page texts live in `I18N` in `index.html` and go through
-  `translate()`. A new text gets a key in **every** language; a test checks this, also for the
-  `i18n.json` of built-in widgets. Hebrew is right-to-left: use logical CSS properties
+  `translate()`. A new text gets a key in **every** language; a test checks this (the collection checks
+  its widgets' `i18n.json`). Hebrew is right-to-left: use logical CSS properties
   (`inset-inline-end`, `padding-inline-start`), not left/right.
 - Config errors and warnings always name the file and a path into it (`services.yaml › [0].Network[1].Router`).
 - Small, focused changes. New logic gets a test. Bugs get a test that fails without the fix.

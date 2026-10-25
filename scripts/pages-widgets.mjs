@@ -1,13 +1,12 @@
 // Writes one documentation page per widget into the staged Pages site (see scripts/pages.sh):
 // the widget's README.md (intro, fields, example) with its version, source and an options table
 // taken from widget.yaml.
-//   node scripts/pages-widgets.mjs <site> <builtin widgets dir> [<collection repo dir> <tag>]
+//   node scripts/pages-widgets.mjs <site> <collection repo dir> <tag>
 
 import fs from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
 
-const REPO = 'https://github.com/stefanrenne/homelab-dashboard';
 const COLLECTION = 'https://github.com/stefanrenne/homelab-dashboard-widgets';
 
 /** The widget folders (with a widget.yaml) directly in `dir`, sorted. */
@@ -51,7 +50,7 @@ function optionsTable(rows) {
 }
 
 /**
- * The page for one widget folder. `source` is { kind: 'builtin' } or { kind: 'collection', tag }.
+ * The page for one widget folder of the collection at `source.tag`.
  * Returns { id, name, description, markdown } (markdown without front matter).
  */
 export function widgetPage(dir, source) {
@@ -62,9 +61,7 @@ export function widgetPage(dir, source) {
   if (!/^# /.test(readme)) readme = `# ${manifest.name}\n\n${readme}`;
 
   const id = manifest.id;
-  const where = source.kind === 'builtin'
-    ? `Built in · [source](${REPO}/tree/main/widgets/${id})`
-    : `[Widget collection](${COLLECTION}) ${source.tag} · [source](${COLLECTION}/tree/${source.tag}/widgets/${id})`;
+  const where = `[Widget collection](${COLLECTION}) ${source.tag} · [source](${COLLECTION}/tree/${source.tag}/widgets/${id})`;
   const also = (manifest.aliases ?? []).map((a) => ` (or \`${a}\`)`).join('');
   const info = `\`type: ${id}\`${also} · version ${manifest.version} · widget API ${manifest.apiVersion} · ${where}\n{: .fs-3 .text-grey-dk-000 }\n`;
   const options = `## Options\n\n${optionsTable(optionRows(yamlText))}\nEvery widget also takes \`refresh\` (or \`refreshInterval\` in ms), \`fields\` and \`hideErrors\`; see [services.yaml](../../configuration.html#servicesyaml).\n`;
@@ -94,22 +91,18 @@ function section(site, folder, title, navOrder, intro, pages) {
   }
 }
 
-export function writeWidgetPages({ site, builtinDir, collectionDir, collectionTag }) {
-  const builtin = widgetFolders(builtinDir).map((d) => widgetPage(d, { kind: 'builtin' }));
-  section(site, 'built-in', 'Built-in widgets', 4,
-    'These widgets come with the dashboard. Use them under `widget:` in `services.yaml` or in `widgets.yaml` (the header).',
-    builtin);
-  if (!collectionDir) return { builtin: builtin.length, collection: 0 };
+export function writeWidgetPages({ site, collectionDir, collectionTag }) {
   const collection = widgetFolders(path.join(collectionDir, 'widgets')).map((d) => widgetPage(d, { kind: 'collection', tag: collectionTag }));
-  section(site, 'collection', 'Widget collection', 5,
-    `The [widgets collection](${COLLECTION}) is always installed at its newest release (this page: ${collectionTag}). ` +
+  section(site, 'collection', 'Widget collection', 4,
+    `Every widget comes from the [widgets collection](${COLLECTION}), always installed at its newest release (this page: ${collectionTag}). ` +
+      'Use them under `widget:` in `services.yaml` or in `widgets.yaml` (the header). ' +
       'To pin a release or take only some widgets, list it under `plugins:` yourself; see [Configuration](../../configuration.html).',
     collection);
-  return { builtin: builtin.length, collection: collection.length };
+  return { collection: collection.length };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const [site, builtinDir, collectionDir, collectionTag] = process.argv.slice(2);
-  const n = writeWidgetPages({ site, builtinDir, collectionDir, collectionTag });
-  console.log(`widget pages: ${n.builtin} built-in, ${n.collection} from the collection`);
+  const [site, collectionDir, collectionTag] = process.argv.slice(2);
+  const n = writeWidgetPages({ site, collectionDir, collectionTag });
+  console.log(`widget pages: ${n.collection} from the collection`);
 }

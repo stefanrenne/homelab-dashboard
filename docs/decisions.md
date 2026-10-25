@@ -2,6 +2,16 @@
 
 Why things are the way they are. Newest first.
 
+## Every widget in the widgets collection (2026-10-25)
+The dashboard had built-in widgets: the generic and header ones, and the ones behind a
+service's `siteMonitor:`, `ping:`, `container:`, `app:` and `proxmoxNode:`. They moved to the
+widgets collection, so a widget has one place, one release cycle and one test suite, and the
+dashboard is only the core. The core still creates those five widgets by id and fills in their
+options (`CORE_WIDGETS` in `src/plugins/installer.js`); their ids and options are a contract
+with the collection. The price: the first start needs network access to download the collection
+(the lock file covers later starts), the five run in the worker thread like any installed
+widget, and `only:` on the collection gets them added so the service fields keep working.
+
 ## One worker thread for installed widgets (2026-10-24)
 A widget's `fetch` used to run in the dashboard's event loop, so a loop without end froze the
 whole page and a leak took the process down, against hard rule 4. Installed widgets now run in a

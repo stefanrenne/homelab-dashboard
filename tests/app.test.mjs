@@ -6,7 +6,7 @@ import http from 'node:http';
 import { createApp } from '../src/app.js';
 import { watchConfig } from '../src/config/watch.js';
 import { execFileSync } from 'node:child_process';
-import { tmpDir, serve, silentLog, writeWidget } from './helpers.mjs';
+import { tmpDir, serve, silentLog, writeWidget, COLLECTION_WIDGETS } from './helpers.mjs';
 import { readLock } from '../src/plugins/installer.js';
 
 const SECRET = 'super-secret-api-key-123';
@@ -17,7 +17,7 @@ async function startApp(files, env = {}) {
     fs.mkdirSync(path.dirname(path.join(configDir, name)), { recursive: true });
     fs.writeFileSync(path.join(configDir, name), text);
   }
-  const app = await createApp({ configDir, env, log: silentLog, defaultPlugins: [], dockerSocket: null });
+  const app = await createApp({ configDir, env, log: silentLog, defaultPlugins: [], dockerSocket: null, builtinDir: COLLECTION_WIDGETS });
   const server = http.createServer(app.handler);
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -91,6 +91,19 @@ test('status checks come from siteMonitor, ping and container', async () => {
     assert.deepEqual(services[2].statuses[0].options, { container: 'c', socket: '/tmp/none.sock', swarm: true });
   } finally {
     await t.close();
+  }
+});
+
+test('without the widgets collection a service field says where its widget comes from', async () => {
+  const configDir = tmpDir('hd-app-');
+  fs.writeFileSync(path.join(configDir, 'services.yaml'), '- G:\n    - A: { siteMonitor: "http://a.lan" }\n    - B:\n        widget: { type: radarr }\n');
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [], dockerSocket: null });
+  try {
+    const messages = app.layout.messages.errors.map((e) => e.message);
+    assert.ok(messages.includes('unknown widget type "http-status": it comes with the widgets collection (0.4.0 or newer), which is not installed'), messages.join('\n'));
+    assert.ok(messages.includes('unknown widget type "radarr"'));
+  } finally {
+    app.close();
   }
 });
 
@@ -547,7 +560,7 @@ test('a mounted Docker socket is discovered without docker.yaml', async () => {
   }, { socketPath });
   const configDir = tmpDir('hd-app-');
   fs.writeFileSync(path.join(configDir, 'docker.yaml'), '# only comments, like config.example\n');
-  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [], dockerSocket: socketPath });
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [], dockerSocket: socketPath, builtinDir: COLLECTION_WIDGETS });
   try {
     for (let i = 0; i < 50 && !JSON.stringify(app.layout).includes('Grafana'); i++) await new Promise((r) => setTimeout(r, 20));
     const group = app.layout.groups.find((g) => g.name === 'Monitoring');
@@ -780,8 +793,10 @@ test('hideVersion: false shows the version and checks for updates; nothing is fe
     const quiet = await make('title: x\n');
     assert.equal(quiet.layout.showVersion, false);
     quiet.close();
-    const off = await make('hideVersion: false\ndisableUpdateCheck: true\n');
+    assert.deepEqual(quiet.layout.plugins, [], 'no plugin versions without the version shown');
+    const off = await make(`hideVersion: false\ndisableUpdateCheck: true\nplugins:\n  - path: ${path.resolve('examples/widget-template')}\n`);
     assert.equal(off.layout.showVersion, true);
+    assert.deepEqual(off.layout.plugins.map((p) => p.name), ['widget-template'], 'the plugins next to the version');
     assert.equal(off.layout.update, null);
     off.close();
     assert.equal(calls, 0, 'no request without the version shown, or with disableUpdateCheck');

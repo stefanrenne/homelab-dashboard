@@ -4,7 +4,7 @@ import path from 'node:path';
 import { loadWidget, loadRegistry, readManifest } from '../src/plugins/loader.js';
 import { validateOptions } from '../src/plugins/options.js';
 import { WidgetRuntime, checkData, scrub, widgetFetch } from '../src/plugins/runtime.js';
-import { tmpDir, writeWidget, silentLog, serve } from './helpers.mjs';
+import { tmpDir, writeWidget, silentLog, serve, COLLECTION_WIDGETS } from './helpers.mjs';
 
 const base = { name: 'T', version: '1.0.0', apiVersion: 1 };
 
@@ -30,10 +30,10 @@ test('server.js must export a fetch function', async () => {
   await assert.rejects(loadWidget(dir), /must "export default/);
 });
 
-test('registry: built-ins load and cannot be replaced by an external widget', async () => {
+test('registry: in-process widgets load and cannot be replaced by an external widget', async () => {
   const ext = writeWidget(tmpDir(), { ...base, id: 'ping' });
   const { widgets, errors } = await loadRegistry({
-    builtinDir: path.resolve('widgets'),
+    builtinDir: COLLECTION_WIDGETS,
     external: [{ dir: ext, source: 'git+https://example/x#v1' }],
   });
   for (const id of ['datetime', 'search', 'resources', 'http-status', 'ping', 'docker', 'custom-api']) {
@@ -167,12 +167,12 @@ test('registry: aliases point to the same widget, after every id, and never take
     fs.writeFileSync(path.join(root, id, 'widget.yaml'), `id: ${id}\nname: ${id}\nversion: 1.0.0\napiVersion: 1\naliases: ${JSON.stringify(aliases)}\noptions: {}\n`);
     return { dir: path.join(root, id), source: `path:${id}` };
   };
-  const { widgets, errors } = await loadRegistry({ builtinDir: path.resolve('widgets'), external: [make('unifi', ['unifi_console', 'ping']), make('other', [])] });
-  assert.equal(widgets.get('unifi_console'), widgets.get('unifi'));
-  assert.equal(widgets.get('unifi_console').id, 'unifi');
-  assert.equal(widgets.get('customapi').id, 'custom-api', 'the built-in alias');
+  const { widgets, errors } = await loadRegistry({ builtinDir: COLLECTION_WIDGETS, external: [make('acme', ['acme_console', 'ping']), make('other', [])] });
+  assert.equal(widgets.get('acme_console'), widgets.get('acme'));
+  assert.equal(widgets.get('acme_console').id, 'acme');
+  assert.equal(widgets.get('customapi').id, 'custom-api', 'the in-process widget\'s alias');
   assert.equal(widgets.get('ping').source, 'builtin', 'an alias never takes an id');
-  assert.ok(errors.some((e) => /alias "ping" of "unifi" is already used by builtin/.test(e.message)));
+  assert.ok(errors.some((e) => /alias "ping" of "acme" is already used by builtin/.test(e.message)));
 });
 
 test('ctx.fetch: insecure accepts a self-signed certificate; Set-Cookie stays a list', async () => {

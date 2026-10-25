@@ -8,7 +8,6 @@ import path from 'node:path';
 
 const HTML = fs.readFileSync(path.resolve('public/index.html'), 'utf8');
 const CSS = HTML.slice(HTML.indexOf('<style>'), HTML.indexOf('</style>'));
-const CLIENTS = fs.readdirSync('widgets').map((d) => path.join('widgets', d, 'client.js')).filter((f) => fs.existsSync(f));
 
 // ---- WCAG 2 contrast, with alpha compositing like the browser
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -59,23 +58,20 @@ test('no thin or light weights for content text', () => {
   }
 });
 
+// the widgets' client.js files are checked in the widgets collection
 test('every font size is relative (rem/em), so text follows the browser setting', () => {
-  for (const [file, text] of [['index.html', CSS], ...CLIENTS.map((f) => [f, fs.readFileSync(f, 'utf8')])]) {
-    for (const m of text.matchAll(/font(?:-size)?:[^;]*?(\d+(?:\.\d+)?)px/g)) assert.fail(`${file}: px font size "${m[0]}"`);
-  }
+  for (const m of CSS.matchAll(/font(?:-size)?:[^;]*?(\d+(?:\.\d+)?)px/g)) assert.fail(`index.html: px font size "${m[0]}"`);
 });
 
 test('controls meet the minimum target sizes', () => {
   assert.match(block('  .icon-btn {'), /min-width: 32px; min-height: 32px/);
   assert.match(block('  .swatch {'), /width: 24px; height: 24px/);
   assert.match(block('  button.tag::before {'), /inset: -4px -4px -12px/, 'container labels get a ≥ 28px hit area');
-  assert.match(fs.readFileSync('widgets/search/client.js', 'utf8'), /min-width: 28px; height: 28px/);
 });
 
 test('Reduce Motion and Increase Contrast have an answer', () => {
   assert.match(CSS, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(CSS, /@media \(prefers-contrast: more\)/);
-  assert.match(fs.readFileSync('widgets/resources/client.js', 'utf8'), /prefers-reduced-motion/);
 });
 
 test('light cards are separated from the page by more than a shadow', () => {

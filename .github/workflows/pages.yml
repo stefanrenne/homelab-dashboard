@@ -1,12 +1,12 @@
 name: Pages
 
 # The documentation site (https://stefanrenne.github.io/homelab-dashboard/): docs/ plus the
-# README as home page, and a page per widget (built-in, and the widgets collection at its newest
-# release), built with Jekyll and the just-the-docs theme (docs/_config.yml).
+# README as home page, and a page per widget (of the widgets collection at its newest release),
+# built with Jekyll and the just-the-docs theme (docs/_config.yml).
 on:
   push:
     branches: [main]
-    paths: [docs/**, README.md, widgets/**, scripts/pages.sh, scripts/pages-widgets.mjs, .github/workflows/pages.yml]
+    paths: [docs/**, README.md, scripts/pages.sh, scripts/pages-widgets.mjs, .github/workflows/pages.yml]
   workflow_dispatch:
   # picks up a new release of the widgets collection
   schedule:

@@ -173,10 +173,11 @@ export function packageInfo(entry, src, record, dir) {
 /**
  * Makes sure every source in `entries` is installed. Returns
  * { installed: [{ dir, source }], packages: [{ name, version, url }], errors: [{ source, message }], warnings: [...] }.
- * With `update: true` git and npm sources are resolved again even when locked; with
+ * With `keepUnused: true` the folders no longer in the lock stay until `removeUnused()` (returned)
+ * is called. With `update: true` git and npm sources are resolved again even when locked; with
  * `update: 'moving'` only the ones that can move (#latest, a branch, an npm range).
  */
-export async function syncPlugins({ configDir, entries, update = false, run = defaultRun, log = console }) {
+export async function syncPlugins({ configDir, entries, update = false, keepUnused = false, run = defaultRun, log = console }) {
   const pluginsRoot = path.join(configDir, PLUGINS_DIR);
   const lock = readLock(configDir);
   const nextLock = {};
@@ -234,7 +235,11 @@ export async function syncPlugins({ configDir, entries, update = false, run = de
   }
 
   if (entries.some((e) => !e.path) || Object.keys(lock).length) writeLock(configDir, nextLock);
-  removeUnlocked(pluginsRoot, nextLock, log, warnings);
+  // keepUnused: the caller removes the old folders once the new widgets are live (removeUnused),
+  // so a widget call that still has an old path does not find it gone
+  const removeUnused = () => removeUnlocked(pluginsRoot, nextLock, log, warnings);
+  if (keepUnused) return { installed, packages, errors, warnings, removeUnused };
+  removeUnused();
   return { installed, packages, errors, warnings };
 }
 

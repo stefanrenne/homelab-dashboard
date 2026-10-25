@@ -25,8 +25,21 @@ import { safeJoin } from './util.js';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const PUBLIC_DIR = path.join(ROOT, 'public');
 export const REPO_URL = 'https://github.com/stefanrenne/homelab-dashboard';
-// HD_VERSION is set by the Docker build (1.2.3 or main-<sha>); otherwise package.json's version.
-export const VERSION = process.env.HD_VERSION || JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
+/**
+ * The version: the VERSION file the Docker build writes (1.2.3 or main-<sha>), else HD_VERSION,
+ * else package.json's. The file comes first because it is part of the image: a container
+ * recreated with its old environment copied over (Portainer's Recreate) keeps an old HD_VERSION.
+ */
+export function readVersion(root = ROOT, env = process.env) {
+  try {
+    const file = fs.readFileSync(path.join(root, 'VERSION'), 'utf8').trim();
+    if (file) return file;
+  } catch {
+    // not an image build
+  }
+  return env.HD_VERSION || JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version;
+}
+export const VERSION = readVersion();
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -162,7 +175,7 @@ export async function createApp({
       config.docker = withMountedSocket(config.docker, dockerSocket);
       schedulePluginChecks(config.settings.pluginUpdateMs);
       const entries = withDefaultPlugins(config.settings.plugins, defaultPlugins);
-      const pluginResult = await syncPlugins({ configDir, entries, update, log });
+      const pluginResult = await syncPlugins({ configDir, entries, update, keepUnused: true, log });
       const { widgets, errors } = await loadRegistry({ builtinDir, external: pluginResult.installed });
       Object.assign(state, { config, registry: widgets, pluginResult, registryErrors: errors });
       for (const e of [...config.errors, ...pluginResult.errors, ...errors]) {
@@ -170,6 +183,10 @@ export async function createApp({
       }
       await discovery.configure(config); // its first poll calls rebuild() when something was found
       rebuild();
+      // the new widgets are live: the old versions' folders can go now (a failure is a warning)
+      const warnings = pluginResult.warnings.length;
+      pluginResult.removeUnused();
+      if (pluginResult.warnings.length !== warnings) rebuild();
     }).catch((err) => log.error(`reload failed: ${err.stack ?? err}`));
     return chain;
   }

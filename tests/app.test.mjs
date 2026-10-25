@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
-import { createApp, versionUrl } from '../src/app.js';
+import { createApp, versionUrl, readVersion } from '../src/app.js';
 import { watchConfig } from '../src/config/watch.js';
 import { execFileSync } from 'node:child_process';
 import { tmpDir, serve, silentLog, writeWidget, COLLECTION_WIDGETS } from './helpers.mjs';
@@ -996,4 +996,13 @@ test('a widget action: POST with the header, one at a time, secrets scrubbed, 40
   } finally {
     await t.close();
   }
+});
+
+test('readVersion: the image\'s VERSION file wins over a copied HD_VERSION, then package.json', () => {
+  const root = tmpDir('hd-version-');
+  fs.writeFileSync(path.join(root, 'package.json'), '{ "version": "1.0.0" }');
+  assert.equal(readVersion(root, {}), '1.0.0');
+  assert.equal(readVersion(root, { HD_VERSION: '0.8.1' }), '0.8.1');
+  fs.writeFileSync(path.join(root, 'VERSION'), '0.10.0\n');
+  assert.equal(readVersion(root, { HD_VERSION: '0.8.1' }), '0.10.0', 'an old environment copied by a recreate does not win');
 });

@@ -400,3 +400,19 @@ test('packageInfo: a label, and links to a public GitHub release or commit or an
   assert.equal(withDefaultPlugins([{ source: 'git+https://github.com/a/widgets#v1.0.0' }], [{ source: 'git+https://github.com/a/widgets#latest', label: 'widgets' }])[0].label, 'widgets', 'your own entry for the collection keeps its name');
   assert.equal(DEFAULT_PLUGINS[0].label, 'widgets');
 });
+
+test('keepUnused: old folders stay until removeUnused, so calls with an old path still work', async () => {
+  const { url, repo, git } = templateRepo();
+  const configDir = tmpDir();
+  const entries = [{ source: `git+${url}#latest` }];
+  const first = await syncPlugins({ configDir, entries, log: silentLog });
+  const oldDir = first.installed[0].dir;
+  fs.writeFileSync(path.join(repo, 'widget.yaml'), fs.readFileSync(path.join(repo, 'widget.yaml'), 'utf8').replace('1.1.0', '1.2.0'));
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qam', 'v1.2');
+  git('tag', 'v1.2.0');
+  const out = await syncPlugins({ configDir, entries, update: true, keepUnused: true, log: silentLog });
+  assert.notEqual(out.installed[0].dir, oldDir);
+  assert.ok(fs.existsSync(oldDir), 'still there');
+  out.removeUnused();
+  assert.equal(fs.existsSync(oldDir), false, 'gone once asked');
+});

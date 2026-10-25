@@ -4,6 +4,14 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-10-25
+
+### Fixed
+- After a plugin update, widgets briefly failed with "Cannot find module" because the old
+  version's folder was removed before the new one was live. It is removed afterwards now.
+- A container recreated with its old environment copied over (Portainer's Recreate) reported the
+  old version. The image now keeps its version in a file, which wins over `HD_VERSION`.
+
 ## [0.10.0] - 2026-10-25
 
 ### Changed

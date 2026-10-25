@@ -17,7 +17,10 @@ COPY public ./public
 COPY config.example ./config.example
 
 # The version reported by /api/health: 1.2.3 for a release, main-<sha> for other builds (CI sets it).
+# In a file, not only in the environment: a recreate that copies the old container's environment
+# would otherwise keep reporting the old version (src/app.js readVersion).
 ARG VERSION=dev
+RUN printf '%s\n' "$VERSION" > /app/VERSION
 ENV HD_VERSION=${VERSION} \
     NODE_ENV=production \
     HD_CONFIG_DIR=/config \

@@ -1,6 +1,6 @@
-// The update check behind `hideVersion: false`: once a day the newest GitHub release, so the
-// footer can say when a newer version is out. Off unless the version is shown, and with
-// disableUpdateCheck. A failed check is logged and tried again the next day.
+// The update check next to the version in the footer: once a day the newest GitHub release, so
+// the footer can say when a newer version is out. Off with hideVersion: true or
+// disableUpdateCheck, and without a url (tests). A failed check is logged and tried again the next day.
 
 export const RELEASES_URL = 'https://api.github.com/repos/stefanrenne/homelab-dashboard/releases/latest';
 export const CHECK_EVERY_MS = 24 * 60 * 60 * 1000;
@@ -25,7 +25,7 @@ export class UpdateCheck {
 
   /** Starts (or keeps) the daily check; the first one runs right away. */
   start() {
-    if (this.timer) return;
+    if (this.timer || !this.url) return;
     this.timer = setInterval(() => this.check(), this.everyMs);
     this.timer.unref?.();
     return this.check();

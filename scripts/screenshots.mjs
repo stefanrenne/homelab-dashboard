@@ -1,9 +1,11 @@
-// Recreates the README screenshots from config.example (see docs/development.md).
+// Recreates the README screenshots from config.example (see docs/development.md), with the
+// widgets of a widgets collection checkout (HD_COLLECTION_DIR, else ../homelab-dashboard-widgets).
 // Playwright is deliberately not in package.json: only needed when the screenshots are refreshed.
 //   npm install --no-save playwright && npx playwright install chromium
 //   node scripts/screenshots.mjs
 import { chromium } from 'playwright';
 import http from 'node:http';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp } from '../src/app.js';
 
@@ -11,7 +13,9 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const out = root + 'docs/images/';
 const quiet = { info() {}, warn() {}, error() {} };
 
-const app = await createApp({ configDir: root + 'config.example', log: quiet, defaultPlugins: [], dockerSocket: null });
+const collection = path.resolve(process.env.HD_COLLECTION_DIR ?? path.join(root, '../homelab-dashboard-widgets'), 'widgets');
+// no update check: the footer shows the version only, the same on every run
+const app = await createApp({ configDir: root + 'config.example', log: quiet, defaultPlugins: [], builtinDir: collection, dockerSocket: null, releasesUrl: null });
 const server = http.createServer(app.handler).listen(0, '127.0.0.1');
 await new Promise((r) => server.once('listening', r));
 const url = `http://127.0.0.1:${server.address().port}/`;

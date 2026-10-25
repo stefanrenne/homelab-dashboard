@@ -138,10 +138,10 @@ providers:          # shared keys and logins; a widget entry uses one with provi
     username: admin
     password: "{{HD_VAR_LONGHORN_PASSWORD}}"
 instanceName: internal   # for discovery labels meant for one dashboard (homelab.instance.internal.href)
-hideVersion: false  # show the version in the footer, and each plugin's (the widgets collection, ...)
-                    # (hidden by default, unlike homepage)
+hideVersion: true   # hide the version in the footer, and each plugin's (the widgets collection, ...);
+                    # shown by default, as in homepage
 pluginUpdateInterval: 1h   # how often #latest and branch plugins are checked for a newer version (false: never)
-disableUpdateCheck: true   # with the version shown: do not ask GitHub once a day for a newer release
+disableUpdateCheck: true   # do not ask GitHub once a day for a newer release (only asked while the version is shown)
 disableIndexing: true      # ask search engines not to index the page (robots.txt and a robots meta tag)
 base: https://lab.example.com/dashboard/   # behind a reverse proxy under a sub path: the page's address
 logpath: /config    # also log to <logpath>/logs/homelab-dashboard.log, rotated at 10 MiB, five files kept;
@@ -502,6 +502,13 @@ service homepage supports (radarr, sonarr, Unraid, Portainer, ...).
 
 Changes to these formats stay backward compatible (hard rule 6). Each renamed or changed key is
 listed here with the version, what the old form becomes, and the test that covers it.
+
+### 0.7.2: the version is shown by default
+
+The footer shows the version unless `hideVersion: true` (before: only with `hideVersion: false`,
+which keeps working and changes nothing now). With the version shown the dashboard asks GitHub
+once a day for a newer release; add `disableUpdateCheck: true` to keep it from doing so. Covered by
+`tests/app.test.mjs` (the version is shown and checked for updates by default).
 
 ### 0.6.0: the built-in widgets moved to the widgets collection
 

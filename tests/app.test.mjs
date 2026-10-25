@@ -17,7 +17,7 @@ async function startApp(files, env = {}) {
     fs.mkdirSync(path.dirname(path.join(configDir, name)), { recursive: true });
     fs.writeFileSync(path.join(configDir, name), text);
   }
-  const app = await createApp({ configDir, env, log: silentLog, defaultPlugins: [], dockerSocket: null, builtinDir: COLLECTION_WIDGETS });
+  const app = await createApp({ configDir, env, log: silentLog, defaultPlugins: [], dockerSocket: null, builtinDir: COLLECTION_WIDGETS, releasesUrl: null });
   const server = http.createServer(app.handler);
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -98,7 +98,7 @@ test('a first load that fails answers 503 with a hint, and the health check stil
   const configDir = path.join(tmpDir('hd-app-'), 'a-file');
   fs.writeFileSync(configDir, 'not a folder'); // the plugins folder cannot be made
   const errors = [];
-  const app = await createApp({ configDir, log: { ...silentLog, error: (m) => errors.push(m) }, defaultPlugins: [{ source: 'git+https://example.com/x#v1.0.0' }], dockerSocket: null });
+  const app = await createApp({ configDir, log: { ...silentLog, error: (m) => errors.push(m) }, defaultPlugins: [{ source: 'git+https://example.com/x#v1.0.0' }], dockerSocket: null, releasesUrl: null });
   const server = http.createServer(app.handler);
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -118,7 +118,7 @@ test('a first load that fails answers 503 with a hint, and the health check stil
 test('without the widgets collection a service field says where its widget comes from', async () => {
   const configDir = tmpDir('hd-app-');
   fs.writeFileSync(path.join(configDir, 'services.yaml'), '- G:\n    - A: { siteMonitor: "http://a.lan" }\n    - B:\n        widget: { type: radarr }\n');
-  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [], dockerSocket: null });
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [], dockerSocket: null, releasesUrl: null });
   try {
     const messages = app.layout.messages.errors.map((e) => e.message);
     assert.ok(messages.includes('unknown widget type "http-status": it comes with the widgets collection (0.4.0 or newer), which is not installed'), messages.join('\n'));
@@ -320,6 +320,7 @@ test('secrets from discovered labels stay out of the layout', async () => {
     log: silentLog,
     defaultPlugins: [],
     dockerSocket: null,
+    releasesUrl: null,
     discovery: {
       docker: async () => [{ group: 'G', name: 'S', weight: 0,
         def: { href: 'http://s.lan', widget: { type: 'custom-api', url: 'http://s.lan/', mappings: [{ field: 'a' }], extra: '{{HOMEPAGE_VAR_KEY}}' } } }],
@@ -532,7 +533,7 @@ test('checkPluginUpdates installs a newer #latest and reloads; without news noth
   git('tag', 'v1.0.0');
   const configDir = tmpDir('hd-app-');
   fs.writeFileSync(path.join(configDir, 'settings.yaml'), 'hideVersion: false\ndisableUpdateCheck: true\n');
-  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [{ source: `git+file://${repo}#latest` }], dockerSocket: null });
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [{ source: `git+file://${repo}#latest` }], dockerSocket: null, releasesUrl: null });
   try {
     assert.deepEqual(app.layout.plugins, [{ name: 'widget', version: 'v1.0.0' }]);
     assert.deepEqual(await app.checkPluginUpdates(), []);
@@ -567,13 +568,13 @@ test('the default plugins are installed without settings.yaml, and settings.yaml
   const defaultPlugins = [{ source: `git+file://${repo}#latest` }];
 
   const configDir = tmpDir('hd-app-');
-  const app = await createApp({ configDir, log: silentLog, defaultPlugins, dockerSocket: null });
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins, dockerSocket: null, releasesUrl: null });
   assert.deepEqual(Object.keys(readLock(configDir)), [defaultPlugins[0].source]);
   assert.deepEqual(app.layout.messages.errors, []);
   app.close();
 
   fs.writeFileSync(path.join(configDir, 'settings.yaml'), 'plugins:\n  - path: ./missing\n');
-  const extended = await createApp({ configDir, log: silentLog, defaultPlugins, dockerSocket: null });
+  const extended = await createApp({ configDir, log: silentLog, defaultPlugins, dockerSocket: null, releasesUrl: null });
   assert.deepEqual(Object.keys(readLock(configDir)), [defaultPlugins[0].source]);
   assert.ok(extended.layout.messages.errors.some((e) => e.path === 'plugins: ./missing'), JSON.stringify(extended.layout.messages.errors));
   extended.close();
@@ -592,7 +593,7 @@ test('a widget of your own wins over the same id in the default plugins, without
   const local = path.join(configDir, 'local-counter');
   fs.cpSync(path.resolve('examples/widget-template'), local, { recursive: true });
   fs.writeFileSync(path.join(configDir, 'settings.yaml'), 'plugins:\n  - path: ./local-counter\n');
-  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [{ source: `git+file://${repo}#latest` }], dockerSocket: null });
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [{ source: `git+file://${repo}#latest` }], dockerSocket: null, releasesUrl: null });
   assert.deepEqual(app.layout.messages.errors, []);
   assert.equal(app.runtime.registry.get('example-counter').source, './local-counter');
   app.close();
@@ -606,7 +607,7 @@ test('a mounted Docker socket is discovered without docker.yaml', async () => {
   }, { socketPath });
   const configDir = tmpDir('hd-app-');
   fs.writeFileSync(path.join(configDir, 'docker.yaml'), '# only comments, like config.example\n');
-  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [], dockerSocket: socketPath, builtinDir: COLLECTION_WIDGETS });
+  const app = await createApp({ configDir, log: silentLog, defaultPlugins: [], dockerSocket: socketPath, builtinDir: COLLECTION_WIDGETS, releasesUrl: null });
   try {
     for (let i = 0; i < 50 && !JSON.stringify(app.layout).includes('Grafana'); i++) await new Promise((r) => setTimeout(r, 20));
     const group = app.layout.groups.find((g) => g.name === 'Monitoring');
@@ -827,7 +828,7 @@ test('providers: shared keys and options fill widget entries, and stay secret', 
   }
 });
 
-test('hideVersion: false shows the version and checks for updates; nothing is fetched otherwise', async () => {
+test('the version is shown and checked for updates by default; hideVersion: true or disableUpdateCheck turns that off', async () => {
   let calls = 0;
   const gh = await serve((req, res) => { calls++; res.end(JSON.stringify({ tag_name: 'v99.0.0', html_url: 'https://github.com/example/releases/tag/v99.0.0' })); });
   const make = async (settings) => {
@@ -836,18 +837,18 @@ test('hideVersion: false shows the version and checks for updates; nothing is fe
     return createApp({ configDir, log: silentLog, defaultPlugins: [], dockerSocket: null, releasesUrl: `${gh.url}/latest` });
   };
   try {
-    const quiet = await make('title: x\n');
+    const quiet = await make('hideVersion: true\n');
     assert.equal(quiet.layout.showVersion, false);
     quiet.close();
     assert.deepEqual(quiet.layout.plugins, [], 'no plugin versions without the version shown');
-    const off = await make(`hideVersion: false\ndisableUpdateCheck: true\nplugins:\n  - path: ${path.resolve('examples/widget-template')}\n`);
+    const off = await make(`disableUpdateCheck: true\nplugins:\n  - path: ${path.resolve('examples/widget-template')}\n`);
     assert.equal(off.layout.showVersion, true);
     assert.deepEqual(off.layout.plugins.map((p) => p.name), ['widget-template'], 'the plugins next to the version');
     assert.equal(off.layout.update, null);
     off.close();
     assert.equal(calls, 0, 'no request without the version shown, or with disableUpdateCheck');
 
-    const on = await make('hideVersion: false\n');
+    const on = await make('title: x\n');
     for (let i = 0; i < 50 && !on.layout.update; i++) await new Promise((r) => setTimeout(r, 20));
     assert.equal(calls, 1);
     assert.deepEqual(on.layout.update, { version: '99.0.0', url: 'https://github.com/example/releases/tag/v99.0.0' });

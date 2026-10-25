@@ -114,8 +114,8 @@ export async function createApp({
     runtime.setInstances(instances, state.registry);
     state.actions = actions;
     state.frames = frames;
-    // hideVersion: false shows the version (homepage shows it by default; this dashboard does not)
-    const showVersion = state.config.settings.hideVersion === false;
+    // the version is shown unless hideVersion: true, as in homepage
+    const showVersion = state.config.settings.hideVersion !== true;
     if (showVersion && !state.config.settings.disableUpdateCheck) updates.start();
     else updates.stop();
     const latest = showVersion && !state.config.settings.disableUpdateCheck ? updates.latest : null;

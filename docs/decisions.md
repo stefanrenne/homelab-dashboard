@@ -74,11 +74,13 @@ homepage writes a log file into the config folder by default. Hard rule 5 keeps 
 the user's files, so here the log goes to stdout (docker logs) unless `logpath` asks for a file;
 then the rotation is homepage's (10 MiB, five files) and `LOG_TARGETS` works the same.
 
-## The version is hidden unless asked for (2026-10-24)
-homepage shows its version and checks GitHub for updates by default. The HIG audit took the
-version out of the footer (it is noise for the people using the page), so here `hideVersion:
-false` turns both on. The check runs once a day only while the version is shown, and never with
-`disableUpdateCheck`, so a default install makes no calls to GitHub.
+## The version is shown by default, as in homepage (2026-10-25)
+At first the version was hidden unless `hideVersion: false` (2026-10-24: the HIG audit called it
+noise for the people using the page). Since every widget comes from the widgets collection, the
+footer also tells which collection release runs, which matters when something looks off; so
+the version is shown again by default, as in homepage, and `hideVersion: true` hides it. The
+update check (once a day, GitHub's newest release) runs only while the version is shown, and
+never with `disableUpdateCheck`.
 
 ## A mounted Docker socket works without a proxy (2026-10-24)
 Mounting `/var/run/docker.sock` is what people try first, and it used to fail with EACCES

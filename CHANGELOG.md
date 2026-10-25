@@ -4,6 +4,15 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-10-25
+
+### Changed
+- The version (and each plugin's) is shown in the footer by default, as in homepage;
+  `hideVersion: true` hides it. With the version shown the dashboard asks GitHub once a day for
+  a newer release; `disableUpdateCheck: true` turns that off.
+- The image of a release commit names itself after the release (`0.7.2`), also as `latest`,
+  instead of `main-<sha>`.
+
 ## [0.7.1] - 2026-10-25
 
 ### Changed

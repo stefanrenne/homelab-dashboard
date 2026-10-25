@@ -5,7 +5,7 @@ A self-hosted start page for your homelab, configured in YAML, in the spirit of
 (a git repository, an npm package or a folder) and pull in with one line of YAML. Nobody has to
 get a pull request merged here first.
 
-![The dashboard in dark mode: groups of service cards with status labels in the corner and widget values, header with clock, resource meters and search](docs/images/screenshot-dark.png)
+![The dashboard in dark mode: groups of service cards with status labels in the corner and widget values, header with clock, resource meters and search, the version in the footer](docs/images/screenshot-dark.png)
 
 <details><summary>Light mode</summary>
 

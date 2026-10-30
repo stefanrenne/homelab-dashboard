@@ -1,7 +1,7 @@
 // Loads and normalizes the YAML files in the config directory.
 //
 // The file formats are a contract with existing installations (hard rule 6): see
-// docs/configuration.md. Problems never throw; they are collected as `errors`
+// docs/configuration/. Problems never throw; they are collected as `errors`
 // (the file or entry is skipped) and `warnings` (it is used anyway), each with the
 // file and a path into it, so the dashboard can show them.
 

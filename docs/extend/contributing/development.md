@@ -20,9 +20,22 @@ node src/server.js --config ~/my-test-config --port 3001
 
 ## Screenshots
 
-The README screenshots are made from `config.example`, with widget data stubbed so they are stable:
+The README and home page screenshots are made from the showcase config in `scripts/showcase/`.
+Its widgets ask the widgets collection's fake homelab (`scripts/mock-homelab.mjs` in the
+collection, answering from its fixtures); status checks and system resources are stubbed, so the
+pictures are the same on every run:
 
 ```bash
 npm install --no-save playwright && npx playwright install chromium
 node scripts/screenshots.mjs
 ```
+
+The example image on each widget's page is made the same way, from the example in the widget's
+README, by `scripts/widget-images.mjs` while the site is built. To look at them locally:
+
+```bash
+node scripts/widget-images.mjs /tmp/widget-images
+```
+
+A widget whose example gets no data from the fixtures (or reports an error) gets no image; fix its
+README example or fixture in the collection.

@@ -1,0 +1,9 @@
+- Developer:
+    - GitHub:
+        - { href: https://github.com, icon: si-github }
+    - Docker Hub:
+        - { href: https://hub.docker.com, icon: si-docker }
+    - Home Assistant docs:
+        - { href: https://www.home-assistant.io/docs/, icon: si-homeassistant }
+    - Self-hosted:
+        - { href: https://selfh.st, icon: mdi-server-network }

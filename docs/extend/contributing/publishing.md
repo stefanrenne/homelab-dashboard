@@ -25,14 +25,23 @@ A change to the widget API is a release note of its own: say which `apiVersion` 
 
 ## Documentation site
 
-`.github/workflows/pages.yml` publishes `docs/` and the README as
+`.github/workflows/pages.yml` publishes `docs/` as
 [stefanrenne.github.io/homelab-dashboard](https://stefanrenne.github.io/homelab-dashboard/) on
-every push to `main` that touches them. Jekyll builds it with the just-the-docs theme; the
-Markdown stays plain (no front matter), titles and the menu order are in `docs/_config.yml`.
-`scripts/pages.sh` stages the site: it adds the README as home page, points links outside
-`docs/` at GitHub, and wraps each page in `{% raw %}` so `{{HD_VAR_*}}` examples stay literal.
-`scripts/pages-widgets.mjs` then adds a page per widget from its `README.md` and `widget.yaml`,
-for the widgets collection at its newest release (checked out by the workflow). A daily run picks up a new collection release.
+every push to `main` that touches it. Jekyll builds it with the just-the-docs theme; the
+Markdown stays plain (no front matter), titles, the menu order and redirects from old addresses
+are in `docs/_config.yml`. The menu has four parts: Home (`docs/README.md`), Configuration
+(`docs/configuration/`, a page per file as in homepage), Widgets and Extend (`docs/extend/`).
+
+`scripts/pages.sh` stages the site: it points links outside `docs/` at GitHub and wraps each
+page in `{% raw %}` so `{{HD_VAR_*}}` examples stay literal. For the widgets collection at its
+newest release (checked out by the workflow), `scripts/widget-images.mjs` then photographs every
+widget with example data, and `scripts/pages-widgets.mjs` adds a page per widget from its
+`README.md` and `widget.yaml` (with that image), split into service and header widgets, and the
+list of all of them on the Widgets page. Widget pages stay at `widgets/collection/<id>.html`,
+whatever their section: other sites link there. A daily run picks up a new collection release.
+
+A new page gets an entry under `defaults:` in `docs/_config.yml`; a moved page a `redirect_from`
+with its old address.
 
 ## Dependabot
 

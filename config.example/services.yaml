@@ -1,7 +1,7 @@
 # Groups of services. Each service can have a status check (siteMonitor, ping or
 # container) and any number of widgets. Secrets go in {{HD_VAR_...}} variables.
 # A long file can be split up: "- Media: !include services/media.yaml" puts that
-# file's services in the group (see "Including other files" in docs/configuration.md).
+# file's services in the group (see "Including other files" in docs/configuration/README.md).
 - Infrastructure:
     - Dashboard:
         href: http://localhost:3000

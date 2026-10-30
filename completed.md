@@ -63,3 +63,6 @@ Finished work, newest first.
 - 2026-10-25: released the widgets collection 0.3.0 and the dashboard 0.5.0.
 - 2026-10-25: the built-in widgets moved to the widgets collection; the dashboard has none of its own any more.
 - 2026-10-25: released the widgets collection 0.4.0 and the dashboard 0.6.0.
+- 2026-10-30: Documentation site in homepage's structure (Home, Configuration per file + Images
+  + Custom CSS & JS, Widgets with an example image per widget, Extend), a showcase for the
+  screenshots and a short README.

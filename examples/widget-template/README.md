@@ -34,4 +34,4 @@ plugins:
 | `assets/` | no | Static files for `client.js`, served at `/widgets/<id>/assets/` |
 
 Release by tagging a version (`git tag v1.0.0`) or `npm publish`, and bump `version` in
-`widget.yaml` at the same time. See the dashboard's `docs/widgets/authoring.md` for the full guide.
+`widget.yaml` at the same time. See the dashboard's `docs/extend/local.md` and `docs/extend/remote.md` for the full guide.

@@ -1,7 +1,7 @@
 // Loads widget packages (built-in and external) into a registry.
 //
 // A widget package is a folder with widget.yaml and optionally server.js, client.js,
-// i18n.json and assets/. See docs/widgets/api-reference.md for the contract.
+// i18n.json and assets/. See docs/extend/api-reference.md for the contract.
 
 import fs from 'node:fs';
 import path from 'node:path';

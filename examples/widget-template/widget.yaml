@@ -1,4 +1,4 @@
-# The manifest of your widget. See docs/widgets/api-reference.md in the dashboard repo.
+# The manifest of your widget. See docs/extend/api-reference.md in the dashboard repo.
 id: example-counter          # unique, lowercase; becomes "type: example-counter" in services.yaml
 name: Example counter
 version: 1.0.0               # bump on every release; the dashboard installs it as <id>@<version>

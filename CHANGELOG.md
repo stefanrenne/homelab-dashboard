@@ -4,6 +4,13 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Changed
+- The documentation site is reorganised like homepage's: Home, Configuration (a page per config
+  file, plus Images with every icon provider and Custom CSS & JS), Widgets (every widget, split
+  into service and header widgets, each page with an example image) and Extend (a local or a
+  remote widget, API reference, security). Old addresses redirect to their new page.
+- A shorter README and new screenshots that show many more widgets.
+
 ## [0.10.2] - 2026-10-25
 
 ### Changed

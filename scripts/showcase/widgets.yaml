@@ -1,0 +1,18 @@
+- greeting:
+    text: Good morning
+    text_size: xl
+- datetime:
+    dateStyle: full
+    timeStyle: short
+- resources:
+    cpu: true
+    memory: true
+    disk: ["/"]
+- openmeteo:
+    label: Amsterdam
+    url: http://mock.lan/openmeteo
+    latitude: 52.37
+    longitude: 4.89
+    units: metric
+- search:
+    provider: duckduckgo

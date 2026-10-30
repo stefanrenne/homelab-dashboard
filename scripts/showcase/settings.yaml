@@ -1,0 +1,19 @@
+# The showcase behind the README and home page screenshots (scripts/screenshots.mjs). Widget
+# urls point at http://mock.lan/<widget>, which the script swaps for the widgets collection's
+# fake homelab; the keys are made up.
+title: Homelab
+language: en
+color: slate
+headerStyle: boxed
+statusStyle: dot
+hideVersion: true
+disableUpdateCheck: true
+layout:
+  Media:
+    style: column
+  Infrastructure:
+    style: column
+  Home:
+    style: column
+  Developer:
+    iconsOnly: true

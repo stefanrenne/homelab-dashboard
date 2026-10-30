@@ -1,20 +1,34 @@
 # Widgets
 
-A widget is a package: a folder with a `widget.yaml` and usually a `server.js`, kept in its own
-repository and pulled in through `plugins:` in `settings.yaml`. Even the widgets behind the
-dashboard's own service fields (`siteMonitor:`, `container:`, ...) come from the
-[widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets) this way, so anything
-they do, a third-party widget can do too.
+A widget puts live data on the dashboard. There are two kinds, as in homepage:
 
-| Page | What |
-|---|---|
-| [Writing a widget](authoring.md) | From the template to a released package, step by step |
-| [API reference](api-reference.md) | `widget.yaml`, the `ctx` passed to `server.js`, the result format, `client.js` |
-| [Security](security.md) | What a widget can do, how secrets stay on the server, advice for users |
+- **Service widgets** go on a service's card in [services.yaml](../configuration/services.md),
+  under `widget:` (or `widgets:` for several). They show the numbers of that service: the queue
+  of Radarr, the blocked queries of Pi-hole, the VMs of Proxmox.
 
-Ready-made widgets:
+  ```yaml
+  # services.yaml
+  - Media:
+      - Radarr:
+          href: http://radarr.lan
+          icon: radarr.svg
+          widget:
+            type: radarr
+            url: http://radarr.lan:7878
+            key: "{{HD_VAR_RADARR_KEY}}"
+  ```
 
-- [homelab-dashboard-widgets](https://github.com/stefanrenne/homelab-dashboard-widgets): Radarr,
-  Sonarr, Unraid, Portainer and more; always installed.
-- [homelab-dashboard-widget-example](https://github.com/stefanrenne/homelab-dashboard-widget-example):
-  a complete example repository to start your own from.
+- **Header widgets** go in the page's header, in [widgets.yaml](../configuration/header-widgets.md):
+  the date and time, system resources, search, the weather.
+
+  ```yaml
+  # widgets.yaml
+  - openmeteo:
+      label: Amsterdam
+      latitude: 52.37
+      longitude: 4.89
+  ```
+
+Every widget below comes from the [widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets),
+which is always installed. Missing one? Any widget package can be added under `plugins:`; see
+[Extend](../extend/README.md) to write your own.

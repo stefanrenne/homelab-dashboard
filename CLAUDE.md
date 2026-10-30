@@ -27,12 +27,12 @@ them, also those behind core features, are in the widgets collection (`DEFAULT_P
 | `deploy/` | Your own installations (config, compose file, preview scripts). Ignored by git; never referenced from the rest of the codebase. |
 | `tests/` | `node:test` for everything, jsdom for the frontend, fixtures in `tests/fixtures/`. |
 | `docker/start.sh` | Image entrypoint: Docker socket group for `node`, example config into an empty `/config`, then the dashboard as `node`. |
-| `scripts/pages.sh`, `scripts/pages-widgets.mjs` | Stage the GitHub Pages site: `docs/`, the README as home page, a page per widget. |
-| `scripts/screenshots.mjs` | Recreates the README screenshots (Playwright, not in `package.json`). |
+| `scripts/pages.sh`, `scripts/pages-widgets.mjs`, `scripts/widget-images.mjs` | Stage the GitHub Pages site: `docs/`, a page per widget with an example image (the widget's README example against the collection's fixtures). |
+| `scripts/screenshots.mjs`, `scripts/showcase/` | Recreates the README and home page screenshots from the showcase config (Playwright, not in `package.json`). |
 | `scripts/new-widget.mjs` | `npm run new-widget -- <id>`: the widget template under a new id (the example repo's `npm run rename` does the same in place). |
 | `../homelab-dashboard-widgets` | Separate repo ([GitHub](https://github.com/stefanrenne/homelab-dashboard-widgets)): every widget, as a collection, including `CORE_WIDGETS` (`src/plugins/installer.js`), the ones `src/layout.js` creates for `siteMonitor:`, `ping:`, `container:`, `app:` and `proxmoxNode:`. Not part of this codebase on purpose. The tests load its widgets from a checkout (`HD_COLLECTION_DIR`, else this sibling folder; CI checks out a pinned release). |
 | `.github/` | CI (tests, image smoke test, amd64+arm64 image to GHCR, release on a tag), Dependabot and its auto-merge. |
-| `docs/` | Architecture, configuration, widgets (authoring, API reference, security), discovery, development, publishing, decisions. Published as a GitHub Pages site (`docs/_config.yml`: titles and menu order; `scripts/pages.sh` adds the README as home page). A new page gets an entry under `defaults:` in `_config.yml`. |
+| `docs/` | The GitHub Pages site, in four parts: Home (`README.md`), `configuration/` (a page per config file, as homepage's, plus images and custom CSS/JS), `widgets/` (the list; a page per widget is generated) and `extend/` (local and remote widgets, API reference, security, `contributing/`). `docs/_config.yml`: titles, menu order, redirects. A new page gets an entry under `defaults:` there. |
 | `todo.md` / `completed.md` | Open and finished work. Update them when you pick something up or finish it. |
 | `CHANGELOG.md` | What changed per version, for users. A user-visible change gets a line under `## [Unreleased]`. |
 
@@ -59,7 +59,7 @@ the image and smoke-tests it.
    the page events and the `client.js` properties (`data`, `options`, `t`, `error`, `busy`) only
    change in a backward-compatible way. A breaking change
    means a new `apiVersion` next to the old one, which stays supported. Every change goes into
-   `docs/widgets/api-reference.md` (with the version that introduced it).
+   `docs/extend/api-reference.md` (with the version that introduced it).
 3. **The core needs no widget internals.** Widgets live in the collection and use only the public
    widget API. If a widget behind a core feature needs more, the API gets it first (documented,
    tested), so external authors get it too. The ids and options of `CORE_WIDGETS` are a contract
@@ -72,8 +72,8 @@ the image and smoke-tests it.
    sets one (`src/log.js`).
 6. **Config files are a contract** with existing installations. Change them in a
    backward-compatible way only. When a key is renamed, the old one keeps working with a warning.
-   Describe it under "Migration" in `docs/configuration.md`, and add a test with config in the old form.
-7. **Minimal dependencies.** Runtime: only `yaml`. Anything else needs a reason in `docs/decisions.md`.
+   Describe it under "Migration" in `docs/configuration/README.md`, and add a test with config in the old form.
+7. **Minimal dependencies.** Runtime: only `yaml`. Anything else needs a reason in `docs/extend/contributing/decisions.md`.
 8. **Host paths, sockets and API URLs via module constants or parameters** (`DEFAULT_SOCKET`,
    `K8S_SA_DIR`, `configDir`, ...) so tests can replace them.
 9. **Docker is read-only.** Only GET calls on the Docker API. Recommend a socket proxy in the docs.
@@ -108,12 +108,15 @@ the image and smoke-tests it.
   both appearances, no weight below 400 for content, labels ≥ 11px, targets ≥ 28px (touch) and
   32px footer buttons, Reduce Motion and Increase Contrast handled. Change the test only with a reason.
 - **README screenshots must match the current dashboard.** A visible UI change refreshes
-  `docs/images/` and the alt texts in the README in the same commit (`node scripts/screenshots.mjs`).
+  `docs/images/` and the alt texts in the README and `docs/README.md` in the same commit
+  (`node scripts/screenshots.mjs`).
+- **The README stays short**, as homepage's: the screenshot, features, one way to start, a link to
+  the site. Everything else goes in `docs/`.
 - New widget API features are shown in `examples/widget-template` when they are useful to authors.
 
 ## Pitfalls we already ran into
 
-See `docs/decisions.md` for the background. In short:
+See `docs/extend/contributing/decisions.md` for the background. In short:
 - A path check must happen on the **resolved** path: `assets/../server.js` starts with `assets/`.
 - The dashboard runs as `node` (uid 1000); `/var/run/docker.sock` is usually `root:root 660`.
   Root scripts (a button's `user: root`) go through sudo and `docker/hd-root`, and only with

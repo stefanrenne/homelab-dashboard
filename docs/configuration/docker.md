@@ -1,13 +1,59 @@
-# Discovery
+# Docker
+
+`docker.yaml` lists the Docker servers: for `container:` status labels on a service, and to
+[discover](#discovery) services from container labels.
+
+## Servers
+
+The Docker servers, for `container:` status labels and for [discovery](#discovery) of
+labelled containers. Each top-level key is a name you choose (`local`, `green`, `nas`, ...):
+
+```yaml
+green:
+  socket: /var/run/docker.sock   # the socket as mounted in the dashboard's container
+nas:
+  host: 192.168.1.20             # a Docker API or docker-socket-proxy
+  port: 2375
+  protocol: http
+  discover: false                # only for container status, do not add its containers
+remote:
+  host: docker.example.lan       # the Docker daemon over TLS (dockerd --tlsverify, port 2376)
+  port: 2376
+  tls:                           # homepage's keys; paths relative to the config folder
+    caFile: tls/ca.pem
+    certFile: tls/cert.pem
+    keyFile: tls/key.pem
+```
+
+| Key | Default | What |
+|---|---|---|
+| `socket` | | Path of a Docker socket inside the container. Mount it: `/var/run/docker.sock:/var/run/docker.sock:ro` |
+| `host` | | Host name or IP of a Docker API or socket proxy (instead of `socket`) |
+| `port` | `2375` | Port of that API |
+| `protocol` | `http` | `http` or `https` (`https` when `tls` is set) |
+| `tls` | | `caFile` (the CA that signed the daemon's certificate), `certFile` and `keyFile` (the client certificate, together). Read when the config loads; their contents stay on the server |
+| `discover` | `true` | `false`: use the server for `container:` status only, without adding its containers |
+| `swarm` | `false` | `true`: a Docker Swarm manager; discovery lists its services, and `container:` also finds a service by name (see [Docker Swarm](#docker-swarm)) |
+
+The name is what `server:` refers to in `services.yaml`, and what config messages show.
+
+- **No servers here** (no file, or only comments): a socket mounted at `/var/run/docker.sock`
+  is used as the server `local` by itself. For a single Docker host on the same machine,
+  mounting the socket is all it takes.
+- **One or more servers here**: only those are used. To use the mounted socket next to another
+  server, list it too, as `green` above.
+- **One server**: services with `container:` use it; `server:` is optional.
+  **Several servers**: give such services `server: <name>`. Discovered containers always
+  carry the server they were found on.
+
+## Discovery
 
 Services can come from Docker labels and Kubernetes Ingress annotations as well as from
 `services.yaml`. Discovered services are merged into the groups. **YAML wins**: a discovered
 service with the same group and name as one in `services.yaml` is skipped. Discovered cards carry
 a small "auto" badge. Sources are polled every `discovery.interval` (default 30 s).
 
-## Docker
-
-Mount the Docker socket, or list a server in `docker.yaml` (see configuration.md):
+Mount the Docker socket, or list a server in `docker.yaml` (see [Servers](#servers)):
 
 ```yaml
 # compose.yaml, the simplest form
@@ -21,7 +67,7 @@ services:
 
 When `docker.yaml` lists no servers, a socket mounted at `/var/run/docker.sock` is used as the
 server `local`. Once it lists a server, only the listed ones are used; see
-[docker.yaml](configuration.md#dockeryaml) for names, several hosts and `discover: false`. The container starts as root only to give its `node` user the socket's group,
+[Servers](#servers) for names, several hosts and `discover: false`. The container starts as root only to give its `node` user the socket's group,
 then runs the dashboard as `node`; no `--group-add` needed.
 
 Then label containers:
@@ -106,91 +152,3 @@ A service of a stack is named `<stack>_<service>` (`media_jellyfin`); that is it
 in services.yaml too. Its status label shows the running tasks against the replicas: `running`,
 `partial` (marked) or down, and CPU and memory when a running task is on the dashboard's node.
 A container of that name still wins. With a socket proxy, also allow `SERVICES=1` and `TASKS=1`.
-
-## Kubernetes
-
-`kubernetes.yaml`: `mode: cluster` in the cluster, or `mode: default` outside it (as in homepage).
-With `mode: cluster` the dashboard uses its service account to list Ingresses in all namespaces;
-with `mode: default` it reads a kubeconfig instead: `kubeconfig:` (a path relative to the config
-folder), else `$KUBECONFIG`, else `~/.kube/config`, with its current context or `context:`.
-
-```yaml
-# kubernetes.yaml, the dashboard in Docker next to a cluster
-mode: default
-kubeconfig: kube/config   # /config/kube/config in the container
-context: home             # optional: another context than the current one
-```
-
-A kubeconfig may hold a token (`token`, `tokenFile`), a client certificate (`client-certificate`
-/ `client-key`, or their `-data` forms) or a user name and password. Credential plugins (`exec`,
-as for EKS, GKE and AKS) are not run: make a service account token for the dashboard instead
-(`kubectl create token homelab-dashboard --duration=8760h`) and put it in the kubeconfig. Give
-that account the RBAC below.
-
-In the cluster: The image starts as root and drops to `node` itself; with
-`runAsNonRoot: true` in the pod's security context, also set `runAsUser: 1000`. RBAC:
-
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata: { name: homelab-dashboard }
-rules:
-  - apiGroups: ["networking.k8s.io"]
-    resources: ["ingresses"]
-    verbs: ["list"]
-  # pod status labels (app:, and discovered services)
-  - apiGroups: ["", "metrics.k8s.io"]
-    resources: ["pods"]
-    verbs: ["list"]
-  # only with traefik: true
-  - apiGroups: ["traefik.io", "traefik.containo.us"]
-    resources: ["ingressroutes"]
-    verbs: ["list"]
-  # only with gateway: true
-  - apiGroups: ["gateway.networking.k8s.io"]
-    resources: ["httproutes", "gateways"]
-    verbs: ["list", "get"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata: { name: homelab-dashboard }
-roleRef: { apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: homelab-dashboard }
-subjects: [{ kind: ServiceAccount, name: homelab-dashboard, namespace: homelab }]
-```
-
-Annotate Ingresses:
-
-```yaml
-metadata:
-  annotations:
-    homelab.dev/enabled: "true"      # required
-    homelab.dev/name: Grafana        # default: the Ingress name
-    homelab.dev/group: Monitoring    # default: the namespace
-    homelab.dev/icon: grafana.svg
-    homelab.dev/href: https://grafana.example.com   # default: first rule host + path (https with TLS)
-    homelab.dev/widget.type: http-status
-    homelab.dev/widget.url: http://grafana.monitoring:3000/api/health
-```
-
-homepage's `gethomepage.dev/*` annotations work as well.
-
-**Pod status.** As in homepage, a discovered Ingress or route gets the state of its app's pods
-as a label (the [Kubernetes pods](widgets/collection/kubernetes-pods.html) widget): the pods
-labelled `app.kubernetes.io/name=<its name>` in its namespace. `homelab.dev/app` names another
-app, `homelab.dev/pod-selector` takes a label selector, and `homelab.dev/external: "true"` leaves
-the label out. This needs `list` on `pods` (and `pods.metrics.k8s.io` for CPU and memory).
-
-**Traefik and the Gateway API**, as in homepage: Ingresses are listed by default; add
-`traefik: true` for Traefik's IngressRoutes (`traefik.io` and the older `traefik.containo.us`)
-and `gateway: true` for Gateway API HTTPRoutes to kubernetes.yaml, `ingress: false` to skip
-Ingresses. They take the same annotations. Without `href`, an IngressRoute links to the host
-and path of its first `Host(...)` match (https with `tls`), and an HTTPRoute to its first
-hostname and path, https when its Gateway's listener is HTTPS. A kind that is not installed is
-skipped.
-
-```yaml
-# kubernetes.yaml
-mode: cluster
-traefik: true
-gateway: true
-```

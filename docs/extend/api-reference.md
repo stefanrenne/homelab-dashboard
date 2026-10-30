@@ -148,7 +148,7 @@ widget declares an option with the same name:
 | `fields` | List of block keys to show, e.g. `[cpu, memoryPercent]`. The widget's order is kept. |
 | `hideErrors` / `hide_errors` | `true` hides the error box of this widget. |
 | `provider` | Fills options the entry leaves out from `settings.yaml` `providers.<name>`: a map fills the options it names, a text the first unset `secret: true` option. Every provider value is treated as a secret. A widget that declares its own `provider` option keeps it. |
-| `highlight` | Colours blocks by their value, as in homepage: block `key` (or `<type>.<key>`) → `numeric` / `string` rules with a `level` (`good`, `warn`, `danger`). The dashboard adds the result to the block as `highlight: { level, valueOnly }`; `client.js` sees it in `data.blocks` and may use or ignore it. See [Configuration](../configuration.md). |
+| `highlight` | Colours blocks by their value, as in homepage: block `key` (or `<type>.<key>`) → `numeric` / `string` rules with a `level` (`good`, `warn`, `danger`). The dashboard adds the result to the block as `highlight: { level, valueOnly }`; `client.js` sees it in `data.blocks` and may use or ignore it. See [Services](../configuration/services.md). |
 
 **References to another service** (homepage's calendar integrations): an object anywhere in a
 widget's options (up to three levels deep) with `service_group` and `service_name` gets that

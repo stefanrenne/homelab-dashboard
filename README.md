@@ -1,32 +1,34 @@
-# Homelab Dashboard
+<div align="center">
 
-A self-hosted start page for your homelab, configured in YAML, in the spirit of
-[homepage](https://gethomepage.dev). Its own twist: **widgets are packages anyone can publish**
-(a git repository, an npm package or a folder) and pull in with one line of YAML. Nobody has to
-get a pull request merged here first.
+<h1>Homelab Dashboard</h1>
 
-![The dashboard in dark mode: groups of service cards with status labels in the corner and widget values, header with clock, resource meters and search, the version in the footer](docs/images/screenshot-dark.png)
+<p>A fast, self-hosted start page for your homelab, configured in YAML,<br>
+with 170+ widgets and room for the ones <strong>you</strong> publish.</p>
 
-<details><summary>Light mode</summary>
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/images/screenshot-light.png">
+  <img alt="The dashboard: a header with a greeting, the time, system meters, the weather and search; cards with live numbers from Plex, Radarr, Sonarr, SABnzbd, Seerr, Proxmox, Unraid, Pi-hole, What's up Docker, Traefik, Immich, Paperless-ngx, Nextcloud, Uptime Kuma and Speedtest, and buttons such as Reboot node, Stop the array, Pause downloads and Update all containers" src="docs/images/screenshot-dark.png">
+</picture>
 
-![The same dashboard in light mode](docs/images/screenshot-light.png)
+[Documentation](https://stefanrenne.github.io/homelab-dashboard/) ·
+[Widgets](https://stefanrenne.github.io/homelab-dashboard/widgets/) ·
+[Write a widget](https://stefanrenne.github.io/homelab-dashboard/extend/)
 
-</details>
+</div>
 
 ## Features
 
-- **YAML configuration** for services, header widgets, bookmarks and discovery, hot-reloaded on save.
-- **Status checks** per service: HTTP (`siteMonitor`), `ping`, or Docker container state.
-- **Widgets** with live data, all from the [widgets collection](https://github.com/stefanrenne/homelab-dashboard-widgets)
-  (installed by default): date/time, system resources, search, HTTP status, ping, Docker
-  container, a generic JSON API mapper, and one for every service homepage supports.
-- **Third-party widgets**: `widget.yaml` + `server.js` (+ optional `client.js` Web Component),
-  installed from git/npm/path, pinned in a lock file.
-- **Secrets stay on the server**: API keys go in `{{HD_VAR_...}}` and never reach the browser.
-- **Auto-discovery** of Docker containers (labels) and Kubernetes Ingresses (annotations).
-- Five languages (en, nl, fr, de, es), dark/light/auto theme and accent colours.
+- **170+ widgets** for the services you run: Radarr, Sonarr, Plex, Proxmox, Unraid, Pi-hole,
+  Home Assistant, Immich and many more, installed and kept up to date by themselves.
+- **Widgets anyone can publish**: a manifest and one function in your own git repository or npm
+  package, added by others with one line of YAML.
+- **YAML configuration** that reloads on save, with mistakes shown on the page.
+- **Auto-discovery** from Docker labels and Kubernetes annotations.
+- **Secrets stay on the server**: API keys never reach the browser.
+- **homepage-compatible**: its config files, labels and `{{HOMEPAGE_VAR_*}}` variables work as they are.
+- Dark and light themes, accent colours, tabs, 17 languages, installable as an app.
 
-## Quick start
+## Getting started
 
 ```bash
 docker run -d -p 3000:3000 -v ./config:/config ghcr.io/stefanrenne/homelab-dashboard:latest
@@ -51,62 +53,15 @@ services:
       retries: 3
       start_period: 20s
 ```
-
-`docker compose up -d`, then `docker compose ps` shows `(healthy)` once `/api/health` answers.
-
-Images are built for amd64 and arm64: `latest` follows `main`, `0.4.0` / `0.4` are releases.
-
-On first start an empty `config` folder is filled with the example config. Edit the YAML files
-and the open page updates by itself. See [docker-compose.example.yml](docker-compose.example.yml)
-for Docker discovery through a read-only socket proxy.
-
-```yaml
-# services.yaml
-- Network:
-    - Pi-hole:
-        href: http://pihole.lan
-        icon: pi-hole.svg            # from dashboard-icons, or /icons/my.svg from config/icons
-        siteMonitor: http://pihole.lan
-        widget:
-          type: custom-api
-          url: http://pihole.lan/api/stats/summary
-          headers: { X-FTL-SID: "{{HD_VAR_PIHOLE_SID}}" }
-          mappings:
-            - { field: queries.total, label: Queries }
-            - { field: queries.blocked, label: Blocked }
-```
-
-## Third-party widgets
-
-Ready-made widgets for Radarr, Sonarr, Bazarr, Prowlarr, SABnzbd, Seerr, Stash, Tautulli,
-Tdarr, What's up Docker, Portainer and Unraid come from
-[homelab-dashboard-widgets](https://github.com/stefanrenne/homelab-dashboard-widgets), which is
-always installed (its newest release). Other widgets are added under `plugins:`:
-
-```yaml
-# settings.yaml
-plugins:
-  - source: git+https://github.com/someone/hd-widget-pihole#v1.2.0
-  - source: npm:hd-widget-adguard@2.0.1
-  - path: ./my-widgets/garage-door
-```
-
-Writing one takes a manifest and one function. Start from
-[homelab-dashboard-widget-example](https://github.com/stefanrenne/homelab-dashboard-widget-example), a complete widget repository with tests and a
-release workflow, and read [docs/widgets/authoring.md](docs/widgets/authoring.md).
+Open `http://localhost:3000`, then edit the YAML files in `config`: the page follows.
 
 ## Documentation
 
-Also as a website: **[stefanrenne.github.io/homelab-dashboard](https://stefanrenne.github.io/homelab-dashboard/)**.
-
-| | |
-|---|---|
-| [Configuration](docs/configuration.md) | Every YAML file and key, variables, icons |
-| [Discovery](docs/discovery.md) | Docker labels, Kubernetes annotations |
-| [Writing widgets](docs/widgets/authoring.md) | From template to published package |
-| [Widget API reference](docs/widgets/api-reference.md) | `widget.yaml`, `ctx`, result format, `client.js` |
-| [Widget security](docs/widgets/security.md) | Trust model, pinning, secrets |
-| [Architecture](docs/architecture.md) · [Development](docs/development.md) · [Publishing](docs/publishing.md) · [Decisions](docs/decisions.md) | For contributors |
+Everything else is on **[stefanrenne.github.io/homelab-dashboard](https://stefanrenne.github.io/homelab-dashboard/)**:
+[configuration](https://stefanrenne.github.io/homelab-dashboard/configuration/),
+[every widget](https://stefanrenne.github.io/homelab-dashboard/widgets/) and how to
+[write your own](https://stefanrenne.github.io/homelab-dashboard/extend/).
+The same pages are in [docs/](docs/README.md).
 
 ## License
 

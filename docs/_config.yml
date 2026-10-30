@@ -1,12 +1,14 @@
 # GitHub Pages site for these docs: https://stefanrenne.github.io/homelab-dashboard/
-# Built by .github/workflows/pages.yml after scripts/pages.sh staged docs/ and the README.
-# Titles and the menu order live here, so the Markdown files stay clean on GitHub.
+# Built by .github/workflows/pages.yml after scripts/pages.sh staged docs/ and the widget pages.
+# Titles, the menu order and the redirects from old addresses live here, so the Markdown files
+# stay clean on GitHub.
 title: Homelab Dashboard
 description: A self-hosted start page for your homelab, configured in YAML, with widgets anyone can publish.
 remote_theme: just-the-docs/just-the-docs@v0.10.1
 plugins:
   - jekyll-remote-theme
   - jekyll-relative-links
+  - jekyll-redirect-from
 relative_links:
   enabled: true
   collections: false
@@ -27,14 +29,25 @@ exclude:
   - _config.yml
 
 defaults:
-  - { scope: { path: index.md }, values: { title: Home, nav_order: 1, permalink: / } }
-  - { scope: { path: configuration.md }, values: { title: Configuration, nav_order: 2 } }
-  - { scope: { path: discovery.md }, values: { title: Discovery, nav_order: 3 } }
-  - { scope: { path: widgets/README.md }, values: { title: Widgets, nav_order: 4, has_children: true, permalink: /widgets/ } }
-  - { scope: { path: widgets/authoring.md }, values: { title: Writing a widget, parent: Widgets, nav_order: 1 } }
-  - { scope: { path: widgets/api-reference.md }, values: { title: API reference, parent: Widgets, nav_order: 2 } }
-  - { scope: { path: widgets/security.md }, values: { title: Security, parent: Widgets, nav_order: 3 } }
-  - { scope: { path: architecture.md }, values: { title: Architecture, nav_order: 5 } }
-  - { scope: { path: development.md }, values: { title: Development, nav_order: 6 } }
-  - { scope: { path: publishing.md }, values: { title: Publishing, nav_order: 7 } }
-  - { scope: { path: decisions.md }, values: { title: Decisions, nav_order: 8 } }
+  - { scope: { path: README.md }, values: { title: Home, nav_order: 1, permalink: / } }
+  - { scope: { path: configuration/README.md }, values: { title: Configuration, nav_order: 2, has_children: true, permalink: /configuration/, redirect_from: [/configuration.html] } }
+  - { scope: { path: configuration/settings.md }, values: { title: Settings, parent: Configuration, nav_order: 1 } }
+  - { scope: { path: configuration/bookmarks.md }, values: { title: Bookmarks, parent: Configuration, nav_order: 2 } }
+  - { scope: { path: configuration/header-widgets.md }, values: { title: Header widgets, parent: Configuration, nav_order: 3 } }
+  - { scope: { path: configuration/services.md }, values: { title: Services, parent: Configuration, nav_order: 4 } }
+  - { scope: { path: configuration/kubernetes.md }, values: { title: Kubernetes, parent: Configuration, nav_order: 5 } }
+  - { scope: { path: configuration/docker.md }, values: { title: Docker, parent: Configuration, nav_order: 6, redirect_from: [/discovery.html] } }
+  - { scope: { path: configuration/proxmox.md }, values: { title: Proxmox, parent: Configuration, nav_order: 7 } }
+  - { scope: { path: configuration/images.md }, values: { title: Images, parent: Configuration, nav_order: 8 } }
+  - { scope: { path: configuration/custom-css-js.md }, values: { title: Custom CSS & JS, parent: Configuration, nav_order: 9 } }
+  - { scope: { path: widgets/README.md }, values: { title: Widgets, nav_order: 3, has_children: true, permalink: /widgets/ } }
+  - { scope: { path: extend/README.md }, values: { title: Extend, nav_order: 4, has_children: true, permalink: /extend/ } }
+  - { scope: { path: extend/local.md }, values: { title: A local widget, parent: Extend, nav_order: 1, redirect_from: [/widgets/authoring.html] } }
+  - { scope: { path: extend/remote.md }, values: { title: A remote widget, parent: Extend, nav_order: 2 } }
+  - { scope: { path: extend/api-reference.md }, values: { title: API reference, parent: Extend, nav_order: 3, redirect_from: [/widgets/api-reference.html] } }
+  - { scope: { path: extend/security.md }, values: { title: Security, parent: Extend, nav_order: 4, redirect_from: [/widgets/security.html] } }
+  - { scope: { path: extend/contributing/README.md }, values: { title: Contributing, parent: Extend, nav_order: 5, has_children: true, permalink: /extend/contributing/ } }
+  - { scope: { path: extend/contributing/architecture.md }, values: { title: Architecture, parent: Contributing, grand_parent: Extend, nav_order: 1, redirect_from: [/architecture.html] } }
+  - { scope: { path: extend/contributing/development.md }, values: { title: Development, parent: Contributing, grand_parent: Extend, nav_order: 2, redirect_from: [/development.html] } }
+  - { scope: { path: extend/contributing/publishing.md }, values: { title: Publishing, parent: Contributing, grand_parent: Extend, nav_order: 3, redirect_from: [/publishing.html] } }
+  - { scope: { path: extend/contributing/decisions.md }, values: { title: Decisions, parent: Contributing, grand_parent: Extend, nav_order: 4, redirect_from: [/decisions.html] } }

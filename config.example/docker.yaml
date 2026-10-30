@@ -1,5 +1,5 @@
 # Docker servers, for "container:" status and for auto-discovery of containers with
-# homelab.* labels (see docs/discovery.md). Each key is a name you choose; services
+# homelab.* labels (see docs/configuration/docker.md). Each key is a name you choose; services
 # refer to it with "server: <name>" (optional when there is one server).
 #
 # With no servers listed here, a mounted /var/run/docker.sock is used as "local" by

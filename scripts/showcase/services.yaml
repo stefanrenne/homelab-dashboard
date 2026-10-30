@@ -1,0 +1,117 @@
+- Media:
+    - Plex:
+        href: http://plex.lan:32400/web
+        icon: plex.svg
+        description: Movies and series
+        siteMonitor: http://plex.lan:32400/identity
+        widget: { type: plex, url: http://mock.lan/plex, key: demo }
+    - Radarr:
+        href: http://radarr.lan
+        icon: radarr.svg
+        siteMonitor: http://radarr.lan
+        widgets:
+          - { type: radarr, url: http://mock.lan/radarr, key: demo, enableQueue: true, queueLimit: 2 }
+          - type: button
+            text: Import finished downloads
+            command: >-
+              curl -fsS -X POST http://radarr.lan:7878/api/v3/command -H "X-Api-Key: $RADARR_KEY"
+              -H "Content-Type: application/json" -d '{"name":"DownloadedMoviesScan"}'
+            inheritEnv: true
+    - Sonarr:
+        href: http://sonarr.lan
+        icon: sonarr.svg
+        siteMonitor: http://sonarr.lan
+        widget: { type: sonarr, url: http://mock.lan/sonarr, key: demo }
+    - SABnzbd:
+        href: http://sabnzbd.lan:8080
+        icon: sabnzbd.svg
+        widgets:
+          - { type: sabnzbd, url: http://mock.lan/sabnzbd, key: demo }
+          - type: button
+            text: Pause downloads for an hour
+            command: curl -fsS "http://sabnzbd.lan:8080/api?mode=config&name=set_pause&value=60&apikey=$SABNZBD_KEY"
+            inheritEnv: true
+    - Seerr:
+        href: http://seerr.lan
+        icon: jellyseerr.svg
+        description: Requests
+        widget: { type: seerr, url: http://mock.lan/seerr, key: demo }
+
+- Infrastructure:
+    - Proxmox:
+        href: https://pve.lan:8006
+        icon: proxmox.svg
+        siteMonitor: https://pve.lan:8006
+        widgets:
+          - { type: proxmox, url: http://mock.lan/proxmox, username: api@pam!dashboard, password: demo }
+          - type: button
+            text: Reboot node
+            command: ssh root@pve.lan reboot
+    - Unraid:
+        href: https://tower.lan
+        icon: unraid.svg
+        description: Storage
+        widgets:
+          - { type: unraid, url: http://mock.lan/unraid, key: demo }
+          - type: button
+            text: Stop the array
+            script: scripts/unraid-stop-array.sh
+    - Pi-hole:
+        href: http://pi.hole/admin
+        icon: pi-hole.svg
+        ping: pi.hole
+        widgets:
+          - { type: pihole, url: http://mock.lan/pihole, version: 6, key: demo }
+          - type: button
+            text: Pause blocking for 5 minutes
+            script: scripts/pihole-pause.sh
+    - What's up Docker:
+        href: http://wud.lan:3000
+        icon: whats-up-docker.svg
+        description: Container updates
+        widgets:
+          - { type: whatsupdocker, url: http://mock.lan/whatsupdocker, username: admin, password: demo }
+          - type: button
+            text: Update all containers
+            command: docker compose -f stacks/apps.yaml pull && docker compose -f stacks/apps.yaml up -d
+            timeout: 900
+    - Traefik:
+        href: http://traefik.lan:8080
+        icon: traefik.svg
+        widget: { type: traefik, url: http://mock.lan/traefik }
+
+- Home:
+    - Immich:
+        href: http://immich.lan:2283
+        icon: immich.svg
+        description: Photos
+        siteMonitor: http://immich.lan:2283
+        widget: { type: immich, url: http://mock.lan/immich, key: demo, version: 2 }
+    - Paperless-ngx:
+        href: http://paperless.lan:8000
+        icon: paperless-ngx.svg
+        widget: { type: paperlessngx, url: http://mock.lan/paperlessngx, key: demo }
+    - Nextcloud:
+        href: https://cloud.lan
+        icon: nextcloud.svg
+        siteMonitor: https://cloud.lan
+        widgets:
+          - { type: nextcloud, url: http://mock.lan/nextcloud, key: demo }
+          - type: button
+            text: Back up now
+            script: scripts/backup-nextcloud.sh
+    - Uptime Kuma:
+        href: http://uptime-kuma.lan:3001
+        icon: uptime-kuma.svg
+        widget: { type: uptimekuma, url: http://mock.lan/uptimekuma, slug: home, fields: [up, down, uptime] }
+    - Speedtest:
+        href: http://speedtest.lan:8080
+        icon: mdi-speedometer
+        widgets:
+          - { type: speedtest, url: http://mock.lan/speedtest, version: 2, key: demo }
+          - type: button
+            text: Run a speed test now
+            command: >-
+              curl -fsS -X POST http://speedtest.lan:8080/api/v1/speedtests/run
+              -H "Authorization: Bearer $SPEEDTEST_TOKEN"
+            inheritEnv: true

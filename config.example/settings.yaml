@@ -1,4 +1,4 @@
-# Dashboard settings. See docs/configuration.md.
+# Dashboard settings. See docs/configuration/settings.md.
 title: Homelab
 language: en          # en, nl, fr, de, es
 theme: auto           # auto, dark, light

@@ -1,5 +1,5 @@
 // Kubernetes discovery (in the cluster or through a kubeconfig): Ingresses with `homelab.dev/enabled: "true"`
-// become services. Needs RBAC to list ingresses; see docs/discovery.md.
+// become services. Needs RBAC to list ingresses; see docs/configuration/kubernetes.md.
 
 import http from 'node:http';
 import https from 'node:https';

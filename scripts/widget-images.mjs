@@ -87,9 +87,24 @@ export function exampleEntry(dir, mockUrl) {
 }
 
 // Widgets that show another page (nothing of the mock worth a picture), and examples that need
-// this machine's details changed to look like a homelab.
+// other options to look like a homelab: this machine's disks, or an icon from a CDN instead of
+// one in the user's own icons folder.
 const SKIP = new Set(['iframe', 'mjpeg']);
-const OPTIONS = { resources: { cpu: true, memory: true, disk: ['/'], uptime: true } };
+const OPTIONS = { resources: { cpu: true, memory: true, disk: ['/'], uptime: true }, logo: { icon: 'proxmox.svg' } };
+
+/** True when an image drawn by a widget (in a shadow root, the element's own or below) failed to load. */
+const brokenImage = (el) => el.evaluate((root) => {
+  const images = [];
+  const walk = (node) => {
+    if (node.shadowRoot) walk(node.shadowRoot);
+    for (const e of node.querySelectorAll('*')) {
+      if (e.shadowRoot) walk(e.shadowRoot);
+      if (e.tagName === 'IMG' && node instanceof ShadowRoot) images.push(e);
+    }
+  };
+  walk(root);
+  return images.some((img) => img.complete && img.naturalWidth === 0);
+});
 
 /**
  * A widget result worth a picture: data, and not a service that is down or not found (a status
@@ -170,7 +185,7 @@ export async function writeWidgetImages({ out, collectionDir, log = console }) {
   const cards = await page.$$('.card');
   const serviceWidgets = app.layout.groups.flatMap((g) => g.services.map((s) => s.widgets[0]));
   for (const [i, { id }] of services.entries()) {
-    if (!cards[i] || !ok.has(serviceWidgets[i]?.instanceId)) continue;
+    if (!cards[i] || !ok.has(serviceWidgets[i]?.instanceId) || (await brokenImage(cards[i]))) continue;
     await cards[i].scrollIntoViewIfNeeded();
     await cards[i].screenshot({ path: path.join(out, `${id}.png`) });
     written.push(id);
@@ -180,6 +195,7 @@ export async function writeWidgetImages({ out, collectionDir, log = console }) {
     const w = app.layout.header[i];
     // widgets without server.js (datetime, greeting, ...) have nothing to fetch
     if (!headerWidgets[i] || (!ok.has(w.instanceId) && fs.existsSync(path.join(widgetsDir, id, 'server.js')))) continue;
+    if (await brokenImage(headerWidgets[i])) continue;
     await headerWidgets[i].screenshot({ path: path.join(out, `${id}.png`) });
     written.push(id);
   }

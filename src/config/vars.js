@@ -11,13 +11,22 @@ import fs from 'node:fs';
 import { isPlainObject } from '../util.js';
 
 const PLACEHOLDER = /\{\{\s*((?:HD|HOMEPAGE)_(?:VAR|FILE)_[A-Z0-9_]+)\s*\}\}/g;
+// `{{SOME_NAME}}`: looks like a variable but is not one the dashboard fills in, so it would reach
+// the service as written (a wrong key or password). Templates such as Home Assistant's
+// `{{ states.x }}` are lowercase and left alone.
+const LOOKALIKE = /\{\{\s*([A-Z][A-Z0-9_]*)\s*\}\}/g;
 
 export function substitute(value, { env = process.env, readFile = (p) => fs.readFileSync(p, 'utf8') } = {}) {
   const secrets = new Set();
   const warnings = [];
 
-  const replaceString = (str) =>
-    str.replace(PLACEHOLDER, (whole, name) => {
+  const replaceString = (str) => {
+    for (const [whole, name] of str.matchAll(LOOKALIKE)) {
+      if (/^(HD|HOMEPAGE)_(VAR|FILE)_/.test(name)) continue;
+      const hint = name.replace(/^(HD|HOMEPAGE)_/, '');
+      warnings.push(`${whole} is not filled in: only {{HD_VAR_*}} and {{HD_FILE_*}} are. Write {{HD_VAR_${hint}}} and set the environment variable HD_VAR_${hint}`);
+    }
+    return str.replace(PLACEHOLDER, (whole, name) => {
       const raw = env[name];
       if (raw === undefined) {
         warnings.push(`${whole} is used but ${name} is not set`);
@@ -35,6 +44,7 @@ export function substitute(value, { env = process.env, readFile = (p) => fs.read
       if (out !== '') secrets.add(out);
       return out;
     });
+  };
 
   const walk = (node) => {
     if (typeof node === 'string') return replaceString(node);

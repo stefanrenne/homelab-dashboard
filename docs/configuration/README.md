@@ -40,6 +40,11 @@ secret). homepage's `{{HOMEPAGE_VAR_*}}` and `{{HOMEPAGE_FILE_*}}` work the same
 existing homepage environment can be reused. Substituted values are treated as secrets: they
 never reach the browser.
 
+Only these forms are filled in. Anything else in double braces, such as `{{SHELLY_PASSWORD}}`,
+stays as written and would reach the service as a wrong key or password; the dashboard warns
+about it at the top of the page, with the form that works (`{{HD_VAR_SHELLY_PASSWORD}}`, with the
+environment variable `HD_VAR_SHELLY_PASSWORD`).
+
 ## Including other files
 
 A long `services.yaml` can be split up. `!include <file>` puts the YAML of another file at that

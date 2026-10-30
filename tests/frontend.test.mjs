@@ -252,7 +252,7 @@ test('search events filter services, and Enter with one match opens it', async (
 test('error summaries say what to check', async () => {
   const w = await page();
   const { explainError } = w.HD;
-  assert.equal(explainError('Radarr', 'Radarr movie answered 401'), 'Radarr: de API-key is geweigerd. Controleer "key".');
+  assert.equal(explainError('Radarr', 'Radarr movie answered 401'), 'Radarr: de inlog is geweigerd. Controleer de key of het wachtwoord.');
   assert.equal(explainError('Radarr', 'fetch failed (ENOTFOUND)'), 'Radarr is niet bereikbaar. Draait het, en klopt "url"?');
   assert.equal(explainError('Portainer', 'Portainer has no environment 9'), 'Portainer: adres niet gevonden. Controleer "url".');
   assert.equal(explainError('X', 'invalid options: url: required'), 'X: de configuratie bevat een fout.');

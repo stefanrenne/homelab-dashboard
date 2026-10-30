@@ -10,6 +10,12 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
   into service and header widgets, each page with an example image) and Extend (a local or a
   remote widget, API reference, security). Old addresses redirect to their new page.
 - A shorter README and new screenshots that show many more widgets.
+- A refused login (401/403) on a card now says to check the key or password, not only "key".
+
+### Added
+- A warning for `{{NAME}}` in the config that the dashboard does not fill in (only
+  `{{HD_VAR_*}}`, `{{HD_FILE_*}}` and homepage's forms are), with the form that works:
+  `{{SHELLY_PASSWORD}}` reached the service as written, as a wrong password.
 
 ## [0.10.2] - 2026-10-25
 

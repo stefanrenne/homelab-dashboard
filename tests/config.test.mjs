@@ -196,6 +196,12 @@ test('parseDuration and safeJoin', () => {
   assert.equal(safeJoin('/a/b', 'c/d.svg'), path.resolve('/a/b/c/d.svg'));
 });
 
+test('a {{NAME}} that is not a variable is reported with the form that works', () => {
+  const out = substitute({ password: '{{SHELLY_PASSWORD}}', tpl: '{{ states.switch | count }}', ok: '{{HD_VAR_X}}' }, { env: { HD_VAR_X: 'x1' } });
+  assert.equal(out.value.password, '{{SHELLY_PASSWORD}}', 'left as written');
+  assert.deepEqual(out.warnings, ['{{SHELLY_PASSWORD}} is not filled in: only {{HD_VAR_*}} and {{HD_FILE_*}} are. Write {{HD_VAR_SHELLY_PASSWORD}} and set the environment variable HD_VAR_SHELLY_PASSWORD']);
+});
+
 test('homepage placeholders work like HD_ ones', () => {
   const out = substitute({ a: '{{HOMEPAGE_VAR_KEY}}' }, { env: { HOMEPAGE_VAR_KEY: 'pk' } });
   assert.equal(out.value.a, 'pk');

@@ -146,7 +146,20 @@ A mistake in the expression (`widget.update false`), a widget that is not on the
 shown unfiltered. An attribute the widget does not publish is a warning. The filter goes to the
 browser, so it cannot hold a `{{HD_VAR_*}}` value.
 
-Discovered services take it as a label (`homelab.filter`) or an annotation
-(`homelab.dev/filter`). The quotes and `&&` of an expression are easiest in Compose's list form:
-`- homelab.filter=widget.update == false`.
+Discovered services take it too: as the Docker label `homelab.filter` (see [Docker](docker.md#discovery)),
+or as the Kubernetes annotation `homelab.dev/filter` on an Ingress (see [Kubernetes](kubernetes.md#discovery);
+`homelab.dev/` is the annotations' prefix, not a web address):
+
+```yaml
+# compose.yaml: Compose's list form keeps the quotes and && of an expression simple
+labels:
+  - homelab.name=Shelly Bureau
+  - homelab.filter=widget.update == false
+
+# an Ingress
+metadata:
+  annotations:
+    homelab.dev/enabled: "true"
+    homelab.dev/filter: widget.update == false
+```
 

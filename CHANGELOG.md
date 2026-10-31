@@ -4,6 +4,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-31
+
 ### Changed
 - The documentation site is reorganised like homepage's: Home, Configuration (a page per config
   file, plus Images with every icon provider and Custom CSS & JS), Widgets (every widget, split

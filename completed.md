@@ -66,3 +66,11 @@ Finished work, newest first.
 - 2026-10-30: Documentation site in homepage's structure (Home, Configuration per file + Images
   + Custom CSS & JS, Widgets with an example image per widget, Extend), a showcase for the
   screenshots and a short README.
+- 2026-10-31: Shelly widget (firmware, update button); a warning for `{{NAME}}` the dashboard
+  does not fill in; "check the key or password" on a refused login.
+- 2026-10-31: `filter:` on a service, on public attributes widgets publish (widget.yaml
+  `attributes:`, `from:` a block, `@attention`, `@status`, `@rows`); attributes for 167 widgets.
+- 2026-10-31: Widget pages with Display fields, Configuration options and Filter attributes; no
+  version requirements in the docs; YAML examples that highlight without red marks.
+- 2026-10-31: An example image for every widget page (the collection's fake services and options
+  in `scripts/fakes.mjs`, demo page and camera, a fixed date).

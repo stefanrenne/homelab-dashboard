@@ -1,6 +1,6 @@
 {
   "name": "homelab-dashboard",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "private": true,
   "description": "A YAML-configured homelab dashboard with widgets anyone can publish outside the core",
   "type": "module",

@@ -4,6 +4,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-10-31
+
 ### Changed
 - `widget.<name>` in a service's `filter:` reads the attributes of all the service's widgets
   together (the first widget on the card that publishes it counts), so one expression works

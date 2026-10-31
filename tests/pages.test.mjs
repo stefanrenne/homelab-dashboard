@@ -139,7 +139,7 @@ test('docs: every page has an entry in _config.yml, and relative links point at 
   }
 });
 
-test('docs: YAML examples quote keys with [ ] or \', which the site\'s highlighter marks red', () => {
+test('docs: no YAML key with [ ] or \', which the site\'s highlighter (Rouge) marks red, quoted or not', () => {
   const files = [];
   const walk = (dir) => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -149,16 +149,14 @@ test('docs: YAML examples quote keys with [ ] or \', which the site\'s highlight
     }
   };
   walk('docs');
-  const widgets = path.join(COLLECTION_DIR, 'widgets');
-  for (const id of fs.readdirSync(widgets)) if (fs.existsSync(path.join(widgets, id, 'README.md'))) files.push(path.join(widgets, id, 'README.md'));
   const bad = [];
   for (const file of files) {
     for (const [, block] of fs.readFileSync(file, 'utf8').matchAll(/```ya?ml\n([\s\S]*?)```/g)) {
       for (const line of block.split('\n')) {
-        const key = /^\s*(?:- )?([^"'\s#{[][^:"#]*?)\s*:(?:\s|$)/.exec(line)?.[1];
-        if (key && /[[\]']/.test(key)) bad.push(`${path.relative('.', file)}: ${line.trim()}`);
+        const key = /^\s*(?:- )?("[^"]*"|'[^']*'|[^"'\s#{[][^:"#]*?)\s*:(?:\s|$)/.exec(line)?.[1];
+        if (key && /[[\]']/.test(key.replace(/^'|'$/g, ''))) bad.push(`${file}: ${line.trim()}`);
       }
     }
   }
-  assert.deepEqual(bad, [], 'quote these keys: "homelab.widgets[0].type": ...');
+  assert.deepEqual(bad, [], 'labels as a list (- homelab.widgets[0].type=emby), or ’ for an apostrophe');
 });

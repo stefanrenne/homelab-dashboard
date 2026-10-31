@@ -4,6 +4,11 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Changed
+- Every widget page on the docs site has an example image: widgets that need a special service
+  (apcupsd, game servers, ...), other options than their README example, or another page or
+  camera now get one too.
+
 ## [0.13.0] - 2026-10-31
 
 ### Changed

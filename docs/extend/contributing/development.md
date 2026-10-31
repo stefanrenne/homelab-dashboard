@@ -37,5 +37,8 @@ README, by `scripts/widget-images.mjs` while the site is built. To look at them 
 node scripts/widget-images.mjs /tmp/widget-images
 ```
 
-A widget whose example gets no data from the fixtures (or reports an error) gets no image; fix its
-README example or fixture in the collection.
+The collection's `scripts/fakes.mjs` adds what its tests use too: fake services for widgets that
+speak something else than HTTP with JSON (apcupsd, game servers, My.JDownloader, ...) and the
+options each widget needs for its fixture. A widget whose README example gets no data is tried
+again with those options. The iframe and MJPEG widgets show a made-up page and camera picture,
+and the browser's clock is fixed in October 2026, the month of the calendar fixture.

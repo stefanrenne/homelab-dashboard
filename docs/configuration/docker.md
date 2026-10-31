@@ -92,12 +92,12 @@ Several widgets and lists use homepage's index notation:
 
 ```yaml
 labels:
-  homelab.widgets[0].type: emby
-  homelab.widgets[0].url: http://emby.lan
-  homelab.widgets[1].type: custom-api
-  homelab.widgets[1].url: http://argus.lan/api/v1/service/summary/emby
-  homelab.widgets[1].mappings[0].label: Deployed version
-  homelab.widgets[1].mappings[0].field.status: deployed_version
+  "homelab.widgets[0].type": emby
+  "homelab.widgets[0].url": http://emby.lan
+  "homelab.widgets[1].type": custom-api
+  "homelab.widgets[1].url": http://argus.lan/api/v1/service/summary/emby
+  "homelab.widgets[1].mappings[0].label": Deployed version
+  "homelab.widgets[1].mappings[0].field.status": deployed_version
 ```
 
 **Several dashboards on one Docker host**: give each an `instanceName` in settings.yaml. A label

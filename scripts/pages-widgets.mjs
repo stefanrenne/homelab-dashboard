@@ -100,19 +100,67 @@ export function widgetPage(dir, source, image = null) {
   const also = (manifest.aliases ?? []).map((a) => ` (or \`${a}\`)`).join('');
   const info = `\`type: ${id}\`${also} · version ${manifest.version} · widget API ${manifest.apiVersion} · ${where}\n{: .fs-3 .text-grey-dk-000 }\n` +
     (image ? `\n![${manifest.name} with example data](${image})\n` : '');
-  const attributes = attributeRows(yamlText);
-  const published = attributes.length
-    ? `\n## Attributes\n\nPublic values a service's \`filter:\` can read, as \`widget.<attribute>\`; see [Filtering services](../../configuration/services.html#filtering-services).\n\n${attributesTable(attributes)}`
-    : '';
-  const options = `## Options\n\n${optionsTable(optionRows(yamlText))}\nEvery widget also takes \`refresh\` (or \`refreshInterval\` in ms), \`fields\` and \`hideErrors\`; see [Services](../../configuration/services.html).\n${published}`;
-
-  // the title, then the info line; the options table goes before ## Example, or at the end
+  // the README's own sections, renamed for the page: what it shows, and what a filter can read
   const [title, ...rest] = readme.split('\n');
-  let body = rest.join('\n');
+  let body = rest.join('\n').replace(/^## Fields$/m, '## Display fields');
+  const fields = displayFields(body, manifest);
+  if (fields.length) body = body.replace(/^## Display fields\n\n?([\s\S]*?)(?=^## |(?![\s\S]))/m, (all, text) =>
+    `## Display fields\n\n${text.trimEnd()}\n\nPick them with \`fields:\` in the entry${manifest.defaultFields ? `; without it the widget shows ${manifest.defaultFields.map((f) => `\`${f}\``).join(', ')}` : ''}.\n\n`);
+  let readmeAttributes = '';
+  body = body.replace(/^## (?:Filter )?[Aa]ttributes\n([\s\S]*?)(?=^## |(?![\s\S]))/m, (all, text) => {
+    readmeAttributes = text.trim();
+    return '';
+  });
+  body = withFieldsInExample(body, [id, ...(manifest.aliases ?? [])], fields);
+
+  const attributes = attributeRows(yamlText);
+  const filterAttributes = attributes.length || readmeAttributes
+    ? `\n## Filter attributes\n\nPublic values a service's \`filter:\` can read, as \`widget.<attribute>\`; see [Filtering services](../../configuration/services.html#filtering-services).\n\n` +
+      (readmeAttributes ? `${readmeAttributes}\n\n` : '') + (attributes.length ? attributesTable(attributes) : '')
+    : '';
+  const options = `## Configuration options\n\n${optionsTable(optionRows(yamlText))}\nEvery widget also takes \`refresh\` (or \`refreshInterval\` in ms), \`fields\` and \`hideErrors\`; see [Services](../../configuration/services.html).\n${filterAttributes}`;
+
+  // the options and filter attributes go before ## Example, or at the end
   const example = body.search(/^## Example/m);
   body = example === -1 ? `${body.trimEnd()}\n\n${options}` : `${body.slice(0, example)}${options}\n${body.slice(example)}`;
   const kind = exampleEntry(dir, 'http://example.lan')?.kind === 'header' ? 'header' : 'service';
   return { id, name: manifest.name, description: manifest.description ?? '', kind, markdown: `${title}\n\n${info}${body}` };
+}
+
+/** The block keys under the README's Display fields (backticked), or none. */
+export function displayFields(body, manifest) {
+  const section = /^## Display fields\n([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(body)?.[1] ?? '';
+  return [...new Set([...section.matchAll(/`([A-Za-z0-9_.]+)`/g)].map((m) => m[1]))];
+}
+
+/**
+ * The README's example with the display fields written out: `fields: [...]` after the first
+ * `type: <id>` (a service widget) or under `- <id>:` (a header widget), unless it has `fields:`.
+ */
+export function withFieldsInExample(body, types, fields) {
+  if (!fields.length) return body;
+  const at = body.search(/^## Example/m);
+  if (at === -1) return body;
+  const head = body.slice(0, at);
+  const example = body.slice(at).replace(/```ya?ml\n([\s\S]*?)```/, (block, yaml) => {
+    if (/^\s*fields:/m.test(yaml)) return block;
+    const lines = yaml.split('\n');
+    const line = `fields: [${fields.join(', ')}]   # the display fields; leave out for the defaults`;
+    for (let i = 0; i < lines.length; i++) {
+      const service = /^(\s*)type: (\S+)\s*$/.exec(lines[i]);
+      if (service && types.includes(service[2])) {
+        lines.splice(i + 1, 0, `${service[1]}${line}`);
+        return block.replace(yaml, lines.join('\n'));
+      }
+      const header = /^(\s*)- (\S+):\s*$/.exec(lines[i]);
+      if (header && types.includes(header[2])) {
+        lines.splice(i + 1, 0, `${header[1]}    ${line}`);
+        return block.replace(yaml, lines.join('\n'));
+      }
+    }
+    return block;
+  });
+  return head + example;
 }
 
 function writePage(file, frontMatter, markdown) {

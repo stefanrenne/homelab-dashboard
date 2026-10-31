@@ -4,6 +4,11 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Changed
+- Widget pages on the docs site: "Display fields" (and the example lists them as `fields:`),
+  "Configuration options", and one "Filter attributes" section. The docs no longer name the
+  dashboard version a feature needs.
+
 ## [0.12.1] - 2026-10-31
 
 ### Changed

@@ -93,6 +93,10 @@ the image and smoke-tests it.
   a rebuild of the site**: `gh workflow run pages.yml --repo stefanrenne/homelab-dashboard`, then
   check that the page of each new or changed widget is there
   (`https://stefanrenne.github.io/homelab-dashboard/widgets/collection/<id>.html`).
+- **No version requirements in the docs before 1.0**: no "(dashboard 0.12.0 or newer)", "since
+  0.8.0" or "needs collection 0.4.0". Versions belong in `CHANGELOG.md`, the Migration section of
+  `docs/configuration/README.md` and the Changes table of the API reference. Versions of the
+  services a widget talks to ("Immich 1.118 or later") are fine.
 - Everything is **English**: code comments, log lines, Markdown docs, this file. Only UI texts in
   `I18N` (and widget `i18n.json`) are translated.
 - The UI is multilingual (en, nl, fr, de, es, ca, he, hr, hu, it, nb-NO, pt, ru, sv, vi, zh-Hans,

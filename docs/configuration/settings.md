@@ -104,8 +104,8 @@ own with the same id as one in the collection (for example a local checkout unde
 Every widget comes from the collection, also the ones behind a service's `siteMonitor:`
 (`http-status`), `ping:` (`ping`), `container:` (`docker`), `app:` (`kubernetes-pods`) and
 `proxmoxNode:` (`proxmoxvm`). An `only:` list for the collection always gets those five added,
-so the service fields keep working. They need collection 0.4.0 or newer: an entry pinned to an
-older tag says so in the messages. The first start downloads the collection, so it needs
+so the service fields keep working. An entry pinned to a release too old for them says so in
+the messages. The first start downloads the collection, so it needs
 network access once; after that the lock file keeps it without network.
 
 `#latest` installs the highest release tag (`v1.2.3` or `1.2.3`; pre-releases such as

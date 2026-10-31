@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
-import { attributeRows, movedLinks, optionRows, widgetPage, writeWidgetPages } from '../scripts/pages-widgets.mjs';
+import { attributeRows, displayFields, movedLinks, optionRows, widgetPage, withFieldsInExample, writeWidgetPages } from '../scripts/pages-widgets.mjs';
 import { exampleEntry, showsData, splitFiles } from '../scripts/widget-images.mjs';
 import { tmpDir, COLLECTION_DIR } from './helpers.mjs';
 
@@ -28,8 +28,9 @@ options:
 test('widgetPage: info line, options table before the example', () => {
   const page = widgetPage(path.join(COLLECTION_DIR, 'widgets/docker'), { kind: 'collection', tag: 'v9.9.9' });
   assert.match(page.markdown, /^# Docker container\n\n`type: docker` · version \d+\.\d+\.\d+/);
-  const options = page.markdown.indexOf('## Options');
-  assert.ok(options > page.markdown.indexOf('## Fields') && options < page.markdown.indexOf('## Example'));
+  const options = page.markdown.indexOf('## Configuration options');
+  assert.ok(options > page.markdown.indexOf('## Display fields') && options < page.markdown.indexOf('## Example'));
+  assert.ok(!/^## (Fields|Options)$/m.test(page.markdown), 'the README\'s headings are renamed for the page');
   assert.match(page.markdown, /\| `container` \| string \| yes \|/);
   assert.match(widgetPage(path.join(COLLECTION_DIR, 'widgets/custom-api'), { kind: 'collection', tag: 'v9.9.9' }).markdown, /`type: custom-api` \(or `customapi`\) · version/, 'aliases are named');
   assert.equal(page.kind, 'service');
@@ -53,9 +54,41 @@ attributes:
   fs.writeFileSync(path.join(dir, 'widget.yaml'), `name: X\nversion: 1.0.0\napiVersion: 1\n${yaml}`);
   fs.writeFileSync(path.join(dir, 'README.md'), '# X\n\nIntro.\n\n## Example\n\n```yaml\n- x: {}\n```\n');
   const md = widgetPage(dir, { kind: 'collection', tag: 'v1' }).markdown;
-  assert.ok(md.indexOf('## Options') < md.indexOf('## Attributes') && md.indexOf('## Attributes') < md.indexOf('## Example'));
+  assert.ok(md.indexOf('## Configuration options') < md.indexOf('## Filter attributes') && md.indexOf('## Filter attributes') < md.indexOf('## Example'));
   assert.match(md, /\| `update` \| boolean \| True while an update waits \|/);
-  assert.ok(!widgetPage(path.join(COLLECTION_DIR, 'widgets/radarr'), { kind: 'collection', tag: 'v1' }).markdown.includes('## Attributes'), 'none, no section');
+  assert.ok(!widgetPage(path.join(COLLECTION_DIR, 'widgets/radarr'), { kind: 'collection', tag: 'v1' }).markdown.includes('## Filter attributes'), 'none, no section');
+});
+
+test('widgetPage: one Filter attributes section, with the README\'s own text merged in', () => {
+  const dir = tmpDir('hd-merge-');
+  fs.writeFileSync(path.join(dir, 'widget.yaml'), 'id: x\nname: X\nversion: 1.0.0\napiVersion: 1\nattributes:\n  update: { type: boolean }   # true while an update waits\n');
+  fs.writeFileSync(path.join(dir, 'README.md'), '# X\n\nIntro.\n\n## Fields\n\n`a`, `b`\n\n## Attributes\n\nA note.\n\n## Example\n\n```yaml\n- G:\n    - S:\n        widget:\n          type: x\n```\n');
+  const md = widgetPage(dir, { kind: 'collection', tag: 'v1' }).markdown;
+  assert.equal(md.match(/^## .*[Aa]ttributes$/gm).length, 1);
+  assert.match(md, /## Filter attributes\n\nPublic values[^\n]*\n\nA note\.\n\n\| Attribute/);
+  assert.ok(!/0\.\d+\.\d+ or newer/.test(md), 'no dashboard versions on the page');
+});
+
+test('display fields: listed on the page and written into the example, unless it has fields:', () => {
+  assert.deepEqual(displayFields('## Display fields\n\n`a`, `b` (only sometimes), `a`\n\n## Example\n`c`', {}), ['a', 'b']);
+  const service = '## Example\n\n```yaml\n- G:\n    - S:\n        widget:\n          type: x\n          url: http://x.lan\n```\n';
+  assert.match(withFieldsInExample(service, ['x'], ['a', 'b']), /          type: x\n          fields: \[a, b\]   # the display fields; leave out for the defaults\n          url:/);
+  const header = '## Example\n\n```yaml\n# widgets.yaml\n- x:\n    label: L\n```\n';
+  assert.match(withFieldsInExample(header, ['x'], ['a']), /- x:\n    fields: \[a\]/);
+  const has = service.replace('url:', 'fields: [b]\n          url:');
+  assert.equal(withFieldsInExample(has, ['x'], ['a']), has, 'its own fields: stays');
+  assert.equal(withFieldsInExample(service, ['x'], []), service, 'no fields, no line');
+});
+
+test('every collection widget page: the example still parses with its fields: line', () => {
+  for (const id of fs.readdirSync(path.join(COLLECTION_DIR, 'widgets'))) {
+    if (!fs.existsSync(path.join(COLLECTION_DIR, 'widgets', id, 'widget.yaml'))) continue;
+    const md = widgetPage(path.join(COLLECTION_DIR, 'widgets', id), { kind: 'collection', tag: 'v1' }).markdown;
+    const example = md.slice(Math.max(0, md.search(/^## Example/m)));
+    for (const [, block] of example.matchAll(/```ya?ml\n([\s\S]*?)```/g)) {
+      for (const part of block.split(/^(?=# [\w.-]+\.ya?ml)/m)) assert.doesNotThrow(() => YAML.parse(part), `${id}: ${part.slice(0, 60)}`);
+    }
+  }
 });
 
 test('widgetPage: the example image right after the info line', () => {

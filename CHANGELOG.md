@@ -4,6 +4,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-10-31
+
 ### Changed
 - An attribute in widget.yaml can take its value from the widget's result with `from:` (a block
   key, `@attention`, `@status` or `@rows`), so widgets publish filter attributes without code.

@@ -182,3 +182,21 @@ test('docs: no YAML key with [ ] or \', which the site\'s highlighter (Rouge) ma
   }
   assert.deepEqual(bad, [], 'labels as a list (- homelab.widgets[0].type=emby), or ’ for an apostrophe');
 });
+
+test('docs: no \\| inside `code` in a table, which the site shows with its backslash', () => {
+  const bad = [];
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith('.md')) {
+        for (const line of fs.readFileSync(p, 'utf8').split('\n')) {
+          if (line.startsWith('|') && /`[^`]*\\\|[^`]*`/.test(line)) bad.push(`${p}: ${line.slice(0, 80)}`);
+        }
+      }
+    }
+  };
+  walk('docs');
+  assert.deepEqual(bad, [], 'write "a or b", or move it out of the table');
+});
+

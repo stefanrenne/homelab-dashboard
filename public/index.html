@@ -1183,7 +1183,14 @@ function renderService(service) {
 function evalFilter(tree, value) {
   const run = (n) => {
     if ('lit' in n) return n.lit;
-    if (n.ref) return value(n.ref.index, n.ref.attr) ?? null;
+    if (n.ref) {
+      // widget.<attr> reads every widget (merged): the first that has it counts
+      for (const i of n.ref.indexes) {
+        const v = value(i, n.ref.attr);
+        if (v !== undefined) return v;
+      }
+      return null;
+    }
     if (n.op === '!') return !run(n.a);
     if (n.op === '&&') return Boolean(run(n.a)) && Boolean(run(n.b));
     if (n.op === '||') return Boolean(run(n.a)) || Boolean(run(n.b));
@@ -1199,7 +1206,7 @@ function evalFilter(tree, value) {
 
 function filterIndexes(tree, out = new Set()) {
   if (!tree || typeof tree !== 'object') return out;
-  if (tree.ref) out.add(tree.ref.index);
+  if (tree.ref) for (const i of tree.ref.indexes) out.add(i);
   filterIndexes(tree.a, out);
   filterIndexes(tree.b, out);
   return out;

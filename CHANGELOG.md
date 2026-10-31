@@ -4,6 +4,15 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Changed
+- `widget.<name>` in a service's `filter:` reads the attributes of all the service's widgets
+  together (the first widget on the card that publishes it counts), so one expression works
+  with one widget or several. With a single widget nothing changes; `widgets[n].<name>` and
+  `widgets.<type>.<name>` still read one widget.
+
+### Fixed
+- The docs showed `\|\|` for `||` in the filter table.
+
 ## [0.12.0] - 2026-10-31
 
 ### Added

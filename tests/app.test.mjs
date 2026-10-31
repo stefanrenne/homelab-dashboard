@@ -1027,8 +1027,8 @@ test('filter: bound to the service\'s widgets in /api/layout; mistakes and secre
   try {
     const layout = await t.json('/api/layout');
     const [a, b, c, d, e] = layout.groups[0].services;
-    assert.deepEqual(a.filter, { op: '==', a: { ref: { index: 0, attr: 'update' } }, b: { lit: false } });
-    assert.deepEqual(b.filter, { ref: { index: 1, attr: 'updates' } }, 'a type becomes its position');
+    assert.deepEqual(a.filter, { op: '==', a: { ref: { indexes: [0], attr: 'update' } }, b: { lit: false } });
+    assert.deepEqual(b.filter, { ref: { indexes: [1], attr: 'updates' } }, 'a type becomes its position');
     assert.equal(c.filter, undefined);
     assert.equal(d.filter, undefined);
     assert.equal(e.filter, undefined);

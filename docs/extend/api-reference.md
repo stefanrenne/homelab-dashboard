@@ -36,7 +36,7 @@ without `client.js` is rendered by the dashboard from `blocks`.
 | `aliases` | no | Other names the widget answers to in `type:`, e.g. homepage's (`[customapi]`). Added after every real id, only where still free; the widget's `id` stays the one the page uses. |
 | `defaultFields` | no | Block keys shown when the entry has no `fields`, e.g. `[cpu, memoryPercent]`. Without it every block shows. |
 | `frames` | no | `url` options whose page the `client.js` shows in an `<iframe>`, e.g. `[src]`. The page's CSP allows the origin of each one's value (`frame-src`); only public options count, so a URL from a variable or a secret option is never framed. |
-| `attributes` | no | Public values the widget publishes for a service's `filter:` (see below), each `name: { type: boolean \| number \| string }`, e.g. `update: { type: boolean }`. A line comment says what it means; the docs page lists them. |
+| `attributes` | no | Public values the widget publishes for a service's `filter:` (see below), each `name: { type: <type> }` with `boolean`, `number` or `string`, e.g. `update: { type: boolean }`. A line comment says what it means; the docs page lists them. |
 | `params` | no | Names a `client.js` may send its `server.js` through the `hd-widget-params` page event, e.g. `[latitude, longitude]`. They reach `ctx.params`; anything else is dropped. |
 
 ### Option schema
@@ -184,7 +184,7 @@ again after every refresh:
 | `error` | Error message of the last refresh, or `null`. |
 | `instanceId` | The id of this widget instance (for `api/suggest`). |
 | `busy` | `true` while an action this widget asked for (`hd-widget-action`) runs, then `false`. Use a setter to update the look (disable the button). Since 0.8.0. |
-| `actionResult` | `{ status: 'ok' \| 'error' }` of the last action, set just before `busy` goes back to `false`, e.g. to show a check after a quiet success. Since 0.10.0. |
+| `actionResult` | `{ status: 'ok' }` or `{ status: 'error' }` of the last action, set just before `busy` goes back to `false`, e.g. to show a check after a quiet success. Since 0.10.0. |
 
 Theme CSS variables inherit into the shadow root: `--hd-text`, `--hd-muted`, `--hd-accent`,
 `--hd-card`, `--hd-border`, `--hd-ok`, `--hd-warn`, `--hd-error`.

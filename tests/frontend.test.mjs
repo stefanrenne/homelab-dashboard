@@ -787,7 +787,7 @@ test('filter: a card hides while its filter is true, shows on a failure, and an 
     id, name, href: null, target: '_blank', icon: null, description: null, discovered: null, statuses: [], filter,
     widgets: instanceIds.map((instanceId) => ({ instanceId, type: 'shelly', options: {}, known: true, server: true, refreshMs: 60000 })),
   });
-  const noUpdate = { op: '==', a: { ref: { index: 0, attr: 'update' } }, b: { lit: false } };
+  const noUpdate = { op: '==', a: { ref: { indexes: [0], attr: 'update' } }, b: { lit: false } };
   const layout = structuredClone(LAYOUT);
   layout.messages = { errors: [], warnings: [] };
   layout.widgetTypes.shelly = { name: 'Shelly', client: null, i18n: {} };
@@ -796,7 +796,8 @@ test('filter: a card hides while its filter is true, shows on a failure, and an 
       shelly('a', 'Bureau', noUpdate, 'sa'),                                               // up to date: hidden
       shelly('b', 'Koelkast', noUpdate, 'sb'),                                             // update: shown
       shelly('c', 'Printer', noUpdate, 'sc'),                                              // fails: shown
-      shelly('d', 'Two', { op: '==', a: { ref: { index: 1, attr: 'update' } }, b: { lit: false } }, 'sd0', 'sd1'), // the second widget decides
+      shelly('d', 'Two', { op: '==', a: { ref: { indexes: [1], attr: 'update' } }, b: { lit: false } }, 'sd0', 'sd1'), // the second widget decides
+      shelly('g', 'Merged', { op: '==', a: { ref: { indexes: [0, 1], attr: 'update' } }, b: { lit: false } }, 'sg0', 'sg1'), // the second has it
     ] },
     { name: 'Quiet', layout: {}, services: [shelly('e', 'Garage', noUpdate, 'se')] },  // its only card hidden: the group goes
     { name: 'Broken', layout: {}, services: [shelly('f', 'Offline', noUpdate, 'sf')] }, // no fixture: an error, shown
@@ -809,12 +810,14 @@ test('filter: a card hides while its filter is true, shows on a failure, and an 
     '/api/widgets/sd0': { ok: true, data: { blocks: [], attributes: { update: true } } },
     '/api/widgets/sd1': { ok: true, data: { blocks: [], attributes: { update: false } } },
     '/api/widgets/se': { ok: true, data: { blocks: [], attributes: { update: false } } },
+    '/api/widgets/sg0': { ok: true, data: { blocks: [] } },
+    '/api/widgets/sg1': { ok: true, data: { blocks: [], attributes: { update: false } } },
   };
   const w = await page(results);
   try {
     const doc = w.document;
     const filtered = (id) => doc.querySelector(`[data-service="${id}"]`).classList.contains('filtered');
-    assert.deepEqual(['a', 'b', 'c', 'd', 'e', 'f'].map(filtered), [true, false, false, true, true, false]);
+    assert.deepEqual(['a', 'b', 'c', 'd', 'e', 'f', 'g'].map(filtered), [true, false, false, true, true, false, true]);
     assert.ok(doc.querySelector('[data-group="Quiet"]').classList.contains('filtered-empty'));
     assert.ok(!doc.querySelector('[data-group="Devices"]').classList.contains('filtered-empty'));
     assert.deepEqual(Array.from(w.HD.filterServices(''), (c) => c.dataset.service).sort(), ['b', 'c', 'f'], 'search hits leave the hidden cards out');
@@ -828,7 +831,7 @@ test('filter: before its widget answers, a card is hidden', async () => {
   const layout = structuredClone(LAYOUT);
   layout.groups = [{ name: 'G', layout: {}, services: [{
     id: 'f', name: 'Slow', href: null, target: '_blank', icon: null, description: null, discovered: null, statuses: [],
-    filter: { ref: { index: 0, attr: 'update' } },
+    filter: { ref: { indexes: [0], attr: 'update' } },
     widgets: [{ instanceId: 'sf', type: 'custom-api', options: {}, known: true, server: true, refreshMs: 60000 }],
   }] }];
   const dom = new JSDOM(HTML, {
@@ -853,12 +856,13 @@ test('filter: the page evaluates like src/filter.js', async () => {
   const w = await page();
   try {
   const trees = [
-    { op: '==', a: { ref: { index: 0, attr: 'update' } }, b: { lit: false } },
-    { op: '||', a: { op: '!', a: { ref: { index: 0, attr: 'update' } } }, b: { op: '>', a: { ref: { index: 1, attr: 'n' } }, b: { lit: 2 } } },
-    { op: '&&', a: { op: '<=', a: { ref: { index: 1, attr: 'n' } }, b: { lit: '3' } }, b: { lit: true } },
-    { op: '!=', a: { ref: { index: 1, attr: 'missing' } }, b: { lit: null } },
+    { op: '==', a: { ref: { indexes: [0], attr: 'update' } }, b: { lit: false } },
+    { op: '||', a: { op: '!', a: { ref: { indexes: [0], attr: 'update' } } }, b: { op: '>', a: { ref: { indexes: [1], attr: 'n' } }, b: { lit: 2 } } },
+    { op: '&&', a: { op: '<=', a: { ref: { indexes: [1], attr: 'n' } }, b: { lit: '3' } }, b: { lit: true } },
+    { op: '!=', a: { ref: { indexes: [1], attr: 'missing' } }, b: { lit: null } },
+    { op: '==', a: { ref: { indexes: [0, 1], attr: 'update' } }, b: { lit: true } },
   ];
-  const values = [[{ update: false }, { n: 3 }], [{ update: true }, { n: 1 }], [{}, {}], [{ update: null }, { n: '3' }]];
+  const values = [[{ update: false }, { n: 3 }], [{ update: true }, { n: 1 }], [{}, {}], [{ update: null }, { n: '3' }], [{}, { update: true }]];
   for (const tree of trees) {
     for (const v of values) {
       const value = (i, attr) => v[i]?.[attr];

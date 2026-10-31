@@ -127,14 +127,16 @@ example, a Shelly device that only appears while a firmware update is waiting:
           password: "{{HD_VAR_SHELLY_PASSWORD}}"
 ```
 
-| Part | Form |
-|---|---|
-| An attribute | `widget.<name>` (the service's first widget), `widgets[1].<name>` (by position, from 0), `widgets.shelly.<name>` (the first widget of that type) |
-| A value | `true`, `false`, `null`, a number, `'text'` or `"text"` |
-| Comparing | `==`, `!=`, `<`, `<=`, `>`, `>=` (`<` and `>` only between numbers) |
-| Combining | `&&` (and), `\|\|` (or), `!` (not), and parentheses |
+- **An attribute**: `widget.<name>` reads the attributes of all the service's widgets together,
+  so it works the same with one widget or several. When two widgets publish the same name, the
+  first one on the card counts. To read one widget only: `widgets[1].<name>` (by position,
+  from 0) or `widgets.shelly.<name>` (the first widget of that type).
+- **A value**: `true`, `false`, `null`, a number, `'text'` or `"text"`.
+- **Comparing**: `==`, `!=`, `<`, `<=`, `>`, `>=` (`<` and `>` only between numbers).
+- **Combining**: `&&` (and), `||` (or), `!` (not), and parentheses:
+  `filter: widget.update == false && widget.queued == 0`.
 
-An attribute the widget did not send counts as `null`, so `widget.update == false` is not true
+An attribute no widget sent counts as `null`, so `widget.update == false` is not true
 before the widget knows. Until the widgets the filter reads have answered, the card stays hidden;
 when one of them fails, the card is shown, so a broken service never disappears quietly. A group
 whose cards are all hidden is hidden too, and a hidden card is no search hit.

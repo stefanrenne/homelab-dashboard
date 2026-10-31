@@ -5,7 +5,8 @@
 //   filter: widget.update == false
 //   filter: widgets.shelly.update == false && widgets[1].count < 3
 //
-// Paths: widget.<attr> (the first widget), widgets[<n>].<attr> (by position, from 0),
+// Paths: widget.<attr> (the attributes of all the service's widgets, merged: the first widget, in
+// the card's order, that publishes it), widgets[<n>].<attr> (one widget by position, from 0),
 // widgets.<type>.<attr> (the first widget of that type). Literals: true, false, null, numbers,
 // 'text' or "text". Operators: == != < <= > >= && || ! and parentheses. A missing attribute is
 // null. The page evaluates the parsed form (public/index.html, evalFilter) against the results.
@@ -54,10 +55,10 @@ function tokenize(text) {
   return tokens;
 }
 
-/** A path word as a reference: { widget: { index } | { type }, attr }. */
+/** A path word as a reference: { widget: { merged: true } | { index } | { type }, attr }. */
 function reference(word) {
   let m = /^widget\.([A-Za-z][\w]*)$/.exec(word);
-  if (m) return { widget: { index: 0 }, attr: m[1] };
+  if (m) return { widget: { merged: true }, attr: m[1] };
   m = /^widgets\[(\d+)\]\.([A-Za-z][\w]*)$/.exec(word);
   if (m) return { widget: { index: Number(m[1]) }, attr: m[2] };
   m = /^widgets\.([a-z0-9][a-z0-9_-]*)\.([A-Za-z][\w]*)$/.exec(word);
@@ -148,7 +149,8 @@ export function filterRefs(tree, out = []) {
 }
 
 /**
- * The tree with every reference turned into a widget position on the service (`{ index }`),
+ * The tree with every reference turned into the widget positions on the service to read, in
+ * order (`{ indexes, attr }`: the first that has the attribute counts),
  * checked against its widgets: [{ type, id?, attributes }] (type as written, id the widget's own
  * when `type` is an alias, attributes from widget.yaml). Returns
  * { tree, errors, warnings } as messages.
@@ -160,17 +162,30 @@ export function bindFilter(tree, widgets) {
     if (!node || typeof node !== 'object') return node;
     if (node.ref) {
       const { widget, attr } = node.ref;
+      if (widget.merged) {
+        // every widget that declares it; none: a warning, and all of them (a widget may not declare)
+        const declaring = widgets.map((w, i) => (w.attributes && attr in w.attributes ? i : -1)).filter((i) => i >= 0);
+        if (!widgets.length) {
+          errors.push('the service has no widget to read attributes from');
+          return { ref: { indexes: [], attr } };
+        }
+        if (!declaring.length) {
+          const all = [...new Set(widgets.flatMap((w) => Object.keys(w.attributes ?? {})))];
+          warnings.push(`no widget on this service publishes "${attr}"${all.length ? ` (they publish ${all.join(', ')})` : ' (they publish none)'}`);
+        }
+        return { ref: { indexes: declaring.length ? declaring : widgets.map((_, i) => i), attr } };
+      }
       const index = widget.type !== undefined ? widgets.findIndex((w) => w.type === widget.type || w.id === widget.type) : widget.index;
       if (index < 0 || index >= widgets.length) {
         errors.push(widget.type !== undefined ? `no "${widget.type}" widget on this service` : `the service has no widget ${widget.index} (it has ${widgets.length}, counted from 0)`);
-        return { ref: { index: -1, attr } };
+        return { ref: { indexes: [], attr } };
       }
       const declared = widgets[index].attributes;
       if (declared && !(attr in declared)) {
         const names = Object.keys(declared);
         warnings.push(`${widgets[index].type} has no attribute "${attr}"${names.length ? ` (it has ${names.join(', ')})` : ' (it publishes none)'}`);
       }
-      return { ref: { index, attr } };
+      return { ref: { indexes: [index], attr } };
     }
     const out = { ...node };
     if (node.a) out.a = bind(node.a);
@@ -181,14 +196,21 @@ export function bindFilter(tree, widgets) {
 }
 
 /**
- * Evaluates a bound tree; `value(index, attr)` gives an attribute (undefined counts as null).
+ * Evaluates a bound tree; `value(index, attr)` gives a widget's attribute. A reference takes the
+ * first of its widgets that has the attribute (not undefined); none: null.
  * Comparisons are strict; <, <=, >, >= only hold between two numbers. The page has the same
  * function (public/index.html, evalFilter); tests/frontend.test.mjs keeps them in step.
  */
 export function evalFilter(tree, value) {
   const run = (n) => {
     if ('lit' in n) return n.lit;
-    if (n.ref) return value(n.ref.index, n.ref.attr) ?? null;
+    if (n.ref) {
+      for (const i of n.ref.indexes) {
+        const v = value(i, n.ref.attr);
+        if (v !== undefined) return v;
+      }
+      return null;
+    }
     if (n.op === '!') return !run(n.a);
     if (n.op === '&&') return Boolean(run(n.a)) && Boolean(run(n.b));
     if (n.op === '||') return Boolean(run(n.a)) || Boolean(run(n.b));

@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
-import { movedLinks, optionRows, widgetPage, writeWidgetPages } from '../scripts/pages-widgets.mjs';
+import { attributeRows, movedLinks, optionRows, widgetPage, writeWidgetPages } from '../scripts/pages-widgets.mjs';
 import { exampleEntry, showsData, splitFiles } from '../scripts/widget-images.mjs';
 import { tmpDir, COLLECTION_DIR } from './helpers.mjs';
 
@@ -34,6 +34,28 @@ test('widgetPage: info line, options table before the example', () => {
   assert.match(widgetPage(path.join(COLLECTION_DIR, 'widgets/custom-api'), { kind: 'collection', tag: 'v9.9.9' }).markdown, /`type: custom-api` \(or `customapi`\) · version/, 'aliases are named');
   assert.equal(page.kind, 'service');
   assert.equal(widgetPage(path.join(COLLECTION_DIR, 'widgets/datetime'), { kind: 'collection', tag: 'v9.9.9' }).kind, 'header', 'a widgets.yaml example makes a header widget');
+});
+
+test('attributeRows and the Attributes table, after the options; option comments stay their own', () => {
+  const yaml = `id: x
+options:
+  version: { type: number }               # the API version
+attributes:
+  update: { type: boolean }               # true while an update waits
+  version: { type: string }               # the installed firmware
+`;
+  assert.deepEqual(attributeRows(yaml), [
+    { name: 'update', type: 'boolean', description: 'True while an update waits' },
+    { name: 'version', type: 'string', description: 'The installed firmware' },
+  ]);
+  assert.equal(optionRows(yaml)[0].description, 'The API version', 'a same-named attribute does not take the option\'s comment');
+  const dir = tmpDir('hd-attr-page-');
+  fs.writeFileSync(path.join(dir, 'widget.yaml'), `name: X\nversion: 1.0.0\napiVersion: 1\n${yaml}`);
+  fs.writeFileSync(path.join(dir, 'README.md'), '# X\n\nIntro.\n\n## Example\n\n```yaml\n- x: {}\n```\n');
+  const md = widgetPage(dir, { kind: 'collection', tag: 'v1' }).markdown;
+  assert.ok(md.indexOf('## Options') < md.indexOf('## Attributes') && md.indexOf('## Attributes') < md.indexOf('## Example'));
+  assert.match(md, /\| `update` \| boolean \| True while an update waits \|/);
+  assert.ok(!widgetPage(path.join(COLLECTION_DIR, 'widgets/radarr'), { kind: 'collection', tag: 'v1' }).markdown.includes('## Attributes'), 'none, no section');
 });
 
 test('widgetPage: the example image right after the info line', () => {

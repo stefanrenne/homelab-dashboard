@@ -36,6 +36,7 @@ without `client.js` is rendered by the dashboard from `blocks`.
 | `aliases` | no | Other names the widget answers to in `type:`, e.g. homepage's (`[customapi]`). Added after every real id, only where still free; the widget's `id` stays the one the page uses. |
 | `defaultFields` | no | Block keys shown when the entry has no `fields`, e.g. `[cpu, memoryPercent]`. Without it every block shows. |
 | `frames` | no | `url` options whose page the `client.js` shows in an `<iframe>`, e.g. `[src]`. The page's CSP allows the origin of each one's value (`frame-src`); only public options count, so a URL from a variable or a secret option is never framed. |
+| `attributes` | no | Public values the widget publishes for a service's `filter:` (see below), each `name: { type: boolean \| number \| string }`, e.g. `update: { type: boolean }`. A line comment says what it means; the docs page lists them. |
 | `params` | no | Names a `client.js` may send its `server.js` through the `hd-widget-params` page event, e.g. `[latitude, longitude]`. They reach `ctx.params`; anything else is dropped. |
 
 ### Option schema
@@ -125,6 +126,7 @@ An object; all fields are optional.
 | `latency` | Milliseconds, shown next to the status dot. |
 | `statusText` | Text for the status label in the card corner instead of the latency (e.g. `healthy`). Translated when it is a key. |
 | `blocks` | List of `{ key?, label, vars?, value, unit?, status? }`. `label` is a string, translated through `i18n.json` when it is a key; `vars` fill `{name}` placeholders in that translation (`{ label: 'poolUsed', vars: { pool: 'Trunk' } }` with `"poolUsed": "{pool} used"`). `value` is a string, number or `null` (shown as –). A string value is translated too when it is a key. `status` is `ok`, `warn`, `error` or `unknown`: warn and error get a colour and a shape (▲, ✕) and are announced to screen readers. `key` names the block for `fields` (default: the label). |
+| `attributes` | Map of the attributes declared in widget.yaml to their value (of the declared type, or `null`): `{ update: true, version: '1.4.2' }`. Users filter services on them (`filter: widget.update == false`). They are **public**: they reach the browser, so never put a secret in one (a secret value is replaced by `***`). Undeclared names and values of another type are left out, with one warning in the log. `fields` and `highlight` do not touch them. |
 | `rows` | List of `{ label, vars?, value?, status?, icon?, progress? }`, shown below the blocks as label-left/value-right lines (a download queue, current streams, `display: list`). `status` marks a row like a block. `icon` (`play` or `pause`) is drawn before the label and spoken as a word. `progress` (0–100) fills the row's background. A row whose text does not fit opens on click, Enter or Space. A row labelled `moreItems` with `vars: { count }` closes a shortened list ("+3 more"). |
 
 ### Writing labels
@@ -230,6 +232,7 @@ Languages: `en`, `nl`, `fr`, `de`, `es`. Missing keys fall back to English, then
 | 1 | 0.1.0 | First version (including `vars`, row `status` and `defaultFields`). |
 | 1 | 0.8.0 | `action(ctx)` in server.js, `ctx.configDir`, the `hd-widget-action` event and the element's `busy`; `POST api/widgets/<instanceId>/action`. |
 | 1 | 0.10.0 | `showResult: 'failure'` in `hd-widget-action`, and the element's `actionResult`. |
+| 1 | next | `attributes` in widget.yaml and in the result: public values a service's `filter:` reads. Older dashboards ignore them. |
 | 1 | next | Blocks can carry `highlight: { level, valueOnly }`, added by the dashboard from the entry's `highlight:` rules. Widgets need no change. |
 | 1 | next | `provider: <name>` in an entry fills options from `settings.yaml` `providers`. Widgets need no change. |
 | 1 | next | `client.js` gets `instanceId`; `GET api/suggest` for search suggestions. |

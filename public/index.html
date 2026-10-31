@@ -145,6 +145,8 @@
   @media (min-width: 1024px) { .group.layout-row .cards { grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); } }
 
   /* service card */
+  /* a service's filter: (hidden while true), and a group left with no card to show */
+  .card.filtered, .group.filtered-empty { display: none; }
   .card { position: relative; margin-bottom: 8px; padding: 4px; border-radius: 6px; background: var(--hd-card); transition: background .15s; min-width: 0;
     border: 1px solid var(--hd-card-border, transparent); }
   .card .names { padding-inline-end: calc(var(--tag-count, 0) * 68px + 8px); } /* keep long names clear of the status labels */
@@ -787,7 +789,8 @@ function renderResult(container, instance, result, name) {
 }
 
 /** Creates the DOM for one widget instance and starts polling its data. */
-function mountWidget(instance, extraClass, name) {
+/** `onResult(result)`: told of every result, for a service's filter. */
+function mountWidget(instance, extraClass, name, onResult) {
   const box = el('div', { class: 'widget' + (extraClass ? ' ' + extraClass : '') });
   const type = layout.widgetTypes[instance.type];
   if (!instance.known || !type) {
@@ -798,6 +801,7 @@ function mountWidget(instance, extraClass, name) {
   let last = null;
   const apply = (result) => {
     last = result;
+    if (onResult) onResult(result);
     if (custom) {
       custom.error = result.ok || instance.hideErrors ? null : result.error;
       custom.data = result.ok ? result.data : null;
@@ -1158,9 +1162,71 @@ function renderService(service) {
   if (service.statuses.length) {
     card.append(el('div', { class: 'tags' }, ...service.statuses.map((s) => statusTag(s, card, service.statusStyle, service.showStats))));
   }
-  for (const w of service.widgets) card.append(mountWidget(w, null, service.name));
+  const results = [];
+  if (service.filter) card.classList.add('filtered'); // until the widgets it reads have answered
+  service.widgets.forEach((w, i) => {
+    const onResult = service.filter ? (result) => {
+      results[i] = result;
+      applyFilter(card, service, results);
+    } : null;
+    card.append(mountWidget(w, null, service.name, onResult));
+  });
   card.style.setProperty('--tag-count', String(service.statuses.length));
   return card;
+}
+
+// ---------------------------------------------------------------- service filters
+/**
+ * A service's `filter:` (bound by the server, src/filter.js) on its widgets' attributes: the
+ * same evaluation as evalFilter there; tests/frontend.test.mjs keeps the two in step.
+ */
+function evalFilter(tree, value) {
+  const run = (n) => {
+    if ('lit' in n) return n.lit;
+    if (n.ref) return value(n.ref.index, n.ref.attr) ?? null;
+    if (n.op === '!') return !run(n.a);
+    if (n.op === '&&') return Boolean(run(n.a)) && Boolean(run(n.b));
+    if (n.op === '||') return Boolean(run(n.a)) || Boolean(run(n.b));
+    const a = run(n.a);
+    const b = run(n.b);
+    if (n.op === '==') return a === b;
+    if (n.op === '!=') return a !== b;
+    if (typeof a !== 'number' || typeof b !== 'number') return false;
+    return n.op === '<' ? a < b : n.op === '<=' ? a <= b : n.op === '>' ? a > b : a >= b;
+  };
+  return Boolean(run(tree));
+}
+
+function filterIndexes(tree, out = new Set()) {
+  if (!tree || typeof tree !== 'object') return out;
+  if (tree.ref) out.add(tree.ref.index);
+  filterIndexes(tree.a, out);
+  filterIndexes(tree.b, out);
+  return out;
+}
+
+/**
+ * Hides the card while its filter is true. Until every widget it reads (with a server.js) has
+ * answered, it stays hidden; a widget that fails shows it, so a problem is not hidden away.
+ */
+function applyFilter(card, service, results) {
+  let hide;
+  const read = [...filterIndexes(service.filter)].map((i) => ({ w: service.widgets[i], r: results[i] }));
+  if (read.some(({ r }) => r && !r.ok)) hide = false;
+  else if (read.some(({ w, r }) => w?.server && !r)) hide = true;
+  else hide = evalFilter(service.filter, (i, attr) => results[i]?.data?.attributes?.[attr]);
+  card.classList.toggle('filtered', hide);
+  updateFilteredGroups(card);
+}
+
+/** Hides a group (and its parents) that has no card left to show, nor a nested group. */
+function updateFilteredGroups(card) {
+  for (let section = card.closest('.group'); section; section = section.parentElement?.closest('.group')) {
+    const own = [...section.querySelectorAll('.card')].filter((c) => c.closest('.group') === section);
+    const nested = [...section.querySelectorAll(':scope > .subgroups > .group')];
+    const empty = own.every((c) => c.classList.contains('filtered')) && nested.every((g) => g.classList.contains('filtered-empty'));
+    section.classList.toggle('filtered-empty', empty && (own.length > 0 || nested.length > 0));
+  }
 }
 
 // ---------------------------------------------------------------- block highlighting
@@ -1560,7 +1626,8 @@ function filterServices(query) {
     for (const item of section.querySelectorAll('.card, .bm')) {
       if (item.closest('.group') !== section) continue; // a nested group's cards are its own
       const text = `${item.dataset.search || item.textContent.toLowerCase()} ${group}`;
-      const hit = words.every((w) => text.includes(w));
+      // a card its filter hides is no search hit either (Enter would open it)
+      const hit = !item.classList.contains('filtered') && words.every((w) => text.includes(w));
       item.hidden = !hit;
       if (hit) {
         visible++;
@@ -1600,7 +1667,7 @@ for (const b of document.querySelectorAll('[data-appearance]')) {
 }
 document.getElementById('color-btn').addEventListener('click', () => document.getElementById('palette').classList.toggle('open'));
 
-window.HD = { I18N, PALETTES, translate, render, safeHref, formatValue, load, explainError, filterServices };
+window.HD = { I18N, PALETTES, translate, render, safeHref, formatValue, load, explainError, filterServices, evalFilter };
 load();
 connectEvents();
 </script>

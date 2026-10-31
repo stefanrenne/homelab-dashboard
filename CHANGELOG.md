@@ -4,6 +4,12 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+- `filter:` on a service hides its card while an expression on its widgets' attributes is true,
+  e.g. a Shelly only while a firmware update waits: `filter: widget.update == false`. A group
+  with only hidden cards is hidden too. Widgets publish such attributes through a new
+  `attributes:` in widget.yaml (widget API 1, backward compatible).
+
 ## [0.11.0] - 2026-10-31
 
 ### Changed

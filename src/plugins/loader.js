@@ -45,6 +45,7 @@ export function readManifest(dir) {
   if (manifest.defaultFields !== undefined && (!Array.isArray(manifest.defaultFields) || manifest.defaultFields.some((f) => typeof f !== 'string'))) {
     problems.push('defaultFields: a list of block keys');
   }
+  problems.push(...checkAttributes(manifest.attributes));
   try {
     manifest.refreshMs = parseDuration(manifest.refresh, DEFAULT_REFRESH_MS);
   } catch (err) {
@@ -53,6 +54,24 @@ export function readManifest(dir) {
   if (problems.length) throw new Error(`${file}: ${problems.join('; ')}`);
   manifest.options ??= {};
   return manifest;
+}
+
+export const ATTRIBUTE_TYPES = ['boolean', 'number', 'string'];
+const ATTRIBUTE_NAME = /^[a-zA-Z][a-zA-Z0-9_]*$/;
+
+/**
+ * `attributes:` in widget.yaml: the public values a widget publishes for a service's `filter:`,
+ * each `{ type: boolean | number | string }`.
+ */
+export function checkAttributes(attributes) {
+  if (attributes === undefined) return [];
+  if (!isPlainObject(attributes)) return ['attributes: a map of name to { type: boolean | number | string }'];
+  const problems = [];
+  for (const [name, def] of Object.entries(attributes)) {
+    if (!ATTRIBUTE_NAME.test(name)) problems.push(`attributes.${name}: a name of letters, digits and underscores, starting with a letter`);
+    else if (!isPlainObject(def) || !ATTRIBUTE_TYPES.includes(def.type)) problems.push(`attributes.${name}: type must be ${ATTRIBUTE_TYPES.join(', ')}`);
+  }
+  return problems;
 }
 
 /**

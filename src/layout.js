@@ -8,6 +8,7 @@ import { DEFAULT_REFRESH_MS } from './plugins/loader.js';
 import { CORE_WIDGETS } from './plugins/installer.js';
 import { stableId, parseDuration, isPlainObject } from './util.js';
 import { DEFAULT_LEVELS } from './highlight.js';
+import { bindFilter, filterRefs } from './filter.js';
 import { k8sConnection } from './discovery/kubeconfig.js';
 
 /**
@@ -277,6 +278,37 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
     };
   };
 
+  // `filter:` bound to the service's widgets; the page evaluates it on their attributes. Its
+  // literals go to the browser, so a secret (a filled-in {{HD_VAR_*}}) is refused (hard rule 1).
+  const serviceFilter = (service, where) => {
+    if (!service.filter) return {};
+    const at = { ...where, path: `${where.path}.filter` };
+    const widgets = service.widgets.map((w) => {
+      const widget = registry.get(w.type);
+      return { type: w.type, id: widget?.id, attributes: widget ? widget.manifest.attributes ?? {} : undefined };
+    });
+    const literals = [];
+    const walk = (n) => {
+      if (!n || typeof n !== 'object') return;
+      if (typeof n.lit === 'string') literals.push(n.lit);
+      walk(n.a);
+      walk(n.b);
+    };
+    walk(service.filter);
+    if (literals.some((l) => [...secrets].some((s) => s && s.length >= 3 && l.includes(s)))) {
+      errors.push({ ...at, message: 'a filter cannot hold a secret ({{HD_VAR_*}} or {{HD_FILE_*}}); the service is shown unfiltered' });
+      return {};
+    }
+    const bound = bindFilter(service.filter, widgets);
+    for (const message of bound.warnings) warnings.push({ ...at, message });
+    if (bound.errors.length) {
+      for (const message of bound.errors) errors.push({ ...at, message: `${message}; the service is shown unfiltered` });
+      return {};
+    }
+    if (!filterRefs(bound.tree).length) warnings.push({ ...at, message: 'the filter names no widget attribute, so it is always true or always false' });
+    return { filter: bound.tree };
+  };
+
   const layoutServices = (group) =>
     group.services.map((service) => {
       const where = { file: service.discovered ?? 'services.yaml', path: `${group.name}.${service.name}` };
@@ -287,6 +319,7 @@ export function buildState({ config, registry, groups, extraErrors = [], extraWa
       return {
         id,
         name: service.name,
+        ...serviceFilter(service, where),
         href: service.href ?? null,
         target: service.target ?? config.settings.target,
         icon: resolveIcon(service.icon),

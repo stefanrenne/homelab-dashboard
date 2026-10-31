@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { loadWidget, loadRegistry, readManifest } from '../src/plugins/loader.js';
 import { validateOptions } from '../src/plugins/options.js';
-import { WidgetRuntime, checkData, scrub, widgetFetch } from '../src/plugins/runtime.js';
+import { WidgetRuntime, checkData, scrub, selectAttributes, widgetFetch } from '../src/plugins/runtime.js';
 import { tmpDir, writeWidget, silentLog, serve, COLLECTION_WIDGETS } from './helpers.mjs';
 
 const base = { name: 'T', version: '1.0.0', apiVersion: 1 };
@@ -62,13 +62,49 @@ test('options: defaults, coercion, required and public/secret split', () => {
   assert.deepEqual(validateOptions(schema, {}).errors, ['url: required']);
 });
 
-async function runtimeWith(serverJs, { timeoutMs = 1000, refresh = '10s', options = {}, secretValues = [] } = {}) {
-  const dir = writeWidget(tmpDir(), { ...base, id: 'w', refresh }, { 'server.js': serverJs });
+async function runtimeWith(serverJs, { timeoutMs = 1000, refresh = '10s', options = {}, secretValues = [], manifest = {}, fields, log = silentLog } = {}) {
+  const dir = writeWidget(tmpDir(), { ...base, id: 'w', refresh, ...manifest }, { 'server.js': serverJs });
   const widget = await loadWidget(dir);
-  const rt = new WidgetRuntime({ registry: new Map([['w', widget]]), timeoutMs, log: silentLog });
-  rt.setInstances(new Map([['i1', { type: 'w', options, secretValues, refreshMs: widget.manifest.refreshMs }]]));
+  const rt = new WidgetRuntime({ registry: new Map([['w', widget]]), timeoutMs, log });
+  rt.setInstances(new Map([['i1', { type: 'w', options, secretValues, fields, refreshMs: widget.manifest.refreshMs }]]));
   return rt;
 }
+
+test('attributes: widget.yaml declares them as a map of name to a type', () => {
+  const dir = writeWidget(tmpDir(), { ...base, id: 'attrs', attributes: { update: { type: 'boolean' }, 'bad-name': { type: 'string' }, size: { type: 'date' } } });
+  assert.throws(() => readManifest(dir), /attributes\.bad-name: a name of letters.*attributes\.size: type must be boolean, number, string/);
+  assert.throws(() => readManifest(writeWidget(tmpDir(), { ...base, id: 'attrs', attributes: ['update'] })), /attributes: a map/);
+  assert.deepEqual(readManifest(writeWidget(tmpDir(), { ...base, id: 'attrs', attributes: { update: { type: 'boolean' } } })).attributes, { update: { type: 'boolean' } });
+});
+
+test('selectAttributes: only declared names of the declared type (or null), secrets scrubbed', () => {
+  const schema = { update: { type: 'boolean' }, version: { type: 'string' }, count: { type: 'number' } };
+  assert.deepEqual(selectAttributes({ update: true, version: 'v1 s3cret', count: null, extra: 1, size: 'x' }, schema, ['s3cret']), {
+    attributes: { update: true, version: 'v1 ***', count: null },
+    dropped: ['extra', 'size'],
+  });
+  assert.deepEqual(selectAttributes({ update: 'yes', count: Infinity }, schema), { attributes: undefined, dropped: ['update', 'count'] });
+  assert.deepEqual(selectAttributes(undefined, schema), { attributes: undefined, dropped: [] });
+  assert.deepEqual(selectAttributes([1], schema).dropped, ['(not a map)']);
+});
+
+test('runtime: attributes reach the result, untouched by fields; undeclared ones are warned about once', async () => {
+  const warnings = [];
+  const rt = await runtimeWith('export default { fetch: () => ({ blocks: [{ key: "a", label: "a", value: 1 }, { key: "b", label: "b", value: 2 }], attributes: { update: true, other: 1 } }) }', {
+    manifest: { attributes: { update: { type: 'boolean' } } },
+    fields: ['b'],
+    log: { info() {}, error() {}, warn: (m) => warnings.push(m) },
+  });
+  const r = await rt.get('i1');
+  assert.deepEqual(r.data.attributes, { update: true });
+  assert.deepEqual(r.data.blocks.map((b) => b.key), ['b']);
+  rt.cache.clear();
+  await rt.get('i1');
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /widget w: attributes not declared in widget\.yaml, or of another type, are left out: other/);
+  const none = await runtimeWith('export default { fetch: () => ({ blocks: [] }) }');
+  assert.ok(!('attributes' in (await none.get('i1')).data), 'no attributes, no field');
+});
 
 test('runtime: a throwing widget becomes an error result', async () => {
   const rt = await runtimeWith('export default { async fetch() { throw new Error("boom") } }');

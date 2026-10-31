@@ -10,6 +10,7 @@ import path from 'node:path';
 import { substitute } from './vars.js';
 import { parseConfigYaml, resolveIncludes } from './include.js';
 import { isPlainObject, parseDuration } from '../util.js';
+import { parseFilter } from '../filter.js';
 
 export const CONFIG_FILES = ['settings', 'services', 'widgets', 'bookmarks', 'docker', 'kubernetes', 'proxmox'];
 
@@ -28,7 +29,7 @@ export const DEFAULT_SETTINGS = {
 };
 
 const SERVICE_KEYS = new Set([
-  'href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'widget', 'widgets', 'target', 'statusStyle', 'showStats', 'weight',
+  'href', 'icon', 'description', 'siteMonitor', 'ping', 'container', 'server', 'widget', 'widgets', 'target', 'statusStyle', 'showStats', 'weight', 'filter',
   'proxmoxNode', 'proxmoxVMID', 'proxmoxType', 'app', 'namespace', 'podSelector', 'external',
 ]);
 export const STATUS_STYLES = ['dot', 'basic'];
@@ -359,6 +360,14 @@ export function normalizeService(name, def, file, p, ctx) {
   if (def.statusStyle !== undefined) {
     if (STATUS_STYLES.includes(def.statusStyle)) service.statusStyle = def.statusStyle;
     else ctx.warn(file, `${p}.statusStyle`, 'expected dot or basic, ignored');
+  }
+  // filter: hides the card while true; parsed here, bound to the service's widgets in layout.js
+  if (def.filter !== undefined && def.filter !== null) {
+    try {
+      service.filter = parseFilter(typeof def.filter === 'string' ? def.filter : undefined);
+    } catch (err) {
+      ctx.error(file, `${p}.filter`, `${err.message}; the service is shown unfiltered`);
+    }
   }
   if (def.weight !== undefined && def.weight !== null) {
     const weight = Number(def.weight);

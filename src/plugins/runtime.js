@@ -33,6 +33,7 @@ export class WidgetRuntime {
     this.cache = new Map(); // instanceId -> { result, expires }
     this.pending = new Map(); // instanceId -> Promise
     this.stores = new Map(); // instanceId -> Map for ctx.cache
+    this.attributeWarnings = new Set(); // widget types already warned about an attribute they did not declare
   }
 
   /** Replaces the set of instances; keeps ctx.cache stores of instances that still exist. */
@@ -85,7 +86,14 @@ export class WidgetRuntime {
           Promise.resolve().then(call),
           new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(controller.signal.reason))),
         ]);
-        const selected = selectFields(checkData(data ?? {}), instance.fields);
+        const checked = checkData(data ?? {});
+        const { attributes, dropped } = selectAttributes(checked.attributes, widget.manifest.attributes, instance.secretValues);
+        if (dropped.length && !this.attributeWarnings.has(instance.type)) {
+          this.attributeWarnings.add(instance.type);
+          this.log.warn(`widget ${instance.type}: attributes not declared in widget.yaml, or of another type, are left out: ${dropped.join(', ')}`);
+        }
+        const selected = { ...selectFields(checked, instance.fields), attributes };
+        if (attributes === undefined) delete selected.attributes;
         result = { ok: true, data: highlightBlocks(selected, instance.highlight, instance.type), fetchedAt: this.now() };
       } catch (err) {
         const message = scrub(describeError(err), instance.secretValues);
@@ -267,6 +275,24 @@ function checkVars(vars, where) {
   for (const [k, v] of Object.entries(vars)) {
     if (!['string', 'number'].includes(typeof v)) throw new Error(`${where}: vars.${k} must be text or a number`);
   }
+}
+
+/**
+ * The attributes a result may publish: the names `schema` (widget.yaml `attributes:`) declares,
+ * with a value of the declared type or null; strings with a secret value scrubbed. Returns
+ * { attributes (undefined when none), dropped: names left out }.
+ */
+export function selectAttributes(attributes, schema, secretValues = []) {
+  if (attributes === undefined || attributes === null) return { attributes: undefined, dropped: [] };
+  if (typeof attributes !== 'object' || Array.isArray(attributes)) return { attributes: undefined, dropped: ['(not a map)'] };
+  const out = {};
+  const dropped = [];
+  for (const [name, value] of Object.entries(attributes)) {
+    const type = schema?.[name]?.type;
+    if (!type || (value !== null && typeof value !== type) || (type === 'number' && value !== null && !Number.isFinite(value))) dropped.push(name);
+    else out[name] = typeof value === 'string' ? scrub(value, secretValues) : value;
+  }
+  return { attributes: Object.keys(out).length ? out : undefined, dropped };
 }
 
 /** Keeps only the blocks named in `fields` (by `key`, else `label`), in the widget's order. */

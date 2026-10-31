@@ -30,6 +30,9 @@ export default {
         { key: 'value', label: 'value', value },
         { key: 'change', label: 'change', value: previous === undefined ? null : value - previous },
       ],
+      // Public values declared under `attributes:` in widget.yaml, for a service's filter:
+      // (filter: widget.full == false hides the card until the number reaches max). Never secrets.
+      attributes: { value, full: value >= ctx.options.max },
       // Anything else is free-form data for client.js.
       value,
       max: ctx.options.max,

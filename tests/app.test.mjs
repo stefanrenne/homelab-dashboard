@@ -63,6 +63,7 @@ test('secrets from variables and secret options never reach /api/layout', async 
     const data = await t.json(`/api/widgets/${counter.widgets[0].instanceId}`);
     assert.equal(data.ok, true);
     assert.equal(data.data.value, 7);
+    assert.deepEqual(data.data.attributes, { value: 7, full: false }, 'the template publishes its attributes');
     const apiData = await t.json(`/api/widgets/${api.widgets[0].instanceId}`);
     assert.deepEqual(apiData.data.blocks, [{ label: 'Count', value: 7 }]);
   } finally {
@@ -1005,4 +1006,41 @@ test('readVersion: the image\'s VERSION file wins over a copied HD_VERSION, then
   assert.equal(readVersion(root, { HD_VERSION: '0.8.1' }), '0.8.1');
   fs.writeFileSync(path.join(root, 'VERSION'), '0.10.0\n');
   assert.equal(readVersion(root, { HD_VERSION: '0.8.1' }), '0.10.0', 'an old environment copied by a recreate does not win');
+});
+
+test('filter: bound to the service\'s widgets in /api/layout; mistakes and secrets are messages', async () => {
+  const dir = path.join(tmpDir('hd-attr-'), 'attr');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'widget.yaml'), 'id: attr\nname: Attr\nversion: 1.0.0\napiVersion: 1\nattributes:\n  update: { type: boolean }\n');
+  fs.writeFileSync(path.join(dir, 'server.js'), 'export default { async fetch() { return { blocks: [], attributes: { update: false } } } }');
+  const t = await startApp({
+    'settings.yaml': `plugins:\n  - path: ${dir}\n`,
+    'services.yaml': [
+      '- G:',
+      '    - A: { filter: "widget.update == false", widget: { type: attr } }',
+      '    - B: { filter: "widgets.attr.updates", widgets: [{ type: datetime }, { type: attr }] }',
+      '    - C: { filter: "widget.update ==", widget: { type: attr } }',
+      '    - D: { filter: "widgets.radarr.x", widget: { type: attr } }',
+      '    - E: { filter: "widget.update == \'{{HD_VAR_PW}}\'", widget: { type: attr } }',
+    ].join('\n') + '\n',
+  }, { HD_VAR_PW: 'hunter22' });
+  try {
+    const layout = await t.json('/api/layout');
+    const [a, b, c, d, e] = layout.groups[0].services;
+    assert.deepEqual(a.filter, { op: '==', a: { ref: { index: 0, attr: 'update' } }, b: { lit: false } });
+    assert.deepEqual(b.filter, { ref: { index: 1, attr: 'updates' } }, 'a type becomes its position');
+    assert.equal(c.filter, undefined);
+    assert.equal(d.filter, undefined);
+    assert.equal(e.filter, undefined);
+    assert.ok(!JSON.stringify(layout).includes('hunter22'), 'no secret in the layout');
+    const errors = layout.messages.errors.map((m) => `${m.file} › ${m.path}: ${m.message}`);
+    assert.ok(errors.some((m) => /services\.yaml › \[0\]\.G\[2\]\.C\.filter: the expression ends too early; the service is shown unfiltered/.test(m)), errors.join('\n'));
+    assert.ok(errors.some((m) => /G\.D\.filter: no "radarr" widget on this service/.test(m)), errors.join('\n'));
+    assert.ok(errors.some((m) => /G\.E\.filter: a filter cannot hold a secret/.test(m)), errors.join('\n'));
+    assert.ok(layout.messages.warnings.some((m) => /G\.B\.filter/.test(m.path) && /attr has no attribute "updates" \(it has update\)/.test(m.message)));
+    const result = await t.json(`/api/widgets/${a.widgets[0].instanceId}`);
+    assert.deepEqual(result.data.attributes, { update: false });
+  } finally {
+    await t.close();
+  }
 });

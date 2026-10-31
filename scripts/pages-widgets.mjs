@@ -22,13 +22,27 @@ export function widgetFolders(dir) {
 }
 
 /** Options from widget.yaml, each with the comment at the end of its line as description. */
-export function optionRows(yamlText) {
-  const manifest = YAML.parse(yamlText);
+/** The line comments of the keys directly under a top-level `section:` of widget.yaml. */
+function lineComments(yamlText, section) {
   const comments = {};
+  let inside = false;
   for (const line of yamlText.split('\n')) {
-    const m = /^ {2}(\w+):.*?#\s*(.+)$/.exec(line);
+    if (/^\S/.test(line)) inside = line.startsWith(`${section}:`);
+    const m = inside && /^ {2}(\w+):.*?#\s*(.+)$/.exec(line);
     if (m) comments[m[1]] = m[2].trim().replace(/^\w/, (c) => c.toUpperCase());
   }
+  return comments;
+}
+
+/** Attributes from widget.yaml (for a service's `filter:`), each with its line comment. */
+export function attributeRows(yamlText) {
+  const comments = lineComments(yamlText, 'attributes');
+  return Object.entries(YAML.parse(yamlText).attributes ?? {}).map(([name, def]) => ({ name, type: def?.type, description: comments[name] ?? '' }));
+}
+
+export function optionRows(yamlText) {
+  const manifest = YAML.parse(yamlText);
+  const comments = lineComments(yamlText, 'options');
   return Object.entries(manifest.options ?? {}).map(([name, def]) => ({
     name,
     type: def.type === 'enum' ? def.values.join(' / ') : def.type,
@@ -52,6 +66,12 @@ export const movedLinks = (markdown) => MOVED.reduce((md, [re, to]) => md.replac
 
 const cell = (text) => String(text).replace(/\|/g, '\\|').replace(/\n/g, ' ');
 const code = (value) => (value === undefined ? '' : `\`${cell(typeof value === 'string' ? value : JSON.stringify(value))}\``);
+
+function attributesTable(rows) {
+  const lines = ['| Attribute | Type | Description |', '|---|---|---|'];
+  for (const r of rows) lines.push(`| \`${r.name}\` | ${cell(r.type)} | ${cell(r.description)} |`);
+  return lines.join('\n') + '\n';
+}
 
 function optionsTable(rows) {
   if (rows.length === 0) return 'This widget has no options.\n';
@@ -80,7 +100,11 @@ export function widgetPage(dir, source, image = null) {
   const also = (manifest.aliases ?? []).map((a) => ` (or \`${a}\`)`).join('');
   const info = `\`type: ${id}\`${also} · version ${manifest.version} · widget API ${manifest.apiVersion} · ${where}\n{: .fs-3 .text-grey-dk-000 }\n` +
     (image ? `\n![${manifest.name} with example data](${image})\n` : '');
-  const options = `## Options\n\n${optionsTable(optionRows(yamlText))}\nEvery widget also takes \`refresh\` (or \`refreshInterval\` in ms), \`fields\` and \`hideErrors\`; see [Services](../../configuration/services.html).\n`;
+  const attributes = attributeRows(yamlText);
+  const published = attributes.length
+    ? `\n## Attributes\n\nPublic values a service's \`filter:\` can read, as \`widget.<attribute>\`; see [Filtering services](../../configuration/services.html#filtering-services).\n\n${attributesTable(attributes)}`
+    : '';
+  const options = `## Options\n\n${optionsTable(optionRows(yamlText))}\nEvery widget also takes \`refresh\` (or \`refreshInterval\` in ms), \`fields\` and \`hideErrors\`; see [Services](../../configuration/services.html).\n${published}`;
 
   // the title, then the info line; the options table goes before ## Example, or at the end
   const [title, ...rest] = readme.split('\n');

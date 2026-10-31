@@ -1,7 +1,7 @@
 // Turns discovery labels/annotations into a service definition in services.yaml form.
 //
 //   <prefix>name, <prefix>group, <prefix>weight, <prefix>href, <prefix>icon, <prefix>description,
-//   <prefix>siteMonitor, <prefix>ping, <prefix>target, <prefix>statusStyle, <prefix>showStats,
+//   <prefix>siteMonitor, <prefix>ping, <prefix>target, <prefix>statusStyle, <prefix>showStats, <prefix>filter,
 //   <prefix>widget.type, <prefix>widget.<option>, <prefix>widget.<map>.<key>,
 //   <prefix>widget.mappings[0].label, <prefix>widgets[1].type   (homepage's dot/index notation)
 //
@@ -11,7 +11,7 @@
 // Docker uses the prefix "homelab." (or homepage's "homepage."), Kubernetes "homelab.dev/"
 // (or "gethomepage.dev/").
 
-const FIELDS = ['href', 'icon', 'description', 'siteMonitor', 'ping', 'target', 'statusStyle', 'showStats'];
+const FIELDS = ['href', 'icon', 'description', 'siteMonitor', 'ping', 'target', 'statusStyle', 'showStats', 'filter'];
 const NESTED = ['widget', 'widgets'];
 
 /** `widgets[1].mappings[0].label` -> ['widgets', 1, 'mappings', 0, 'label']; null when malformed. */

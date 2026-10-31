@@ -10,3 +10,6 @@ options:
   key: { type: string, secret: true }          # secret: only ever reaches server.js
   field: { type: string, default: count }
   max: { type: number, default: 100 }
+attributes:                  # public values users can filter services on (filter: widget.full == false)
+  value: { type: number }    # the number
+  full: { type: boolean }    # true when the number reached max

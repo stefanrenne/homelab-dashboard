@@ -13,6 +13,7 @@ and any number of [widgets](../widgets/README.md). Services can also be
         statusStyle: dot              # overrides settings.statusStyle for this service
         showStats: true               # overrides settings.showStats for this service
         weight: 50                    # order within the group, low first; default (position + 1) x 100
+        filter: widget.update == false  # hide the card while this is true (see Filtering services)
         target: _self                 # overrides settings.target; hidden-iframe: the dashboard
                                       # server calls the URL (a webhook) and shows how it went
         # status check, the first one that is set:
@@ -107,3 +108,43 @@ Click a container label to see the container's CPU and memory. `ping` also accep
 
 Icons: a dashboard-icons name, an `mdi-`, `si-` or `sh-` icon, a file in `config/icons` or a URL;
 see [Images](images.md).
+
+## Filtering services
+
+`filter:` on a service hides its card while an expression is true. The expression reads the
+**attributes** its widgets publish: public values a widget declares for this (the Attributes table
+on each [widget's page](../widgets/README.md) lists them), apart from the blocks it shows. For
+example, a Shelly device that only appears while a firmware update is waiting:
+
+```yaml
+- Devices:
+    - Shelly Bureau:
+        href: http://shelly-bureau.lan
+        filter: widget.update == false          # hidden while there is no update
+        widget:
+          type: shelly
+          url: http://shelly-bureau.lan
+          password: "{{HD_VAR_SHELLY_PASSWORD}}"
+```
+
+| Part | Form |
+|---|---|
+| An attribute | `widget.<name>` (the service's first widget), `widgets[1].<name>` (by position, from 0), `widgets.shelly.<name>` (the first widget of that type) |
+| A value | `true`, `false`, `null`, a number, `'text'` or `"text"` |
+| Comparing | `==`, `!=`, `<`, `<=`, `>`, `>=` (`<` and `>` only between numbers) |
+| Combining | `&&` (and), `\|\|` (or), `!` (not), and parentheses |
+
+An attribute the widget did not send counts as `null`, so `widget.update == false` is not true
+before the widget knows. Until the widgets the filter reads have answered, the card stays hidden;
+when one of them fails, the card is shown, so a broken service never disappears quietly. A group
+whose cards are all hidden is hidden too, and a hidden card is no search hit.
+
+A mistake in the expression (`widget.update false`), a widget that is not on the service
+(`widgets.radarr.queued` on a Shelly) or a secret in it are config errors; the service is then
+shown unfiltered. An attribute the widget does not publish is a warning. The filter goes to the
+browser, so it cannot hold a `{{HD_VAR_*}}` value.
+
+Discovered services take it as a label (`homelab.filter`) or an annotation
+(`homelab.dev/filter`). The quotes and `&&` of an expression are easiest in Compose's list form:
+`- homelab.filter=widget.update == false`.
+

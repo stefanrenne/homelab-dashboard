@@ -781,3 +781,91 @@ test('a status label shows a spinner until its first result', async () => {
   assert.equal(tag.textContent, '78 ms');
   dom.window.close();
 });
+
+test('filter: a card hides while its filter is true, shows on a failure, and an emptied group goes', async () => {
+  const shelly = (id, name, filter, ...instanceIds) => ({
+    id, name, href: null, target: '_blank', icon: null, description: null, discovered: null, statuses: [], filter,
+    widgets: instanceIds.map((instanceId) => ({ instanceId, type: 'shelly', options: {}, known: true, server: true, refreshMs: 60000 })),
+  });
+  const noUpdate = { op: '==', a: { ref: { index: 0, attr: 'update' } }, b: { lit: false } };
+  const layout = structuredClone(LAYOUT);
+  layout.messages = { errors: [], warnings: [] };
+  layout.widgetTypes.shelly = { name: 'Shelly', client: null, i18n: {} };
+  layout.groups = [
+    { name: 'Devices', layout: {}, services: [
+      shelly('a', 'Bureau', noUpdate, 'sa'),                                               // up to date: hidden
+      shelly('b', 'Koelkast', noUpdate, 'sb'),                                             // update: shown
+      shelly('c', 'Printer', noUpdate, 'sc'),                                              // fails: shown
+      shelly('d', 'Two', { op: '==', a: { ref: { index: 1, attr: 'update' } }, b: { lit: false } }, 'sd0', 'sd1'), // the second widget decides
+    ] },
+    { name: 'Quiet', layout: {}, services: [shelly('e', 'Garage', noUpdate, 'se')] },  // its only card hidden: the group goes
+    { name: 'Broken', layout: {}, services: [shelly('f', 'Offline', noUpdate, 'sf')] }, // no fixture: an error, shown
+  ];
+  const results = {
+    '/api/layout': layout,
+    '/api/widgets/sa': { ok: true, data: { blocks: [], attributes: { update: false } } },
+    '/api/widgets/sb': { ok: true, data: { blocks: [], attributes: { update: true } } },
+    '/api/widgets/sc': { ok: false, error: 'Shelly answered 401' },
+    '/api/widgets/sd0': { ok: true, data: { blocks: [], attributes: { update: true } } },
+    '/api/widgets/sd1': { ok: true, data: { blocks: [], attributes: { update: false } } },
+    '/api/widgets/se': { ok: true, data: { blocks: [], attributes: { update: false } } },
+  };
+  const w = await page(results);
+  try {
+    const doc = w.document;
+    const filtered = (id) => doc.querySelector(`[data-service="${id}"]`).classList.contains('filtered');
+    assert.deepEqual(['a', 'b', 'c', 'd', 'e', 'f'].map(filtered), [true, false, false, true, true, false]);
+    assert.ok(doc.querySelector('[data-group="Quiet"]').classList.contains('filtered-empty'));
+    assert.ok(!doc.querySelector('[data-group="Devices"]').classList.contains('filtered-empty'));
+    assert.deepEqual(Array.from(w.HD.filterServices(''), (c) => c.dataset.service).sort(), ['b', 'c', 'f'], 'search hits leave the hidden cards out');
+    assert.equal(w.HD.filterServices('bureau').length, 0, 'a hidden card is no search hit');
+  } finally {
+    w.close();
+  }
+});
+
+test('filter: before its widget answers, a card is hidden', async () => {
+  const layout = structuredClone(LAYOUT);
+  layout.groups = [{ name: 'G', layout: {}, services: [{
+    id: 'f', name: 'Slow', href: null, target: '_blank', icon: null, description: null, discovered: null, statuses: [],
+    filter: { ref: { index: 0, attr: 'update' } },
+    widgets: [{ instanceId: 'sf', type: 'custom-api', options: {}, known: true, server: true, refreshMs: 60000 }],
+  }] }];
+  const dom = new JSDOM(HTML, {
+    runScripts: 'dangerously',
+    url: 'http://localhost/',
+    beforeParse(window) {
+      window.fetch = (url) => new URL(url, 'http://localhost/').pathname === '/api/layout'
+        ? Promise.resolve({ json: async () => structuredClone(layout) })
+        : new Promise(() => {});
+    },
+  });
+  await new Promise((r) => setTimeout(r, 30));
+  try {
+    assert.ok(dom.window.document.querySelector('[data-service="f"]').classList.contains('filtered'));
+  } finally {
+    dom.window.close();
+  }
+});
+
+test('filter: the page evaluates like src/filter.js', async () => {
+  const { evalFilter } = await import('../src/filter.js');
+  const w = await page();
+  try {
+  const trees = [
+    { op: '==', a: { ref: { index: 0, attr: 'update' } }, b: { lit: false } },
+    { op: '||', a: { op: '!', a: { ref: { index: 0, attr: 'update' } } }, b: { op: '>', a: { ref: { index: 1, attr: 'n' } }, b: { lit: 2 } } },
+    { op: '&&', a: { op: '<=', a: { ref: { index: 1, attr: 'n' } }, b: { lit: '3' } }, b: { lit: true } },
+    { op: '!=', a: { ref: { index: 1, attr: 'missing' } }, b: { lit: null } },
+  ];
+  const values = [[{ update: false }, { n: 3 }], [{ update: true }, { n: 1 }], [{}, {}], [{ update: null }, { n: '3' }]];
+  for (const tree of trees) {
+    for (const v of values) {
+      const value = (i, attr) => v[i]?.[attr];
+      assert.equal(w.HD.evalFilter(tree, value), evalFilter(tree, value), JSON.stringify({ tree, v }));
+    }
+  }
+  } finally {
+    w.close();
+  }
+});

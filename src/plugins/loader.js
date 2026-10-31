@@ -57,11 +57,16 @@ export function readManifest(dir) {
 }
 
 export const ATTRIBUTE_TYPES = ['boolean', 'number', 'string'];
+// `from:` sources other than a block key, with the type they give
+export const ATTRIBUTE_SOURCES = { '@attention': 'boolean', '@status': 'string', '@rows': 'number' };
 const ATTRIBUTE_NAME = /^[a-zA-Z][a-zA-Z0-9_]*$/;
 
 /**
  * `attributes:` in widget.yaml: the public values a widget publishes for a service's `filter:`,
- * each `{ type: boolean | number | string }`.
+ * each `{ type: boolean | number | string, from? }`. `from: <block key>` takes that block's value
+ * (null when the block is absent); `from: '@attention'` is true when a block or row is marked warn
+ * or error, `'@status'` is the result's status (up, down, ...), `'@rows'` the number of rows.
+ * Without `from`, server.js returns the value in `attributes`.
  */
 export function checkAttributes(attributes) {
   if (attributes === undefined) return [];
@@ -70,6 +75,9 @@ export function checkAttributes(attributes) {
   for (const [name, def] of Object.entries(attributes)) {
     if (!ATTRIBUTE_NAME.test(name)) problems.push(`attributes.${name}: a name of letters, digits and underscores, starting with a letter`);
     else if (!isPlainObject(def) || !ATTRIBUTE_TYPES.includes(def.type)) problems.push(`attributes.${name}: type must be ${ATTRIBUTE_TYPES.join(', ')}`);
+    else if (def.from !== undefined && (typeof def.from !== 'string' || !def.from)) problems.push(`attributes.${name}: from must be a block key, @attention, @status or @rows`);
+    else if (def.from?.startsWith('@') && !ATTRIBUTE_SOURCES[def.from]) problems.push(`attributes.${name}: from: ${def.from} is not one of ${Object.keys(ATTRIBUTE_SOURCES).join(', ')}`);
+    else if (ATTRIBUTE_SOURCES[def.from] && def.type !== ATTRIBUTE_SOURCES[def.from]) problems.push(`attributes.${name}: from: ${def.from} is a ${ATTRIBUTE_SOURCES[def.from]}`);
   }
   return problems;
 }

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { loadWidget, loadRegistry, readManifest } from '../src/plugins/loader.js';
 import { validateOptions } from '../src/plugins/options.js';
-import { WidgetRuntime, checkData, scrub, selectAttributes, widgetFetch } from '../src/plugins/runtime.js';
+import { WidgetRuntime, blockAttributes, checkData, scrub, selectAttributes, widgetFetch } from '../src/plugins/runtime.js';
 import { tmpDir, writeWidget, silentLog, serve, COLLECTION_WIDGETS } from './helpers.mjs';
 
 const base = { name: 'T', version: '1.0.0', apiVersion: 1 };
@@ -86,6 +86,28 @@ test('selectAttributes: only declared names of the declared type (or null), secr
   assert.deepEqual(selectAttributes({ update: 'yes', count: Infinity }, schema), { attributes: undefined, dropped: ['update', 'count'] });
   assert.deepEqual(selectAttributes(undefined, schema), { attributes: undefined, dropped: [] });
   assert.deepEqual(selectAttributes([1], schema).dropped, ['(not a map)']);
+});
+
+test('blockAttributes: a block\'s value by key (null when absent), @attention, @status and @rows', () => {
+  const schema = { queued: { type: 'number', from: 'queued' }, gone: { type: 'number', from: 'gone' }, attention: { type: 'boolean', from: '@attention' }, own: { type: 'string' } };
+  assert.deepEqual(blockAttributes({ blocks: [{ key: 'queued', label: 'q', value: 3 }] }, schema), { queued: 3, gone: null, attention: false });
+  assert.deepEqual(blockAttributes({ blocks: [], rows: [{ label: 'x', status: 'warn' }] }, schema).attention, true);
+  assert.deepEqual(blockAttributes({ blocks: [{ label: 'queued', value: 1, status: 'error' }] }, schema), { queued: 1, gone: null, attention: true }, 'a block without key goes by label');
+  const more = { status: { type: 'string', from: '@status' }, streams: { type: 'number', from: '@rows' } };
+  assert.deepEqual(blockAttributes({ status: 'down', rows: [{ label: 'a' }, { label: 'b' }, { label: 'moreItems', vars: { count: 3 } }] }, more), { status: 'down', streams: 5 }, '"+3 more" counts as 3');
+  assert.deepEqual(blockAttributes({ blocks: [] }, more), { status: null, streams: 0 });
+  assert.throws(() => readManifest(writeWidget(tmpDir(), { ...base, id: 'f', attributes: { a: { type: 'number', from: '@attention' } } })), /from: @attention is a boolean/);
+  assert.throws(() => readManifest(writeWidget(tmpDir(), { ...base, id: 'f', attributes: { a: { type: 'number', from: '@nope' } } })), /from: @nope is not one of @attention, @status, @rows/);
+});
+
+test('runtime: from: attributes are taken before fields; what server.js returns wins', async () => {
+  const rt = await runtimeWith('export default { fetch: () => ({ blocks: [{ key: "a", label: "a", value: 1 }, { key: "b", label: "b", value: 2, status: "warn" }], attributes: { a: 9 } }) }', {
+    manifest: { attributes: { a: { type: 'number', from: 'a' }, b: { type: 'number', from: 'b' }, attention: { type: 'boolean', from: '@attention' } } },
+    fields: ['a'],
+  });
+  const r = await rt.get('i1');
+  assert.deepEqual(r.data.attributes, { a: 9, b: 2, attention: true });
+  assert.deepEqual(r.data.blocks.map((x) => x.key), ['a']);
 });
 
 test('runtime: attributes reach the result, untouched by fields; undeclared ones are warned about once', async () => {

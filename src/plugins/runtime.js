@@ -87,7 +87,8 @@ export class WidgetRuntime {
           new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(controller.signal.reason))),
         ]);
         const checked = checkData(data ?? {});
-        const { attributes, dropped } = selectAttributes(checked.attributes, widget.manifest.attributes, instance.secretValues);
+        const published = { ...blockAttributes(checked, widget.manifest.attributes), ...(checked.attributes ?? {}) };
+        const { attributes, dropped } = selectAttributes(Object.keys(published).length ? published : checked.attributes, widget.manifest.attributes, instance.secretValues);
         if (dropped.length && !this.attributeWarnings.has(instance.type)) {
           this.attributeWarnings.add(instance.type);
           this.log.warn(`widget ${instance.type}: attributes not declared in widget.yaml, or of another type, are left out: ${dropped.join(', ')}`);
@@ -275,6 +276,30 @@ function checkVars(vars, where) {
   for (const [k, v] of Object.entries(vars)) {
     if (!['string', 'number'].includes(typeof v)) throw new Error(`${where}: vars.${k} must be text or a number`);
   }
+}
+
+/**
+ * The attributes widget.yaml takes from the result itself (`from:`), before `fields` picks the
+ * blocks: a block's value by its key (null when the widget left the block out), `@attention` (a
+ * block or row marked warn or error), `@status` (the result's status) or `@rows` (how many rows).
+ * What server.js returns in `attributes` wins.
+ */
+export function blockAttributes(data, schema) {
+  const out = {};
+  for (const [name, def] of Object.entries(schema ?? {})) {
+    if (typeof def?.from !== 'string') continue;
+    if (def.from === '@attention') {
+      out[name] = [...(data.blocks ?? []), ...(data.rows ?? [])].some((x) => x?.status === 'warn' || x?.status === 'error');
+    } else if (def.from === '@status') {
+      out[name] = data.status ?? null;
+    } else if (def.from === '@rows') {
+      out[name] = Array.isArray(data.rows) ? data.rows.filter((r) => r?.label !== 'moreItems').length + (data.rows.find((r) => r?.label === 'moreItems')?.vars?.count ?? 0) : 0;
+    } else {
+      const block = (data.blocks ?? []).find((b) => (b.key ?? b.label) === def.from);
+      out[name] = block ? block.value ?? null : null;
+    }
+  }
+  return out;
 }
 
 /**

@@ -56,7 +56,7 @@ attributes:
   const md = widgetPage(dir, { kind: 'collection', tag: 'v1' }).markdown;
   assert.ok(md.indexOf('## Configuration options') < md.indexOf('## Filter attributes') && md.indexOf('## Filter attributes') < md.indexOf('## Example'));
   assert.match(md, /\| `update` \| boolean \| True while an update waits \|/);
-  assert.ok(!widgetPage(path.join(COLLECTION_DIR, 'widgets/radarr'), { kind: 'collection', tag: 'v1' }).markdown.includes('## Filter attributes'), 'none, no section');
+  assert.ok(!widgetPage(path.join(COLLECTION_DIR, 'widgets/datetime'), { kind: 'collection', tag: 'v1' }).markdown.includes('## Filter attributes'), 'none, no section');
 });
 
 test('widgetPage: one Filter attributes section, with the README\'s own text merged in', () => {

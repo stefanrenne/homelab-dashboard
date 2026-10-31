@@ -5,6 +5,8 @@ All user-visible changes. The format follows [Keep a Changelog](https://keepacha
 ## [Unreleased]
 
 ### Changed
+- An attribute in widget.yaml can take its value from the widget's result with `from:` (a block
+  key, `@attention`, `@status` or `@rows`), so widgets publish filter attributes without code.
 - Widget pages on the docs site: "Display fields" (and the example lists them as `fields:`),
   "Configuration options", and one "Filter attributes" section. The docs no longer name the
   dashboard version a feature needs.
